@@ -1,0 +1,13 @@
+#upload-area {
+  margin: 20px;
+  padding: 15px;
+  background-color: #efefef;
+}
+
+#footer {
+  margin-top: 50px;
+  min-height: 50px;
+  text-align: center;
+  padding: 10px;
+  color: #9d9d9d;
+}
