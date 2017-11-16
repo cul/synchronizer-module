@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /* Columbia University Library
    Project: Synchronizer Module
    File: style.css
@@ -8,15 +7,12 @@
 */
 
 /*Upload Page*/
-=======
->>>>>>> 2480555ab54f456974855201af5046314578d87b
 #upload-area {
   margin: 20px;
   padding: 15px;
   background-color: #efefef;
 }
 
-<<<<<<< HEAD
 #audio,
 #video,
 #text {
@@ -30,8 +26,6 @@
 }
 
 /*Footer Block*/
-=======
->>>>>>> 2480555ab54f456974855201af5046314578d87b
 #footer {
   margin-top: 50px;
   min-height: 50px;
