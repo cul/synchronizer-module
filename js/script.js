@@ -7,31 +7,23 @@
 */
 
 // Here is our error handling
-function errorHandler(evt) {
-  switch(evt.target.error.code) {
-    case evt.target.error.NOT_FOUND_ERR:
-      alert('File Not Found!');
-      break;
-    case evt.target.error.NOT_READABLE_ERR:
-      alert('File is not readable');
-      break;
-    case evt.target.error.ABORT_ERR:
-      break;
-    default:
-      alert('An error occurred reading this file.');
-  };
+function errorHandler(e) {
+	  document.getElementById('info-results').innerHTML += '<p class="list-item">' + e + '</p><hr />';
 }
 
 // Here we play audio files in the video control player
 function renderVideo(file) {
 	$("#video").show();
 	var reader = new FileReader();
-	reader.onload = function(event) {
-		var target = event.target.result;
-		var videoNode = document.querySelector('video');
+  try {
+  	reader.onload = function(event) {
+  		var target = event.target.result;
+  		var videoNode = document.querySelector('video');
 
-		videoNode.src = target;
-	}
+  		videoNode.src = target;
+  	}
+  }
+  catch (e) { errorHandler(e); }
 
 	reader.readAsDataURL(file);
 }
@@ -40,12 +32,15 @@ function renderVideo(file) {
 function renderAudio(file) {
 	$("#audio").show();
 	var reader = new FileReader();
-	reader.onload = function(event) {
-		var target = event.target.result;
-		var audioNode = document.querySelector('audio');
+  try {
+  	reader.onload = function(event) {
+  		var target = event.target.result;
+  		var audioNode = document.querySelector('audio');
 
-		audioNode.src = target;
-	}
+  		audioNode.src = target;
+  	}
+  }
+  catch (e) { errorHandler(e); }
 
 	reader.readAsDataURL(file);
 }
@@ -53,28 +48,29 @@ function renderAudio(file) {
 // Here we display text file data
 function renderText(file) {
 	var reader = new FileReader();
-	reader.onload = function(event) {
-	// Because modern browsers will automagically close some open HTML tags,
-	// the XML blocks are not able to be styled. Potential future TODO
+  try {
+  	reader.onload = function(event) {
+  	// Because modern browsers will automagically close some open HTML tags,
+  	// the XML blocks are not able to be styled. Potential future TODO
 
-		var target = event.target.result;
-		if (file.type.match('text.xml')) document.getElementById('xml').innerText += target;
-		else document.getElementById('text').innerHTML += '<div class="textfile-data" style="white-space: pre-line;">' + target + '</div>';
-	}
+  		var target = event.target.result;
+      guessLanguage.name(target, function(languageName) {
+      	document.getElementById('language').innerHTML = "Documents provided are in " + languageName + ".";
+      });
+
+  		// if (file.type.match('text.xml')) document.getElementById('xml').innerText += target;
+  		// else document.getElementById('text').innerHTML += '<div class="textfile-data" style="white-space: pre-line;">' + target + '</div>';
+
+      document.getElementById('index').value += target;
+  	}
+  }
+  catch (e) { errorHandler(e); }
 
 	reader.readAsText(file);
 }
 
 // Here we determine what kind of file was uploaded
 function determineFile(file) {
-	// Development information sent to console
-	console.group("File " + file.name);
-	console.log(file);
-	console.log("size: " + parseInt(file.size / 1024, 10) + "kb");
-	console.log("type: " + file.type);
-	console.log("date: " + new Date(file.lastModified));
-	console.groupEnd();
-
 	// List the information from the files
 	var listItem = '<p class="list-item">';
 	listItem += "File Name: " + file.name + "<br />";
@@ -98,62 +94,23 @@ function determineFile(file) {
 
 	// For grabbing files via upload
 	document.getElementById('file-upload').addEventListener('change', function(){
-	    for(var i = 0; i < this.files.length; i++){
-	        var file =  this.files[i];
-					determineFile(file);
-	    }
+    for(var i = 0; i < this.files.length; i++){
+      var file =  this.files[i];
+			determineFile(file);
+    }
 	}, false);
 
 	// For importing files via URL
 	document.getElementById('url-submit').addEventListener('click', function(){
-		var xhr = new XMLHttpRequest();
 		var url = document.getElementById('url-upload').value;
-		console.log(url);
 
 		// Get file extension from url
-		// For building the proper file type
 		var urlArr = url.split('.');
-		var ext = urlArr[urlArr.length- 1];
-		console.log(ext);
-		var type = "";
-		switch(ext) {
-			// Video files
-			case "mp4":
-			case "avi":
-				break;
+		var ext = urlArr[urlArr.length - 1];
 
-			// Audio files
-			case "ogg":
-			case "mp3":
-				break;
-
-			// Text files
-			case "txt":
-			case "xml":
-			case "vtt":
-				break;
-
-			default:
-				errorHandler(new evt);
-				break;
-		}
-		console.log(type);
-
-
-		xhr.open('GET', url, true);
-		xhr.send(null);
-		xhr.onreadystatechange = function () {
-			if (xhr.readyState === 4 && xhr.status === 200) {
-				// var type = xhr.getResponseHeader('Content-Type');
-				// var prefix = type.split("/");
-				// var suffix = type.split(";");
-				// type = prefix[0] + '/' + ext + ";" + suffix[suffix.length - 1];
-				// console.log(xhr.responseText);
-
-				var file = xhr.response;
-				file.type = type;
-				determineFile(file);
-			}
-		}
+    fetch(url)
+      .then(res => res.blob())
+      .then(blob => { determineFile(blob); })
+      .catch(function(e) { errorHandler(e); });
 	});
 }(jQuery));
