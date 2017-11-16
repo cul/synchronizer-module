@@ -1,0 +1,35 @@
+/* Columbia University Library
+   Project: Synchronizer Module
+   File: style.css
+	 Description: Stylesheet with specific styling outside of Bootstrap
+   Author: Ashley Pressley
+   Date: 11/16/2017
+*/
+
+/*Upload Page*/
+#upload-area {
+  margin: 20px;
+  padding: 15px;
+  background-color: #efefef;
+}
+
+#audio,
+#video,
+#text {
+  margin: 10px auto;
+}
+
+.textfile-data {
+  padding: 5px;
+  background-color: #efefef;
+  margin: 5px;
+}
+
+/*Footer Block*/
+#footer {
+  margin-top: 50px;
+  min-height: 50px;
+  text-align: center;
+  padding: 10px;
+  color: #9d9d9d;
+}
