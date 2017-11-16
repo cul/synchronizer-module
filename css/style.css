@@ -15,7 +15,9 @@
 
 #audio,
 #video,
-#text {
+#text,
+#xml,
+.list-item {
   margin: 10px auto;
 }
 

@@ -84,7 +84,7 @@ function determineFile(file) {
 	listItem += "File Size: " + parseInt(file.size / 1024, 10) + "kb<br />";
 	listItem += "File Type: " + file.type + "<br />";
 	listItem += "Last Modified Date: " + new Date(file.lastModified) + "<br />";
-	listItem += "</p>";
+	listItem += "</p><hr />";
 	document.getElementById('info-results').innerHTML += listItem;
 
 	// Depending on the type of file, display its contents in specific players or locations
