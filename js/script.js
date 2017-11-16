@@ -77,9 +77,6 @@ function determineFile(file) {
 
 	// List the information from the files
 	var listItem = '<p class="list-item">';
-	// TODO:  filename from URL file
-	// TODO:  filetype from URL file
-
 	listItem += "File Name: " + file.name + "<br />";
 	listItem += "File Size: " + parseInt(file.size / 1024, 10) + "kb<br />";
 	listItem += "File Type: " + file.type + "<br />";
@@ -107,30 +104,56 @@ function determineFile(file) {
 	    }
 	}, false);
 
-	// For grabbing files via URL
+	// For importing files via URL
 	document.getElementById('url-submit').addEventListener('click', function(){
 		var xhr = new XMLHttpRequest();
 		var url = document.getElementById('url-upload').value;
 		console.log(url);
+
+		// Get file extension from url
+		// For building the proper file type
+		var urlArr = url.split('.');
+		var ext = urlArr[urlArr.length- 1];
+		console.log(ext);
+		var type = "";
+		switch(ext) {
+			// Video files
+			case "mp4":
+			case "avi":
+				break;
+
+			// Audio files
+			case "ogg":
+			case "mp3":
+				break;
+
+			// Text files
+			case "txt":
+			case "xml":
+			case "vtt":
+				break;
+
+			default:
+				errorHandler(new evt);
+				break;
+		}
+		console.log(type);
+
+
 		xhr.open('GET', url, true);
-
 		xhr.send(null);
-		    xhr.onreadystatechange = function () {
-		        if (xhr.readyState === 4 && xhr.status === 200) {
-		            var type = xhr.getResponseHeader('Content-Type');
-		            console.log(type);
-								console.log(xhr.responseText);
-		        }
-		    }
+		xhr.onreadystatechange = function () {
+			if (xhr.readyState === 4 && xhr.status === 200) {
+				// var type = xhr.getResponseHeader('Content-Type');
+				// var prefix = type.split("/");
+				// var suffix = type.split(";");
+				// type = prefix[0] + '/' + ext + ";" + suffix[suffix.length - 1];
+				// console.log(xhr.responseText);
 
-		// xhr.responseType = 'blob';
-		// xhr.onload = function(e) {
-		//   if (this.status == 200) {
-		//     var file = this.response;
-		// 		determineFile(file);
-		//   }
-		// };
-		// xhr.send();
-
+				var file = xhr.response;
+				file.type = type;
+				determineFile(file);
+			}
+		}
 	});
 }(jQuery));

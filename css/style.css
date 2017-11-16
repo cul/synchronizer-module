@@ -27,6 +27,11 @@
   margin: 5px;
 }
 
+/*To fix their status bar text getting cut-off*/
+.able-status-bar {
+  height: 2.5em;
+}
+
 /*Footer Block*/
 #footer {
   margin-top: 50px;
