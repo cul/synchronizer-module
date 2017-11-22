@@ -3,7 +3,7 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 11/16/2017
+   Date: 11/22/2017
 */
 
 // Here is our error handling
