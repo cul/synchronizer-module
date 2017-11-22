@@ -13,6 +13,7 @@
 
 		<!-- Theming -->
 		<link href="/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+		<link href="/includes/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 		<link href="/css/ableplayer.min.css" rel="stylesheet" type="text/css"/>
 		<link href="/css/style.css" rel="stylesheet" type="text/css">
 	</head>
@@ -40,34 +41,65 @@
 	    </nav>
 
 	    <div id="main" class="container">
+        <h1>Welcome to the Upload Page</h1>
 
-	      <div>
-	        <h1>Welcome to the Upload Page</h1>
+				<div id="errorBar" class="col-md-12"></div>
 
-					<div id="upload-area" class="col-md-12">
-						<p class="col-md-6"><input id="file-upload" type="file" multiple></p>
-						<p class="col-md-6"><input id="url-upload" type="text" placeholder="Enter a URL here">
-							<button id="url-submit">Submit</button>
-						</p>
-						<p id="language"></p>
-					</div>
+				<div id="working-area" class="col-md-12">
+					<div id="media-playback" class="col-md-4 container">
+						<div id="media-upload" class="col-md-12 upload-box">
+							<i class="fa fa-times-circle-o close"></i>
+							<p>Select an applicable audio or video file to upload here, if you so choose.</p>
+							<p>
+								<label class="btn btn-primary">
+							    <input id="media-file-upload" type="file">
+							    Browse Locally
+								</label>
+							</p>
+							<p>&nbsp;</p>
+							<p><input id="media-url-upload" type="text" placeholder="Enter a URL here">
+								<button id="media-url-submit">Submit</button>
+							</p>
+						</div>
 
-				<div id="upload-results" class="col-md-12">
-					<div id="media-playback" class="col-md-12 container">
 						<div id="video"><video id="video-player" data-able-player preload="auto"></video></div>
 						<div id="audio"><audio id="audio-player" data-able-player preload="auto"></audio></div>
-					</div>
+					</div><!-- /#media-playback -->
 
 					<div id="display-results" class="col-md-8 pull-right">
-						<div id="text"></div>
-						<div id="xml"></div>
-						<textarea id="index" rows="5" cols="115"></textarea>
-					</div>
+						<div id="upload-area" class="col-md-12 upload-box">
+							<i class="fa fa-times-circle-o close"></i>
+							<p>Select applicable index or transcript files to upload here, if you so choose.</p>
+							<p class="col-md-6">
+								<label class="btn btn-primary">
+							    <input id="file-upload" type="file" multiple>
+							    Browse Locally
+								</label>
+							<p class="col-md-6">
+								<input id="url-upload" type="text" placeholder="Enter a URL here">
+								<button id="url-submit" class="btn btn-primary">Submit</button>
+							</p>
+							<p id="language"></p>
+						</div>
 
-					<div id="info-results" class="col-md-4"></div>
-				</div>
+						<div id="input-area">
+							<h2>Index Document</h2>
+							<textarea id="index" rows="15" cols="115"></textarea>
+							<h2>Transcript</h2>
+							<textarea id="transcript" rows="25" cols="115"></textarea>
+						</div>
 
-	      </div>
+						<div id="finish-area">
+							<p>These buttons do not currently function.</p>
+							<div class="col-md-6">
+								<button id="preview" class="btn btn-primary" onclick="errorHandler(new Error('I told you I do not yet function'))">Preview</button>
+							</div>
+							<div class="col-md-6">
+								<button id="download" class="btn btn-primary" onclick="errorHandler(new Error('I told you I do not yet function'))">Download</button>
+							</div>
+						</div>
+					</div><!-- /#display-results -->
+				</div><!-- /#working-area -->
 
 	    </div><!-- /#main -->
 
