@@ -80,10 +80,20 @@ function determineFile(file) {
 	listItem += "</p><hr />";
 	document.getElementById('info-results').innerHTML += listItem;
 
+	// Get file extension
+	var name = file.name.split('.');
+	var ext = name[name.length - 1];
+
 	// Depending on the type of file, display its contents in specific players or locations
 	if (file.type.match('video.*')) renderVideo(file);
-	if (file.type.match('audio.*')) renderAudio(file);
-	if (file.type.match('text.*')) renderText(file);
+	else if (file.type.match('audio.*')) renderAudio(file);
+	else if (file.type.match('text.*')) renderText(file);
+
+	// For legacy SRT files
+	else if (ext == "srt" || ext == "SRT") renderText(file);
+
+	// If no file types or extensions are caught, error
+	else errorHandler(new Error("Bad File Type - cannot display data"));
 }
 
 // Document Ready
