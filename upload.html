@@ -46,18 +46,25 @@
 
 					<div id="upload-area" class="col-md-12">
 						<p class="col-md-6"><input id="file-upload" type="file" multiple></p>
-						<p class="col-md-6"><input id="url-upload" type="text" placeholder="Enter a URL here"> <button id="url-submit">Submit</button></p>
+						<p class="col-md-6"><input id="url-upload" type="text" placeholder="Enter a URL here">
+							<button id="url-submit">Submit</button>
+						</p>
+						<p id="language"></p>
 					</div>
 
 				<div id="upload-results" class="col-md-12">
-					<div id="display-results" class="col-md-7 pull-right">
-						<div id="video"><video data-able-player preload="auto"></video></div>
-						<div id="audio"><audio data-able-player preload="auto"></audio></div>
-						<div id="text"></div>
-						<div id="xml"></div>
+					<div id="media-playback" class="col-md-12 container">
+						<div id="video"><video id="video-player" data-able-player preload="auto"></video></div>
+						<div id="audio"><audio id="audio-player" data-able-player preload="auto"></audio></div>
 					</div>
 
-					<div id="info-results" class="col-md-5"></div>
+					<div id="display-results" class="col-md-8 pull-right">
+						<div id="text"></div>
+						<div id="xml"></div>
+						<textarea id="index" rows="5" cols="115"></textarea>
+					</div>
+
+					<div id="info-results" class="col-md-4"></div>
 				</div>
 
 	      </div>
@@ -74,6 +81,8 @@
 			<script src="/js/js.cookie.js"></script>
 			<script src="/js/bootstrap.min.js"></script>
 			<script src="/js/ableplayer.min.js"></script>
+			<script src="/js/languageData.js"></script>
+			<script src="/js/guessLanguage.js"></script>
 			<script src="/js/script.js"></script>
 	</body>
 
