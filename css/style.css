@@ -39,6 +39,16 @@ textarea {
   height: 2.5em;
 }
 
+#exportWrapper {
+  overflow: hidden;
+  transition: max-height 300ms;
+  max-height: 0;
+}
+
+.open {
+  max-height: 100%;
+}
+
 /*Footer Block*/
 #footer {
   margin-top: 50px;

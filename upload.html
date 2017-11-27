@@ -95,7 +95,12 @@
 								<button id="preview" class="btn btn-primary" onclick="errorHandler(new Error('I told you I do not yet function'))">Preview</button>
 							</div>
 							<div class="col-md-6">
-								<button id="download" class="btn btn-primary" onclick="errorHandler(new Error('I told you I do not yet function'))">Download</button>
+								<button id="export" class="btn btn-primary expand">Export</button>
+								<div id="exportWrapper">
+									<button id="downloadXML" class="btn btn-sm btn-info" onclick="exportFile('xml')">Download XML</button><br />
+									<button id="downloadVTT" class="btn btn-sm btn-info" onclick="exportFile('vtt')">Download VTT</button><br />
+									<button id="downloadAnno" class="btn btn-sm btn-info" onclick="exportFile('anno')">Download WebAnno</button>
+								</div>
 							</div>
 						</div>
 					</div><!-- /#display-results -->

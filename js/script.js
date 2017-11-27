@@ -73,7 +73,7 @@ function renderText(file, ext) {
 
 			// This will use RegEx to make an as appropriate guess at the primary language of the file
       guessLanguage.name(target, function(languageName) {
-      	document.getElementById('language').innerHTML = "Documents provided are in " + languageName + ".";
+      	$('#language').html("Documents provided are in " + languageName + ".");
       });
 
 			// Based upon example files, the following appears to be true:
@@ -120,6 +120,34 @@ function renderText(file, ext) {
   catch (e) { errorHandler(e); }
 
 	reader.readAsText(file);
+}
+
+// Here we prepare the information for export
+function exportFile(sender) {
+	var file = null;
+
+	switch(sender) {
+		case "xml":
+			var content = document.getElementById('index').value + document.getElementById('transcript').value;
+			var data = new Blob(file, {type: 'text/xml'});
+
+	    file = window.URL.createObjectURL(data);
+
+	    return file;
+			break;
+
+		case "vtt":
+			errorHandler(new Error('I told you I do not yet function'));
+			break;
+
+		case "anno":
+			errorHandler(new Error('I told you I do not yet function'));
+		  break;
+
+		default:
+			errorHandler(new Error('I told you I do not yet function'));
+			break;
+	}
 }
 
 // Here we ensure the extension is usable by the system
@@ -233,5 +261,10 @@ function determineFile(file, ext) {
 				else errorHandler(new Error("Bad File - cannot load data from " + url));
 			})
 			.catch(function(e) { errorHandler(e); });
+	});
+
+  // For showing the export options
+	$('#export').click(function(){
+		$('#exportWrapper').toggleClass('open');
 	});
 }(jQuery));
