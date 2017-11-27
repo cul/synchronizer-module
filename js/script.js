@@ -3,7 +3,8 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 11/22/2017
+   Date: 11/27/2017
+	 Version: 0.2.1
 */
 
 // Here is our error handling
@@ -64,16 +65,52 @@ function renderAudio(file) {
 }
 
 // Here we display text file data
-function renderText(file) {
+function renderText(file, ext) {
 	var reader = new FileReader();
   try {
   	reader.onload = function(event) {
   		var target = event.target.result;
+			console.log(ext);
+
+			// This will use RegEx to make an as appropriate guess at the primary language of the file
       guessLanguage.name(target, function(languageName) {
       	document.getElementById('language').innerHTML = "Documents provided are in " + languageName + ".";
       });
 
-      document.getElementById('index').value += target;
+			// Based upon example files, the following appears to be true:
+			// Metadata (aka Index) information comes from
+			// 	- XML files with the root of metadata
+			// Transcript (including Captions) information comes from
+			//  - TXT files
+			// 	- SRT files
+			// Metadata and Transcript information can also come from
+			//  - XML files following the OHMS schema
+			// 	- VTT files
+			if (ext == "txt" || ext == "srt") {
+				document.getElementById('transcript').value += target;
+			}
+			else if (target.indexOf("</metadata>") > -1) {
+				document.getElementById('index').value += target;
+			}
+			else if (ext == "xml") {
+				// Index information from Root to Transcript
+				document.getElementById('index').value += target.slice(0, target.indexOf("<transcript>"));
+				// Then there is Transcript
+				document.getElementById('transcript').value += target.slice(target.indexOf("<transcript>"), target.indexOf("<transcript_alt>"));
+				// Then more index information
+				document.getElementById('index').value += target.slice(target.indexOf("<transcript_alt>"));
+			}
+			else if (ext == "vtt") {
+				var breaks = target.split("00:00:0");
+				// Index information from Record to Index
+				document.getElementById('index').value += "00:00:0" + breaks[1];
+				// Remainder is Transcript
+				document.getElementById('transcript').value += "00:00:0" + breaks[2];
+			}
+			else {
+				document.getElementById('transcript').value += target;
+				errorHandler(new Error("Cannot determine as index or transcript."));
+			}
   	}
   }
   catch (e) { errorHandler(e); }
@@ -92,7 +129,7 @@ function checkExt(ext) {
 								 "ogg",
 								 "mp3"];
 
-	if (allowed.indexOf(ext.toLowerCase()) > -1) return true;
+	if (allowed.indexOf(ext > -1)) return true;
 	else return false;
 }
 
@@ -108,10 +145,10 @@ function determineFile(file, ext) {
 	// Depending on the type of file, display its contents in specific players or locations
 	if (file.type.match('video.*')) renderVideo(file);
 	else if (file.type.match('audio.*')) renderAudio(file);
-	else if (file.type.match('text.*')) renderText(file);
+	else if (file.type.match('text.*')) renderText(file, ext);
 
 	// For legacy SRT files
-	else if (ext == "srt" || ext == "SRT") renderText(file);
+	else if (ext == "srt") renderText(file, ext);
 
 	// If no file types or extensions are caught, clearly there's something wrong
 	else errorHandler(new Error("Bad File - cannot display data."));
@@ -133,13 +170,12 @@ function determineFile(file, ext) {
 
 	// For grabbing index and transcript files via upload
 	document.getElementById('file-upload').addEventListener('change', function(){
-		// Originally allowed multiple concurrent file uploads, removed per original requirements
 		for(var i = 0; i < this.files.length; i++){
 			var file =  this.files[i];
 
 			// Get file extension
 			var name = file.name.split('.');
-			var ext = name[name.length - 1];
+			var ext = name[name.length - 1].toLowerCase();
 
 			if (checkExt(ext)) determineFile(file, ext);
 			else errorHandler(new Error("Bad File - cannot load data from " + file.name));
@@ -154,7 +190,7 @@ function determineFile(file, ext) {
 
 			// Get file extension
 			var name = file.name.split('.');
-			var ext = name[name.length - 1];
+			var ext = name[name.length - 1].toLowerCase();
 
 			if (checkExt(ext)) determineFile(file, ext);
 			else errorHandler(new Error("Bad File - cannot load data from " + file.name));
