@@ -70,7 +70,6 @@ function renderText(file, ext) {
   try {
   	reader.onload = function(event) {
   		var target = event.target.result;
-			console.log(ext);
 
 			// This will use RegEx to make an as appropriate guess at the primary language of the file
       guessLanguage.name(target, function(languageName) {
@@ -80,18 +79,30 @@ function renderText(file, ext) {
 			// Based upon example files, the following appears to be true:
 			// Metadata (aka Index) information comes from
 			// 	- XML files with the root of metadata
+			//  - TXT WebAnno files
 			// Transcript (including Captions) information comes from
 			//  - TXT files
 			// 	- SRT files
 			// Metadata and Transcript information can also come from
 			//  - XML files following the OHMS schema
 			// 	- VTT files
-			if (ext == "txt" || ext == "srt") {
-				document.getElementById('transcript').value += target;
+
+			if (target.indexOf("WebVTT") > -1 || ext == "vtt") {
+				if (target.indexOf("Kind:") > -1) {
+					var breaks = target.split(/(00:00:0)/);
+					for (var i = 0; i < breaks.length; i++) {
+						// The end bits are the Transcript
+						if (i >= breaks.length - 2) document.getElementById('transcript').value += breaks[i];
+						// Index information is at the beginning
+						else document.getElementById('index').value += breaks[i];
+					}
+				}
+				else if (target.indexOf("WebAnno") > -1) document.getElementById('index').value += target;
+				// Either cannot discern metadata from transcript, or there isn't any
+				else document.getElementById('transcript').value += target;
 			}
-			else if (target.indexOf("</metadata>") > -1) {
-				document.getElementById('index').value += target;
-			}
+			else if (ext == "txt" || ext == "srt") document.getElementById('transcript').value += target;
+			else if (target.indexOf("</metadata>") > -1) document.getElementById('index').value += target;
 			else if (ext == "xml") {
 				// Index information from Root to Transcript
 				document.getElementById('index').value += target.slice(0, target.indexOf("<transcript>"));
@@ -99,13 +110,6 @@ function renderText(file, ext) {
 				document.getElementById('transcript').value += target.slice(target.indexOf("<transcript>"), target.indexOf("<transcript_alt>"));
 				// Then more index information
 				document.getElementById('index').value += target.slice(target.indexOf("<transcript_alt>"));
-			}
-			else if (ext == "vtt") {
-				var breaks = target.split("00:00:0");
-				// Index information from Record to Index
-				document.getElementById('index').value += "00:00:0" + breaks[1];
-				// Remainder is Transcript
-				document.getElementById('transcript').value += "00:00:0" + breaks[2];
 			}
 			else {
 				document.getElementById('transcript').value += target;
