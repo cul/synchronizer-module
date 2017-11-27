@@ -3,28 +3,35 @@
    File: style.css
 	 Description: Stylesheet with specific styling outside of Bootstrap
    Author: Ashley Pressley
-   Date: 11/16/2017
+   Date: 11/22/2017
 */
 
 /*Upload Page*/
-#upload-area {
+#errorBar {
   margin: 20px;
+  padding: 25px 15px 0px 15px;
+  background-color: #efefef;
+  color: #f00;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+#working-area {
+  margin-top: 25px;
+}
+
+.upload-box {
   padding: 15px;
   background-color: #efefef;
 }
 
-#audio,
-#video,
-#text,
-#xml,
-.list-item {
-  margin: 10px auto;
+input[type="file"] {
+  display: none;
 }
 
-.textfile-data {
-  padding: 5px;
-  background-color: #efefef;
-  margin: 5px;
+#display-results > div,
+textarea {
+  margin-bottom: 25px;
 }
 
 /*To fix their status bar text getting cut-off*/
