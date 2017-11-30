@@ -186,6 +186,14 @@ function determineFile(file, ext) {
 	else errorHandler(new Error("Bad File - cannot display data."));
 }
 
+// Here we empty the text areas
+function clearBoxes() {
+	if (confirm("This will clear the index and transcript areas.") == true) {
+		$("#index").val("");
+  	$("#transcript").val("");
+	}
+}
+
 // Document Ready
 (function($){
 	// Don't show the video and audio controls
