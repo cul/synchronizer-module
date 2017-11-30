@@ -52,13 +52,13 @@
 							<p>Select an applicable audio or video file to upload here, if you so choose.</p>
 							<p>
 								<label class="btn btn-primary">
-							    <input id="media-file-upload" type="file">
+							    <input id="media-file-upload" type="file" onchange="uploadFile('media-file-upload')">
 							    Browse Locally
 								</label>
 							</p>
 							<p>&nbsp;</p>
 							<p><input id="media-url-upload" type="text" placeholder="Enter a URL here">
-								<button id="media-url-submit">Submit</button>
+								<button id="media-url-submit" class="btn btn-primary" onclick="uploadURLFile('media-url-upload')">Submit</button>
 							</p>
 						</div>
 
@@ -72,12 +72,12 @@
 							<p>Select applicable index or transcript files to upload here, if you so choose.</p>
 							<p class="col-md-6">
 								<label class="btn btn-primary">
-							    <input id="file-upload" type="file" multiple>
+							    <input id="file-upload" type="file" multiple onchange="uploadFile('file-upload')">
 							    Browse Locally
 								</label>
 							<p class="col-md-6">
 								<input id="url-upload" type="text" placeholder="Enter a URL here">
-								<button id="url-submit" class="btn btn-primary">Submit</button>
+								<button id="url-submit" class="btn btn-primary"onclick="uploadURLFile('url-upload')">Submit</button>
 							</p>
 							<p id="language"></p>
 						</div>
