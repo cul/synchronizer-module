@@ -11,6 +11,9 @@
   margin: 20px;
   padding: 25px 15px 0px 15px;
   background-color: #efefef;
+}
+
+.error-bar {
   color: #f00;
   font-size: 1.5em;
   font-weight: bold;
