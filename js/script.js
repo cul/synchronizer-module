@@ -175,23 +175,50 @@ function determineFile(file, ext) {
 	console.log("Last Modified Date: " + new Date(file.lastModified));
 	console.groupEnd();
 
-	// Depending on the type of file, display its contents in specific players or locations
-	if (file.type.match('video.*')) renderVideo(file);
-	else if (file.type.match('audio.*')) renderAudio(file);
-	else if (file.type.match('text.*')) renderText(file, ext);
+	// We can't depend upon the file.type (Chrome, IE, and Safari break)
+	// Based upon the extension of the file, display its contents in specific locations
+	switch(ext) {
+		case "txt":
+		case "vtt":
+		case "xml":
+		case "srt":
+			renderText(file, ext);
+			break;
 
-	// For legacy SRT files
-	else if (ext == "srt") renderText(file, ext);
+		case "mp4":
+		case "webm":
+			renderVideo(file);
+			break;
 
-	// If no file types or extensions are caught, clearly there's something wrong
-	else errorHandler(new Error("Bad File - cannot display data."));
+		case "ogg":
+		case "mp3":
+			renderAudio(file);
+			break;
+
+		default:
+			errorHandler(new Error("Bad File - cannot display data."));
+			break;
+	}
+
+	// // Depending on the type of file, display its contents in specific players or locations
+	// if (file.type.match('video.*')) renderVideo(file);
+	// else if (file.type.match('audio.*')) renderAudio(file);
+	// else if (file.type.match('text.*')) renderText(file, ext);
+  //
+	// // For legacy SRT files
+	// else if (ext == "srt") renderText(file, ext);
+  //
+	// // If no file types or extensions are caught, clearly there's something wrong
+	// else errorHandler(new Error("Bad File - cannot display data."));
 }
 
 // Here we empty the text areas
 function clearBoxes() {
-	if (confirm("This will clear the index and transcript areas.") == true) {
+	if (confirm("This will clear the URL, index, and transcript areas.") == true) {
 		$("#index").val("");
   	$("#transcript").val("");
+		$("#media-url-upload").val("");
+		$("#url-upload").val("");
 	}
 }
 
