@@ -3,7 +3,7 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 11/30/2017
+   Date: 12/04/2017
 	 Version: 0.2.2
 */
 
@@ -219,6 +219,7 @@ function clearBoxes() {
   	$("#transcript").val("");
 		$("#media-url-upload").val("");
 		$("#url-upload").val("");
+		$("#errorBar").hide();
 	}
 }
 
@@ -237,10 +238,11 @@ function uploadFile(sender) {
 	}
 }
 
+// This function is no longer utilized for non-AV files
 function uploadURLFile(sender) {
 	// Copy the URL to the user's clipboard, in case we need it later during an error
-	document.getElementById(sender).select();
-	document.execCommand("Copy");
+	// document.getElementById(sender).select();
+	// document.execCommand("Copy");
 
 	// Continue onward, grab the URL value
 	var input = document.getElementById(sender);
@@ -250,16 +252,22 @@ function uploadURLFile(sender) {
 	var urlArr = url.split('.');
 	var ext = urlArr[urlArr.length - 1];
 
-	fetch(url)
-		.then(res => res.blob())
-		.then(blob => {
-			if (checkExt(ext)) determineFile(blob, ext);
-			else errorHandler(new Error("Bad File - cannot load data from " + url));
-		})
-		.catch(function(e) {
-			var error = new Error(e + "</p><p class='no-red'>Typically, this is due to a blocked Cross-Origin Request. We have copied your URL to your clipboard so that you may attempt to Browse Locally and paste the URL in the given prompt. This will allow the browser to attempt to download the file into your temporary files folder, and then upload it to the browser for editing or viewing.");
-			errorHandler(error);
-		});
+	if (ext !== "mp3" || ext !== "ogg" || ext !== "webm" || ext !== "mp4") {
+		var error = new Error("This field only accepts audio and video file URLs.");
+		errorHandler(error);
+	}
+	else {
+		fetch(url)
+			.then(res => res.blob())
+			.then(blob => {
+				if (checkExt(ext)) determineFile(blob, ext);
+				else errorHandler(new Error("Bad File - cannot load data from " + url));
+			})
+			.catch(function(e) {
+				// var error = new Error(e + "</p><p class='no-red'>Typically, this is due to a blocked Cross-Origin Request. We have copied your URL to your clipboard so that you may attempt to Browse Locally and paste the URL in the given prompt. This will allow the browser to attempt to download the file into your temporary files folder, and then upload it to the browser for editing or viewing.");
+				errorHandler(e);
+			});
+	}
 }
 
 // Document Ready

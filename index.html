@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-	    <meta charset="utf-8">
-	    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-	    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
 		<meta name="description" content="Columbia University Library: Synchronizer Module">
 		<meta name="keywords" content="HTML,CSS,JavaScript">
@@ -16,6 +16,7 @@
 		<link href="./includes/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 		<link href="./css/ableplayer.min.css" rel="stylesheet" type="text/css"/>
 		<link href="./css/style.css" rel="stylesheet" type="text/css">
+		<link rel="icon" type="image/icon" href="fav.ico">
 	</head>
 
 	<body>
@@ -49,7 +50,7 @@
 					<div id="media-playback" class="col-md-4 container">
 						<div id="media-upload" class="col-md-12 upload-box">
 							<i class="fa fa-times-circle-o close"></i>
-							<p>Select an applicable audio or video file to upload here, if you so choose.</p>
+							<p>Click browse to select an applicable audio or video file from your local file system, or enter a URL.</p>
 							<p>
 								<label class="btn btn-primary">
 							    <input id="media-file-upload" type="file" onchange="uploadFile('media-file-upload')">
@@ -69,16 +70,17 @@
 					<div id="display-results" class="col-md-8 pull-right">
 						<div id="upload-area" class="col-md-12 upload-box">
 							<i class="fa fa-times-circle-o close"></i>
-							<p>Select applicable index or transcript files to upload here, if you so choose.</p>
-							<p class="col-md-6">
+							<p>Click browse to select an applicable index or transcript file from your local file system or enter a URL in the file name box.</p>
+							<p class="">
 								<label class="btn btn-primary">
 							    <input id="file-upload" type="file" multiple onchange="uploadFile('file-upload')">
-							    Browse Locally
+							    Browse
 								</label>
-							<p class="col-md-6">
+							<!-- URL-based file upload has been removed per requirements -->
+							<!-- <p class="col-md-6">
 								<input id="url-upload" type="text" placeholder="Enter a URL here">
 								<button id="url-submit" class="btn btn-primary"onclick="uploadURLFile('url-upload')">Submit</button>
-							</p>
+							</p> -->
 							<p id="language"></p>
 						</div>
 
