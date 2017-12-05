@@ -252,7 +252,8 @@ function uploadURLFile(sender) {
 	var urlArr = url.split('.');
 	var ext = urlArr[urlArr.length - 1];
 
-	if (ext !== "mp3" || ext !== "ogg" || ext !== "webm" || ext !== "mp4") {
+	// We only allow local uploads of media files, not any text files
+	if (ext == "txt" || ext == "vtt" || ext == "xml" || ext == "srt") {
 		var error = new Error("This field only accepts audio and video file URLs.");
 		errorHandler(error);
 	}
