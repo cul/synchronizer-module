@@ -128,7 +128,7 @@ function exportFile(sender) {
 
 	switch(sender) {
 		case "xml":
-			errorHandler(new Error('I told you I do not yet function'));
+			errorHandler(new Error('I do not yet function'));
 			// var content = $('#index').value + $('#transcript').value;
 			// var data = new Blob(file, {type: 'text/xml'});
       //
@@ -138,15 +138,15 @@ function exportFile(sender) {
 			break;
 
 		case "vtt":
-			errorHandler(new Error('I told you I do not yet function'));
+			errorHandler(new Error('I do not yet function'));
 			break;
 
 		case "anno":
-			errorHandler(new Error('I told you I do not yet function'));
+			errorHandler(new Error('I do not yet function'));
 		  break;
 
 		default:
-			errorHandler(new Error('I told you I do not yet function'));
+			errorHandler(new Error('I do not yet function'));
 			break;
 	}
 }
