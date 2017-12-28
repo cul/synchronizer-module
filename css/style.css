@@ -8,12 +8,20 @@
 */
 
 /* Containers */
+.navbar {
+  margin-bottom: 0px;
+  border-radius: 0px;
+}
+
 #working-area {
   margin-top: 25px;
+  margin-bottom: 25px;
 }
 
 #media-playback {
-	position: fixed;
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
 }
 
 .upload-box {
@@ -26,15 +34,14 @@ input[type="file"] {
   display: none;
 }
 
-#display-results > div,
-textarea {
-  margin-bottom: 25px;
+#index,
+#transcript {
+  white-space: pre-wrap;
 }
 /*  */
 
 /* Error Bar */
 #errorBar {
-  margin: 20px;
   padding: 25px 15px 0px 15px;
   background-color: #efefef;
 }
@@ -46,16 +53,6 @@ textarea {
 }
 /*  */
 
-/* Footer Block */
-#footer {
-  margin-top: 50px;
-  min-height: 50px;
-  text-align: center;
-  padding: 10px;
-  color: #9d9d9d;
-}
-/*  */
-
 /* Ableplayer */
 /*To fix their status bar text getting cut-off*/
 .able-status-bar {
@@ -64,13 +61,21 @@ textarea {
 /*  */
 
 /* Export options */
-#exportWrapper {
-  overflow: hidden;
-  transition: max-height 300ms;
-  max-height: 0;
+.dropdown-item {
+	display: block;
+	width: 100%;
+	padding: .25rem 1.5rem;
+	clear: both;
+	font-weight: 400;
+	color: #212529;
+	text-align: inherit;
+	white-space: nowrap;
+	background: 0 0;
+	border: 0;
 }
 
-.open {
-  max-height: 100%;
+a.dropdown-item:hover {
+  background-color: #efefef;
+  text-decoration: none;
 }
 /*  */

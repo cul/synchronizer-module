@@ -42,7 +42,7 @@
 	      </div>
 	    </nav>
 
-	    <div id="main" class="container">
+	    <div id="main" class="">
         <!-- <h1>Synchronizer Module</h1> -->
 
 				<div id="errorBar" class="col-md-12"></div>
@@ -68,7 +68,7 @@
 						<div id="audio"><audio id="audio-player" data-able-player preload="auto"></audio></div>
 					</div><!-- /#media-playback -->
 
-					<div id="text-tabs" class="col-md-8 pull-right">
+					<div id="text-tabs" class="col-md-9 pull-right">
 						<ul>
 							<li><a href="#tabs-index">Index</a></li>
 							<li><a href="#tabs-transcript">Transcript</a></li>
@@ -102,33 +102,31 @@
 							</div>
 							<div id="input-transcript">
 								<h2>Transcript</h2>
-								<textarea id="transcript" rows="25" class="col-md-11" readonly></textarea>
+								<div id="transcript" class="col-md-11"></div>
 							</div>
 						</div><!-- /#tabs-transcript -->
 
 					</div><!-- /#display-results -->
 				</div><!-- /#working-area -->
 
-				<div id="finish-area">
+				<div id="finish-area" class="col-md-9 pull-right">
 					<p>These buttons do not currently function.</p>
-					<div class="col-md-6">
-						<button id="preview" class="btn btn-primary" onclick="errorHandler(new Error('I do not yet function'))">Preview</button>
-					</div>
-					<div class="col-md-6">
-						<button id="export" class="btn btn-primary expand">Export</button>
-						<div id="exportWrapper">
-							<button id="downloadXML" class="btn btn-sm btn-info" onclick="exportFile('xml')">Download XML</button><br />
-							<button id="downloadVTT" class="btn btn-sm btn-info" onclick="exportFile('vtt')">Download VTT</button><br />
-							<button id="downloadAnno" class="btn btn-sm btn-info" onclick="exportFile('anno')">Download WebAnno</button>
-						</div>
+					<div class="btn-group" role="group">
+						<button id="preview" class="btn btn-secondary" onclick="errorHandler(new Error('I do not yet function'))">Preview</button>
+						<div class="btn-group" role="group">
+					    <button id="export" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					      Export
+					    </button>
+					    <div class="dropdown-menu" aria-labelledby="btnGroupExport">
+					      <a id="downloadXML" class="dropdown-item" onclick="exportFile('xml')">Download XML</a>
+					      <a id="downloadVTT" class="dropdown-item" onclick="exportFile('vtt')">Download VTT</a>
+					      <a id="downloadAnno" class="dropdown-item" onclick="exportFile('anno')">Download WebAnno</a>
+					    </div>
+					  </div>
 					</div>
 				</div><!-- /#finish-area -->
 
 	    </div><!-- /#main -->
-
-			<div id="footer" class="navbar-inverse">
-			  <div class="container"><p>Site currently under development</p></div>
-			</div>
 
 			<!-- Scripts Loading -->
 			<script src="./js/modernizr.custom.js"></script>
@@ -137,8 +135,6 @@
 			<script src="./js/js.cookie.js"></script>
 			<script src="./js/bootstrap.min.js"></script>
 			<script src="./js/ableplayer.min.js"></script>
-			<script src="./js/languageData.js"></script>
-			<script src="./js/guessLanguage.js"></script>
 			<script src="./js/script.js"></script>
 	</body>
 

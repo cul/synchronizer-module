@@ -65,14 +65,14 @@ function renderAudio(file) {
 }
 
 // Here we display index or transcript file data
-function renderTranscript(file, sender) {
+function renderText(file, sender) {
 	var reader = new FileReader();
 	try {
 		reader.onload = function(event) {
 			var target = event.target.result;
 
 			if (sender === "input-index") document.getElementById('index').value = target;
-			else if (sender === "input-transcript") document.getElementById('transcript').value = target;
+			else if (sender === "input-transcript") $('#transcript').text(target);
 		}
 	}
 	catch (e) { errorHandler(e); }
@@ -171,7 +171,7 @@ function clearBoxes() {
 function uploadFile(sender) {
 	console.log(sender);
 	// Clear error
-	$("#errorBar").hide();
+	$("#errorBar").fadeOut();
 
 	// Grab the files from the user's selection
 	var input = document.getElementById(sender);
@@ -190,7 +190,7 @@ function uploadFile(sender) {
 // This function is no longer utilized for non-AV files
 function uploadURLFile(sender) {
 	// Clear error
-	$("#errorBar").hide();
+	$("#errorBar").fadeOut();
 
 	// Continue onward, grab the URL value
 	var input = document.getElementById(sender);
@@ -224,7 +224,9 @@ function uploadURLFile(sender) {
 	$("#errorBar").hide();
 
 	// Initiate tabs
-  $("#text-tabs").tabs();
+  $("#text-tabs").tabs({
+		active: 0
+	});
 
 	// Here we hide items the user no longer wishes to see
 	for (var close of document.querySelectorAll('.close')) {
@@ -232,9 +234,4 @@ function uploadURLFile(sender) {
 			$(this).parent('div').fadeOut();
 		}, false);
 	}
-
-  // For showing the export options
-	$('#export').click(function(){
-		$('#exportWrapper').toggleClass('open');
-	});
 }(jQuery));
