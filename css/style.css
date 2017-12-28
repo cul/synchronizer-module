@@ -3,28 +3,22 @@
    File: style.css
 	 Description: Stylesheet with specific styling outside of Bootstrap
    Author: Ashley Pressley
-   Date: 11/22/2017
+   Date: 12/28/2017
+   Version: 0.3.0
 */
 
-/*Upload Page*/
-#errorBar {
-  margin: 20px;
-  padding: 25px 15px 0px 15px;
-  background-color: #efefef;
-}
-
-.error-bar {
-  color: #f00;
-  font-size: 1.5em;
-  font-weight: bold;
-}
-
+/* Containers */
 #working-area {
   margin-top: 25px;
 }
 
+#media-playback {
+	position: fixed;
+}
+
 .upload-box {
   padding: 15px;
+  margin-bottom: 10px;
   background-color: #efefef;
 }
 
@@ -36,12 +30,40 @@ input[type="file"] {
 textarea {
   margin-bottom: 25px;
 }
+/*  */
 
+/* Error Bar */
+#errorBar {
+  margin: 20px;
+  padding: 25px 15px 0px 15px;
+  background-color: #efefef;
+}
+
+.error-bar {
+  color: #f00;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+/*  */
+
+/* Footer Block */
+#footer {
+  margin-top: 50px;
+  min-height: 50px;
+  text-align: center;
+  padding: 10px;
+  color: #9d9d9d;
+}
+/*  */
+
+/* Ableplayer */
 /*To fix their status bar text getting cut-off*/
 .able-status-bar {
   height: 2.5em;
 }
+/*  */
 
+/* Export options */
 #exportWrapper {
   overflow: hidden;
   transition: max-height 300ms;
@@ -51,12 +73,4 @@ textarea {
 .open {
   max-height: 100%;
 }
-
-/*Footer Block*/
-#footer {
-  margin-top: 50px;
-  min-height: 50px;
-  text-align: center;
-  padding: 10px;
-  color: #9d9d9d;
-}
+/*  */

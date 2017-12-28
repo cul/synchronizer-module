@@ -13,6 +13,7 @@
 
 		<!-- Theming -->
 		<link href="./css/bootstrap.min.css" rel="stylesheet" type="text/css">
+		<link href="./css/jquery-ui.min.css" rel="stylesheet" type="text/css">
 		<link href="./includes/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 		<link href="./css/ableplayer.min.css" rel="stylesheet" type="text/css"/>
 		<link href="./css/style.css" rel="stylesheet" type="text/css">
@@ -47,7 +48,7 @@
 				<div id="errorBar" class="col-md-12"></div>
 
 				<div id="working-area" class="col-md-12">
-					<div id="media-playback" class="col-md-4 container">
+					<div id="media-playback" class="col-md-3 container">
 						<div id="media-upload" class="col-md-12 upload-box">
 							<i class="fa fa-times-circle-o close"></i>
 							<p>Click browse to select an applicable audio or video file from your local file system, or enter a URL.</p>
@@ -67,47 +68,61 @@
 						<div id="audio"><audio id="audio-player" data-able-player preload="auto"></audio></div>
 					</div><!-- /#media-playback -->
 
-					<div id="display-results" class="col-md-8 pull-right">
-						<div id="upload-area" class="col-md-12 upload-box">
-							<i class="fa fa-times-circle-o close"></i>
-							<p>Click browse to select an applicable index or transcript file from your local file system or enter a URL in the file name box.</p>
-							<p class="">
-								<label class="btn btn-primary">
-							    <input id="file-upload" type="file" multiple onchange="uploadFile('file-upload')">
-							    Browse
-								</label>
-							<!-- URL-based file upload has been removed per requirements -->
-							<!-- <p class="col-md-6">
-								<input id="url-upload" type="text" placeholder="Enter a URL here">
-								<button id="url-submit" class="btn btn-primary"onclick="uploadURLFile('url-upload')">Submit</button>
-							</p> -->
-							<p id="language"></p>
-						</div>
-
-						<div id="input-area">
-							<button class="btn btn-info pull-right" onclick="clearBoxes()">Start New</button>
-							<h2>Index Document</h2>
-							<textarea id="index" rows="15" cols="115"></textarea>
-							<h2>Transcript</h2>
-							<textarea id="transcript" rows="25" cols="115"></textarea>
-						</div>
-
-						<div id="finish-area">
-							<p>These buttons do not currently function.</p>
-							<div class="col-md-6">
-								<button id="preview" class="btn btn-primary" onclick="errorHandler(new Error('I told you I do not yet function'))">Preview</button>
+					<div id="text-tabs" class="col-md-8 pull-right">
+						<ul>
+							<li><a href="#tabs-index">Index</a></li>
+							<li><a href="#tabs-transcript">Transcript</a></li>
+						</ul>
+						<div id="tabs-index">
+							<div id="upload-index" class="col-md-12 upload-box">
+								<i class="fa fa-times-circle-o close"></i>
+								<p>Click browse to select an applicable index file from your local file system or enter a URL in the file name box.</p>
+								<p class="">
+									<label class="btn btn-primary">
+								    <input id="input-index" type="file" multiple onchange="uploadFile('input-index')">
+								    Browse
+									</label>
 							</div>
-							<div class="col-md-6">
-								<button id="export" class="btn btn-primary expand">Export</button>
-								<div id="exportWrapper">
-									<button id="downloadXML" class="btn btn-sm btn-info" onclick="exportFile('xml')">Download XML</button><br />
-									<button id="downloadVTT" class="btn btn-sm btn-info" onclick="exportFile('vtt')">Download VTT</button><br />
-									<button id="downloadAnno" class="btn btn-sm btn-info" onclick="exportFile('anno')">Download WebAnno</button>
-								</div>
+
+							<div id="input-index">
+								<h2>Index Document</h2>
+								<textarea id="index" rows="15" class="col-md-11"></textarea>
 							</div>
-						</div>
+						</div><!-- /#tabs-index -->
+
+						<div id="tabs-transcript">
+							<div id="upload-transcript" class="col-md-12 upload-box">
+								<i class="fa fa-times-circle-o close"></i>
+								<p>Click browse to select an applicable transcript file from your local file system or enter a URL in the file name box.</p>
+								<p class="">
+									<label class="btn btn-primary">
+								    <input id="input-transcript" type="file" multiple onchange="uploadFile('input-transcript')">
+								    Browse
+									</label>
+							</div>
+							<div id="input-transcript">
+								<h2>Transcript</h2>
+								<textarea id="transcript" rows="25" class="col-md-11" readonly></textarea>
+							</div>
+						</div><!-- /#tabs-transcript -->
+
 					</div><!-- /#display-results -->
 				</div><!-- /#working-area -->
+
+				<div id="finish-area">
+					<p>These buttons do not currently function.</p>
+					<div class="col-md-6">
+						<button id="preview" class="btn btn-primary" onclick="errorHandler(new Error('I do not yet function'))">Preview</button>
+					</div>
+					<div class="col-md-6">
+						<button id="export" class="btn btn-primary expand">Export</button>
+						<div id="exportWrapper">
+							<button id="downloadXML" class="btn btn-sm btn-info" onclick="exportFile('xml')">Download XML</button><br />
+							<button id="downloadVTT" class="btn btn-sm btn-info" onclick="exportFile('vtt')">Download VTT</button><br />
+							<button id="downloadAnno" class="btn btn-sm btn-info" onclick="exportFile('anno')">Download WebAnno</button>
+						</div>
+					</div>
+				</div><!-- /#finish-area -->
 
 	    </div><!-- /#main -->
 
@@ -118,6 +133,7 @@
 			<!-- Scripts Loading -->
 			<script src="./js/modernizr.custom.js"></script>
 			<script src="./js/jquery-3.2.1.min.js"></script>
+			<script src="./js/jquery-ui.min.js"></script>
 			<script src="./js/js.cookie.js"></script>
 			<script src="./js/bootstrap.min.js"></script>
 			<script src="./js/ableplayer.min.js"></script>
