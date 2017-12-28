@@ -3,13 +3,61 @@
    File: style.css
 	 Description: Stylesheet with specific styling outside of Bootstrap
    Author: Ashley Pressley
-   Date: 11/22/2017
+   Date: 12/28/2017
+   Version: 0.3.0
 */
 
-/*Upload Page*/
+/* Containers */
+.navbar {
+  margin-bottom: 0px;
+  border-radius: 0px;
+}
+
+#working-area {
+  margin-top: 25px;
+  margin-bottom: 25px;
+}
+
+#media-playback {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+}
+
+.upload-box {
+  padding: 15px;
+  margin-bottom: 10px;
+  background-color: #efefef;
+}
+
+input[type="file"] {
+  display: none;
+}
+
+#metadata,
+#index,
+#transcript {
+  white-space: pre-wrap;
+}
+/*  */
+
+/* Error and Success Bars */
+#successBar {
+  margin-top: 10px;
+}
+
+.success-bar {
+  padding: 15px;
+  background-color: #75f492;
+  border-radius: 6px;
+}
+
+#successBar i {
+	padding: 10px;
+}
+
 #errorBar {
-  margin: 20px;
-  padding: 25px 15px 0px 15px;
+  padding: 15px;
   background-color: #efefef;
 }
 
@@ -18,45 +66,31 @@
   font-size: 1.5em;
   font-weight: bold;
 }
+/*  */
 
-#working-area {
-  margin-top: 25px;
-}
-
-.upload-box {
-  padding: 15px;
-  background-color: #efefef;
-}
-
-input[type="file"] {
-  display: none;
-}
-
-#display-results > div,
-textarea {
-  margin-bottom: 25px;
-}
-
+/* Ableplayer */
 /*To fix their status bar text getting cut-off*/
 .able-status-bar {
   height: 2.5em;
 }
+/*  */
 
-#exportWrapper {
-  overflow: hidden;
-  transition: max-height 300ms;
-  max-height: 0;
+/* Export options */
+.dropdown-item {
+	display: block;
+	width: 100%;
+	padding: .25rem 1.5rem;
+	clear: both;
+	font-weight: 400;
+	color: #212529;
+	text-align: inherit;
+	white-space: nowrap;
+	background: 0 0;
+	border: 0;
 }
 
-.open {
-  max-height: 100%;
+a.dropdown-item:hover {
+  background-color: #efefef;
+  text-decoration: none;
 }
-
-/*Footer Block*/
-#footer {
-  margin-top: 50px;
-  min-height: 50px;
-  text-align: center;
-  padding: 10px;
-  color: #9d9d9d;
-}
+/*  */

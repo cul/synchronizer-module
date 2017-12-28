@@ -3,8 +3,8 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 12/04/2017
-	 Version: 0.2.2
+   Date: 12/28/2017
+	 Version: 0.3.0
 */
 
 // Here is our error handling
@@ -13,9 +13,7 @@ function errorHandler(e) {
   $('#errorBar').html('<i id="close" class="fa fa-times-circle-o close"></i><p class="error-bar"><i class="fa fa-exclamation-circle"></i> ' + e + '</p><hr />');
 	$('html, body').animate({ scrollTop: 0 }, 'fast');
 
-	document.getElementById('close').addEventListener('click', function() {
-		$(this).parent('div').fadeOut();
-	}, false);
+	closeButtons();
 }
 
 // Here we play audio files in the video control player
@@ -64,60 +62,41 @@ function renderAudio(file) {
 	reader.readAsDataURL(file);
 }
 
-// Here we display text file data
+// Here we display index or transcript file data
 function renderText(file, ext) {
 	var reader = new FileReader();
-  try {
-  	reader.onload = function(event) {
-  		var target = event.target.result;
-
-			// This will use RegEx to make an as appropriate guess at the primary language of the file
-      guessLanguage.name(target, function(languageName) {
-      	$('#language').html("Documents provided are in " + languageName + ".");
-      });
-
-			// Based upon example files, the following appears to be true:
-			// Metadata (aka Index) information comes from
-			// 	- XML files with the root of metadata
-			//  - TXT WebAnno files
-			// Transcript (including Captions) information comes from
-			//  - TXT files
-			// 	- SRT files
-			// Metadata and Transcript information can also come from
-			//  - XML files following the OHMS schema
-			// 	- VTT files
+	try {
+		reader.onload = function(event) {
+			var target = event.target.result;
 
 			if (target.indexOf("WebVTT") > -1 || ext == "vtt") {
 				if (target.indexOf("Kind:") > -1) {
 					var breaks = target.split(/(00:00:0)/);
 					for (var i = 0; i < breaks.length; i++) {
-						// The end bits are the Transcript
-						if (i >= breaks.length - 2) document.getElementById('transcript').value += breaks[i];
-						// Index information is at the beginning
-						else document.getElementById('index').value += breaks[i];
+						// The end bits are the index segments
+						if (i >= breaks.length - 2) document.getElementById('index').value += breaks[i];
+						// Metadata information is at the beginning
+						else $('#metadata').append(breaks[i]);
 					}
 				}
 				else if (target.indexOf("WebAnno") > -1) document.getElementById('index').value += target;
 				// Either cannot discern metadata from transcript, or there isn't any
-				else document.getElementById('transcript').value += target;
+				else $('#transcript').append(target);
 			}
-			else if (ext == "txt" || ext == "srt") document.getElementById('transcript').value += target;
+			else if (ext == "txt" || ext == "srt") $('#transcript').append(target);
 			else if (target.indexOf("</metadata>") > -1) document.getElementById('index').value += target;
 			else if (ext == "xml") {
 				// Index information from Root to Transcript
 				document.getElementById('index').value += target.slice(0, target.indexOf("<transcript>"));
 				// Then there is Transcript
-				document.getElementById('transcript').value += target.slice(target.indexOf("<transcript>"), target.indexOf("<transcript_alt>"));
+				$('transcript').append(target.slice(target.indexOf("<transcript>"), target.indexOf("<transcript_alt>")));
 				// Then more index information
 				document.getElementById('index').value += target.slice(target.indexOf("<transcript_alt>"));
 			}
-			else {
-				document.getElementById('transcript').value += target;
-				errorHandler(new Error("Cannot determine as index or transcript."));
-			}
-  	}
-  }
-  catch (e) { errorHandler(e); }
+			else errorHandler(new Error("Cannot determine as interview metadata, index, or transcript."));
+		}
+	}
+	catch (e) { errorHandler(e); }
 
 	reader.readAsText(file);
 }
@@ -167,7 +146,7 @@ function checkExt(ext) {
 }
 
 // Here we determine what kind of file was uploaded
-function determineFile(file, ext) {
+function determineFile(file, ext, sender) {
 	// List the information from the files
 	console.group("File Name: " + file.name);
 	console.log("File Size: " + parseInt(file.size / 1024, 10));
@@ -175,44 +154,36 @@ function determineFile(file, ext) {
 	console.log("Last Modified Date: " + new Date(file.lastModified));
 	console.groupEnd();
 
+	var success = "";
+	success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />File Name: ' + file.name + "<br />File Size: " + parseInt(file.size / 1024, 10) + "<br />File Type: " + file.type + "<br />Last Modified Date: " + new Date(file.lastModified) + "</div>";
+	$("#successBar").append(success);
+	closeButtons();
+
 	// We can't depend upon the file.type (Chrome, IE, and Safari break)
 	// Based upon the extension of the file, display its contents in specific locations
-	switch(ext) {
-		case "txt":
-		case "vtt":
-		case "xml":
-		case "srt":
-			renderText(file, ext);
-			break;
+	if (sender === "media-file-upload") {
+		switch(ext) {
+			case "mp4":
+			case "webm":
+				renderVideo(file);
+				break;
 
-		case "mp4":
-		case "webm":
-			renderVideo(file);
-			break;
+			case "ogg":
+			case "mp3":
+				renderAudio(file);
+				break;
 
-		case "ogg":
-		case "mp3":
-			renderAudio(file);
-			break;
-
-		default:
-			errorHandler(new Error("Bad File - cannot display data."));
-			break;
+			default:
+				errorHandler(new Error("Bad File - cannot display data."));
+				break;
+		}
 	}
-
-	// // Depending on the type of file, display its contents in specific players or locations
-	// if (file.type.match('video.*')) renderVideo(file);
-	// else if (file.type.match('audio.*')) renderAudio(file);
-	// else if (file.type.match('text.*')) renderText(file, ext);
-  //
-	// // For legacy SRT files
-	// else if (ext == "srt") renderText(file, ext);
-  //
-	// // If no file types or extensions are caught, clearly there's something wrong
-	// else errorHandler(new Error("Bad File - cannot display data."));
+	else if (sender === "input-text") renderText(file, ext);
+	else errorHandler(new Error("Bad File - cannot display data."));
 }
 
 // Here we empty the text areas
+// Not currently in use
 function clearBoxes() {
 	if (confirm("This will clear the URL, index, and transcript areas.") == true) {
 		$("#index").val("");
@@ -224,6 +195,10 @@ function clearBoxes() {
 }
 
 function uploadFile(sender) {
+	console.log(sender);
+	// Clear error
+	$("#errorBar").fadeOut();
+
 	// Grab the files from the user's selection
 	var input = document.getElementById(sender);
 	for (var i = 0; i < input.files.length; i++) {
@@ -233,16 +208,15 @@ function uploadFile(sender) {
 		var name = file.name.split('.');
 		var ext = name[name.length - 1].toLowerCase();
 
-		if (checkExt(ext)) determineFile(file, ext);
+		if (checkExt(ext)) determineFile(file, ext, sender);
 		else errorHandler(new Error("Bad File - cannot load data from " + file.name));
 	}
 }
 
 // This function is no longer utilized for non-AV files
 function uploadURLFile(sender) {
-	// Copy the URL to the user's clipboard, in case we need it later during an error
-	// document.getElementById(sender).select();
-	// document.execCommand("Copy");
+	// Clear error
+	$("#errorBar").fadeOut();
 
 	// Continue onward, grab the URL value
 	var input = document.getElementById(sender);
@@ -252,22 +226,28 @@ function uploadURLFile(sender) {
 	var urlArr = url.split('.');
 	var ext = urlArr[urlArr.length - 1];
 
-	// We only allow local uploads of media files, not any text files
-	if (ext == "txt" || ext == "vtt" || ext == "xml" || ext == "srt") {
-		var error = new Error("This field only accepts audio and video file URLs.");
-		errorHandler(error);
-	}
-	else {
+	// We only allow URL uploads of media files, not any text files
+	if (ext == "mp3" || ext == "ogg" || ext == "mp4" || ext == "webm") {
 		fetch(url)
 			.then(res => res.blob())
 			.then(blob => {
 				if (checkExt(ext)) determineFile(blob, ext);
 				else errorHandler(new Error("Bad File - cannot load data from " + url));
 			})
-			.catch(function(e) {
-				// var error = new Error(e + "</p><p class='no-red'>Typically, this is due to a blocked Cross-Origin Request. We have copied your URL to your clipboard so that you may attempt to Browse Locally and paste the URL in the given prompt. This will allow the browser to attempt to download the file into your temporary files folder, and then upload it to the browser for editing or viewing.");
-				errorHandler(e);
-			});
+			.catch(function(e) { errorHandler(e);	});
+	}
+	else {
+		var error = new Error("This field only accepts audio and video file URLs.");
+		errorHandler(error);
+	}
+}
+
+// Here we hide items the user no longer wishes to see
+function closeButtons() {
+	for (var close of document.querySelectorAll('.close')) {
+	  close.addEventListener('click', function(){
+			$(this).parent('div').fadeOut();
+		}, false);
 	}
 }
 
@@ -278,15 +258,11 @@ function uploadURLFile(sender) {
 	$("#audio").hide();
 	$("#errorBar").hide();
 
-	// Here we hide items the user no longer wishes to see
-	for (var close of document.querySelectorAll('.close')) {
-	  close.addEventListener('click', function(){
-			$(this).parent('div').fadeOut();
-		}, false);
-	}
+	// Initiate close buttons
+	closeButtons();
 
-  // For showing the export options
-	$('#export').click(function(){
-		$('#exportWrapper').toggleClass('open');
+	// Initiate tabs
+  $("#text-tabs").tabs({
+		active: 0
 	});
 }(jQuery));
