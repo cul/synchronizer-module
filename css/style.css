@@ -34,15 +34,30 @@ input[type="file"] {
   display: none;
 }
 
+#metadata,
 #index,
 #transcript {
   white-space: pre-wrap;
 }
 /*  */
 
-/* Error Bar */
+/* Error and Success Bars */
+#successBar {
+  margin-top: 10px;
+}
+
+.success-bar {
+  padding: 15px;
+  background-color: #75f492;
+  border-radius: 6px;
+}
+
+#successBar i {
+	padding: 10px;
+}
+
 #errorBar {
-  padding: 25px 15px 0px 15px;
+  padding: 15px;
   background-color: #efefef;
 }
 

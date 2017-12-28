@@ -46,70 +46,65 @@
         <!-- <h1>Synchronizer Module</h1> -->
 
 				<div id="errorBar" class="col-md-12"></div>
+				<div id="successBar" class="col-md-12"></div>
 
 				<div id="working-area" class="col-md-12">
-					<div id="media-playback" class="col-md-3 container">
-						<div id="media-upload" class="col-md-12 upload-box">
-							<i class="fa fa-times-circle-o close"></i>
-							<p>Click browse to select an applicable audio or video file from your local file system, or enter a URL.</p>
-							<p>
-								<label class="btn btn-primary">
-							    <input id="media-file-upload" type="file" onchange="uploadFile('media-file-upload')">
-							    Browse Locally
-								</label>
-							</p>
-							<p>&nbsp;</p>
-							<p><input id="media-url-upload" type="text" placeholder="Enter a URL here">
-								<button id="media-url-submit" class="btn btn-primary" onclick="uploadURLFile('media-url-upload')">Submit</button>
-							</p>
-						</div>
+					<div id="left-sidebar" class="col-md-4 container">
+						<div id="media-playback" class="">
+							<div id="media-upload" class="col-md-12 upload-box">
+								<i class="fa fa-times-circle-o close"></i>
+								<p>Click browse to select an applicable audio or video file from your local file system, or enter a URL.</p>
+								<p>
+									<label class="btn btn-primary">
+								    <input id="media-file-upload" type="file" onchange="uploadFile('media-file-upload')">
+								    Browse Locally
+									</label>
+								</p>
+								<p>&nbsp;</p>
+								<p><input id="media-url-upload" type="text" placeholder="Enter a URL here">
+									<button id="media-url-submit" class="btn btn-primary" onclick="uploadURLFile('media-url-upload')">Submit</button>
+								</p>
+							</div>
 
-						<div id="video"><video id="video-player" data-able-player preload="auto"></video></div>
-						<div id="audio"><audio id="audio-player" data-able-player preload="auto"></audio></div>
-					</div><!-- /#media-playback -->
+							<div id="video"><video id="video-player" data-able-player preload="auto"></video></div>
+							<div id="audio"><audio id="audio-player" data-able-player preload="auto"></audio></div>
+						</div><!-- /#media-playback -->
 
-					<div id="text-tabs" class="col-md-9 pull-right">
+						<div id="metadata"><p>The metadata for the interview will go here.</p></div>
+					</div><!-- /#left-sidebar -->
+
+					<div id="upload-text" class="col-md-8 pull-right upload-box">
+						<i class="fa fa-times-circle-o close"></i>
+						<p>Click browse to select an applicable interview metadata, index, or transcript file from your local file system or enter a URL in the file name box.</p>
+						<label class="btn btn-primary">
+							<input id="input-text" type="file" multiple onchange="uploadFile('input-text')">
+							Browse
+						</label>
+					</div>
+
+					<div id="text-tabs" class="col-md-8 pull-right">
 						<ul>
 							<li><a href="#tabs-index">Index</a></li>
 							<li><a href="#tabs-transcript">Transcript</a></li>
 						</ul>
 						<div id="tabs-index">
-							<div id="upload-index" class="col-md-12 upload-box">
-								<i class="fa fa-times-circle-o close"></i>
-								<p>Click browse to select an applicable index file from your local file system or enter a URL in the file name box.</p>
-								<p class="">
-									<label class="btn btn-primary">
-								    <input id="input-index" type="file" multiple onchange="uploadFile('input-index')">
-								    Browse
-									</label>
-							</div>
-
 							<div id="input-index">
 								<h2>Index Document</h2>
-								<textarea id="index" rows="15" class="col-md-11"></textarea>
+								<textarea id="index" rows="15" class="col-md-12"></textarea>
 							</div>
 						</div><!-- /#tabs-index -->
 
 						<div id="tabs-transcript">
-							<div id="upload-transcript" class="col-md-12 upload-box">
-								<i class="fa fa-times-circle-o close"></i>
-								<p>Click browse to select an applicable transcript file from your local file system or enter a URL in the file name box.</p>
-								<p class="">
-									<label class="btn btn-primary">
-								    <input id="input-transcript" type="file" multiple onchange="uploadFile('input-transcript')">
-								    Browse
-									</label>
-							</div>
 							<div id="input-transcript">
 								<h2>Transcript</h2>
-								<div id="transcript" class="col-md-11"></div>
+								<div id="transcript" class="col-md-12"></div>
 							</div>
 						</div><!-- /#tabs-transcript -->
 
 					</div><!-- /#display-results -->
 				</div><!-- /#working-area -->
 
-				<div id="finish-area" class="col-md-9 pull-right">
+				<div id="finish-area" class="col-md-8 pull-right">
 					<p>These buttons do not currently function.</p>
 					<div class="btn-group" role="group">
 						<button id="preview" class="btn btn-secondary" onclick="errorHandler(new Error('I do not yet function'))">Preview</button>

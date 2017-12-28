@@ -13,9 +13,7 @@ function errorHandler(e) {
   $('#errorBar').html('<i id="close" class="fa fa-times-circle-o close"></i><p class="error-bar"><i class="fa fa-exclamation-circle"></i> ' + e + '</p><hr />');
 	$('html, body').animate({ scrollTop: 0 }, 'fast');
 
-	document.getElementById('close').addEventListener('click', function() {
-		$(this).parent('div').fadeOut();
-	}, false);
+	closeButtons();
 }
 
 // Here we play audio files in the video control player
@@ -65,14 +63,37 @@ function renderAudio(file) {
 }
 
 // Here we display index or transcript file data
-function renderText(file, sender) {
+function renderText(file, ext) {
 	var reader = new FileReader();
 	try {
 		reader.onload = function(event) {
 			var target = event.target.result;
 
-			if (sender === "input-index") document.getElementById('index').value = target;
-			else if (sender === "input-transcript") $('#transcript').text(target);
+			if (target.indexOf("WebVTT") > -1 || ext == "vtt") {
+				if (target.indexOf("Kind:") > -1) {
+					var breaks = target.split(/(00:00:0)/);
+					for (var i = 0; i < breaks.length; i++) {
+						// The end bits are the index segments
+						if (i >= breaks.length - 2) document.getElementById('index').value += breaks[i];
+						// Metadata information is at the beginning
+						else $('#metadata').append(breaks[i]);
+					}
+				}
+				else if (target.indexOf("WebAnno") > -1) document.getElementById('index').value += target;
+				// Either cannot discern metadata from transcript, or there isn't any
+				else $('#transcript').append(target);
+			}
+			else if (ext == "txt" || ext == "srt") $('#transcript').append(target);
+			else if (target.indexOf("</metadata>") > -1) document.getElementById('index').value += target;
+			else if (ext == "xml") {
+				// Index information from Root to Transcript
+				document.getElementById('index').value += target.slice(0, target.indexOf("<transcript>"));
+				// Then there is Transcript
+				$('transcript').append(target.slice(target.indexOf("<transcript>"), target.indexOf("<transcript_alt>")));
+				// Then more index information
+				document.getElementById('index').value += target.slice(target.indexOf("<transcript_alt>"));
+			}
+			else errorHandler(new Error("Cannot determine as interview metadata, index, or transcript."));
 		}
 	}
 	catch (e) { errorHandler(e); }
@@ -125,13 +146,18 @@ function checkExt(ext) {
 }
 
 // Here we determine what kind of file was uploaded
-function determineFile(file, ex, sender) {
+function determineFile(file, ext, sender) {
 	// List the information from the files
 	console.group("File Name: " + file.name);
 	console.log("File Size: " + parseInt(file.size / 1024, 10));
 	console.log("File Type: " + file.type);
 	console.log("Last Modified Date: " + new Date(file.lastModified));
 	console.groupEnd();
+
+	var success = "";
+	success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />File Name: ' + file.name + "<br />File Size: " + parseInt(file.size / 1024, 10) + "<br />File Type: " + file.type + "<br />Last Modified Date: " + new Date(file.lastModified) + "</div>";
+	$("#successBar").append(success);
+	closeButtons();
 
 	// We can't depend upon the file.type (Chrome, IE, and Safari break)
 	// Based upon the extension of the file, display its contents in specific locations
@@ -152,7 +178,7 @@ function determineFile(file, ex, sender) {
 				break;
 		}
 	}
-	else if (sender === "input-index" || sender === "input-transcript") renderText(file, sender);
+	else if (sender === "input-text") renderText(file, ext);
 	else errorHandler(new Error("Bad File - cannot display data."));
 }
 
@@ -216,6 +242,15 @@ function uploadURLFile(sender) {
 	}
 }
 
+// Here we hide items the user no longer wishes to see
+function closeButtons() {
+	for (var close of document.querySelectorAll('.close')) {
+	  close.addEventListener('click', function(){
+			$(this).parent('div').fadeOut();
+		}, false);
+	}
+}
+
 // Document Ready
 (function($){
 	// Don't show the video and audio controls
@@ -223,15 +258,11 @@ function uploadURLFile(sender) {
 	$("#audio").hide();
 	$("#errorBar").hide();
 
+	// Initiate close buttons
+	closeButtons();
+
 	// Initiate tabs
   $("#text-tabs").tabs({
 		active: 0
 	});
-
-	// Here we hide items the user no longer wishes to see
-	for (var close of document.querySelectorAll('.close')) {
-	  close.addEventListener('click', function(){
-			$(this).parent('div').fadeOut();
-		}, false);
-	}
 }(jQuery));
