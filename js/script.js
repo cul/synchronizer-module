@@ -263,6 +263,15 @@ function closeButtons() {
 			$(this).parent('div').fadeOut();
 		}, false);
 	}
+
+	for (var close of document.querySelectorAll('.tag-delete')) {
+	  close.addEventListener('click', function(){
+				var panel = $(this).parents('div').get(1);
+				var header = panel.closest('h3');
+				panel.remove();
+				header.remove();
+		}, false);
+	}
 }
 
 // Here we handle the Tag Segment player controls
@@ -325,17 +334,33 @@ function tagSave() {
 	var subjects = $("#tag-subjects").val();
 	var synopsis = $("#tag-segment-synopsis").val();
 
-	var panel = '<h3>' + timestamp + " - " + title + '</h3>';
-	panel += '<div>';
-	panel += "Partial Transcript: " + transcript + "<br />";
-	panel += "Keywords: " + keywords + "<br />";
-	panel += "Subjects: " + subjects + "<br />";
-	panel += "Synopsis: " + synopsis;
-	panel += '</div>';
+	if (title === "" || title === null) alert("You must enter a title.");
+	else {
+		var panel = '<h3>' + timestamp + " - " + title + '</h3>';
+		panel += '<div>';
+		panel += '<div class="col-md-2 pull-right"><button class="btn btn-xs btn-secondary">Edit</button> ';
+		panel += '<button class="btn btn-xs btn-primary tag-delete">Delete</button></div>';
+		panel += "Partial Transcript: " + transcript + "<br />";
+		panel += "Keywords: " + keywords + "<br />";
+		panel += "Subjects: " + subjects + "<br />";
+		panel += "Synopsis: " + synopsis;
+		panel += '</div>';
 
-	$("#indexAccordion").append(panel);
-	sortAccordion();
-	$("#indexAccordion").accordion("refresh");
+		$("#indexAccordion").append(panel);
+		sortAccordion();
+		$("#indexAccordion").accordion("refresh");
+		tagCancel();
+		closeButtons();
+	}
+}
+
+// Here we clear and back out of the Tag Segment modal
+function tagCancel() {
+	$("#tag-segment-title").val("");
+	$("#tag-partial-transcript").val("");
+	$("#tag-keywords").val("");
+	$("#tag-subjects").val("");
+	$("#tag-segment-synopsis").val("");
 	$("#index-tag").modal('hide');
 }
 

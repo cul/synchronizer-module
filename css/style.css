@@ -46,6 +46,10 @@ input[type="file"] {
 /*  */
 
 /* Segment Tagging */
+label i {
+  color: #f00;
+}
+
 #tag-segment-btn {
 	margin-top: 20px;
 	margin-bottom: 10px;
