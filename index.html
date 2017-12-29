@@ -70,7 +70,7 @@
 							<div id="audio"><audio id="audio-player" data-able-player preload="auto"></audio></div>
 						</div><!-- /#media-playback -->
 
-						<div id="metadata"><p>The metadata for the interview will go here.</p></div>
+						<div id="metadata"></div>
 					</div><!-- /#left-sidebar -->
 
 					<div id="upload-text" class="col-md-8 pull-right upload-box">
@@ -89,8 +89,12 @@
 						</ul>
 						<div id="tabs-index">
 							<div id="input-index">
-								<h2>Index Document</h2>
-								<textarea id="index" rows="15" class="col-md-12"></textarea>
+								<h2 class="col-md-5">Index Document</h2>
+								<button id="tag-segment-btn" type="button" class="btn btn-primary pull-right" data-toggle="modal" data-target=".index-tag" data-backdrop="static" data-keyboard="false">Add Segment</button>
+
+								<div id="indexAccordion"></div>
+
+								<textarea id="index" rows="5" class="col-md-12"></textarea>
 							</div>
 						</div><!-- /#tabs-index -->
 
@@ -122,6 +126,73 @@
 				</div><!-- /#finish-area -->
 
 	    </div><!-- /#main -->
+
+			<!-- Modal popup for Index Tagging -->
+			<div id="index-tag" class="modal fade index-tag" tabindex="-1" role="dialog" aria-labelledby="indexTag" aria-hidden="true">
+				<div class="modal-dialog">
+					<div class="modal-content col-md-11">
+						<h2>Tag Segment</h2>
+						<form>
+							<div class="form-group row">
+								<label for="tag-interview-title" class="col-md-3 col-form-label">Interview Title</label>
+								<div class="col-md-9">
+									<input id="tag-interview-title" class="form-control" type="text" readonly>
+								</div>
+							</div>
+							<div class="form-group row">
+								<label for="tag-timestamp" class="col-md-3 col-form-label">Timestamp</label>
+								<div class="col-md-9">
+									<input id="tag-timestamp" class="form-control" type="text" readonly>
+								</div>
+							</div>
+							<div id="tag-controls" class="form-group row btn-group" role="group">
+								<div class="col-md-1">&nbsp;</div>
+								<button id="control-beginning" type="button" class="btn btn-secondary" onclick="playerControls('beginning')"><i class="fa fa-fast-backward" title="Jump to Beginning of Segment"></i></button>
+								<button id="control-backward" type="button" class="btn btn-secondary" onclick="playerControls('backward')"><i class="fa fa-arrow-left" title="Jump Back 15 Seconds"></i></button>
+								<button id="control-play" type="button" class="btn btn-secondary" onclick="playerControls('play')"><i class="fa fa-play" title="Play"></i></button>
+								<button id="control-stop" type="button" class="btn btn-secondary" onclick="playerControls('stop')"><i class="fa fa-stop" title="Stop"></i></button>
+								<button id="control-forward" type="button" class="btn btn-secondary" onclick="playerControls('forward')"><i class="fa fa-arrow-right" title="Jump Forward 15 Seconds"></i></button>
+								<button id="control-update-time" type="button" class="btn btn-secondary" onclick="playerControls('update')">Update Time</button>
+							</div>
+							<div class="form-group row">
+								<label for="tag-segment-title" class="col-md-3 col-form-label"><i class="fa fa-asterisk"></i>Segment Title</label>
+								<div class="col-md-9">
+									<input id="tag-segment-title" class="form-control" type="text">
+								</div>
+							</div>
+							<div class="form-group row">
+								<label for="tag-partial-transcript" class="col-md-3 col-form-label">Partial Transcript</label>
+								<div class="col-md-9">
+									<textarea id="tag-partial-transcript" class="form-control" rows="4"></textarea>
+								</div>
+							</div>
+							<div class="form-group row">
+								<label for="tag-keywords" class="col-md-3 col-form-label">Keywords</label>
+								<div class="col-md-9">
+									<textarea id="tag-keywords" class="form-control" rows="3"></textarea>
+								</div>
+							</div>
+							<div class="form-group row">
+								<label for="tag-subjects" class="col-md-3 col-form-label">Subjects</label>
+								<div class="col-md-9">
+									<textarea id="tag-subjects" class="form-control" rows="3"></textarea>
+								</div>
+							</div>
+							<div class="form-group row">
+								<label for="tag-segment-synopsis" class="col-md-3 col-form-label">Segment Synopsis</label>
+								<div class="col-md-9">
+									<textarea id="tag-segment-synopsis" class="form-control" rows="4"></textarea>
+								</div>
+							</div>
+							<div class="form-group row">
+								<div class="col-md-1">&nbsp;</div>
+								<button type="submit" class="btn btn-primary" onclick="tagSave()">Save</button>
+								<button type="button" class="btn btn-secondary" onclick="tagCancel()">Cancel</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div><!-- /#index-tag -->
 
 			<!-- Scripts Loading -->
 			<script src="./js/modernizr.custom.js"></script>
