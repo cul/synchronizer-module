@@ -3,9 +3,13 @@
    File: style.css
 	 Description: Stylesheet with specific styling outside of Bootstrap
    Author: Ashley Pressley
-   Date: 12/28/2017
-   Version: 0.3.0
+   Date: 12/29/2017
+   Version: 0.3.1
 */
+
+body {
+  font-family: sans-serif;
+}
 
 /* Containers */
 .navbar {
@@ -39,6 +43,14 @@ input[type="file"] {
 #transcript {
   white-space: pre-wrap;
 }
+/*  */
+
+/* Segment Tagging */
+#tag-segment-btn {
+	margin-top: 20px;
+	margin-bottom: 10px;
+}
+
 /*  */
 
 /* Error and Success Bars */

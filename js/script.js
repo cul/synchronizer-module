@@ -3,8 +3,8 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 12/28/2017
-	 Version: 0.3.0
+   Date: 12/29/2017
+	 Version: 0.3.1
 */
 
 // Here is our error handling
@@ -18,9 +18,6 @@ function errorHandler(e) {
 
 // Here we play audio files in the video control player
 function renderVideo(file) {
-	$("#video").show();
-	$("#audio").hide();
-
 	var reader = new FileReader();
   try {
   	reader.onload = function(event) {
@@ -29,11 +26,17 @@ function renderVideo(file) {
 
   		videoNode.src = target;
 			$("#media-upload").hide();
+			$("#video").show();
+			$("#audio").hide();
+			$("#tag-segment-btn").show();
   	}
   }
   catch (e) {
 		errorHandler(e);
 		$("#media-upload").show();
+		$("#video").hide();
+		$("#audio").hide();
+		$("#tag-segment-btn").hide();
 	}
 
 	reader.readAsDataURL(file);
@@ -41,9 +44,6 @@ function renderVideo(file) {
 
 // Here we play audio files in the audio control player
 function renderAudio(file) {
-	$("#audio").show();
-	$("#video").hide();
-
 	var reader = new FileReader();
   try {
   	reader.onload = function(event) {
@@ -52,11 +52,17 @@ function renderAudio(file) {
 
   		audioNode.src = target;
 			$("#media-upload").hide();
+			$("#audio").show();
+			$("#video").hide();
+			$("#tag-segment-btn").show();
   	}
   }
   catch (e) {
 		errorHandler(e);
 		$("#media-upload").show();
+		$("#video").hide();
+		$("#audio").hide();
+		$("#tag-segment-btn").hide();
 	}
 
 	reader.readAsDataURL(file);
@@ -194,6 +200,7 @@ function clearBoxes() {
 	}
 }
 
+// Here we accept locally uploaded files
 function uploadFile(sender) {
 	console.log(sender);
 	// Clear error
@@ -213,6 +220,7 @@ function uploadFile(sender) {
 	}
 }
 
+// Here we accept URL-based files
 // This function is no longer utilized for non-AV files
 function uploadURLFile(sender) {
 	// Clear error
@@ -251,12 +259,49 @@ function closeButtons() {
 	}
 }
 
+// Here we handle the Tag Segment player controls
+function playerControls(button) {
+  var player = "";
+	if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
+	else if ($("#video").is(':visible')) player = document.getElementById("video-player");
+
+	switch(button) {
+		// case "beginning":
+		// 	player.play();
+		// 	break;
+    //
+		// case "backward":
+		// 	player.pause();
+		// 	break;
+
+		case "play":
+			player.play();
+			break;
+
+		case "stop":
+			player.pause();
+			break;
+    //
+		// case "forward":
+		// 	player.play();
+		// 	break;
+    //
+		// case "update":
+		// 	player.pause();
+		// 	break;
+
+		default:
+			break;
+	}
+}
+
 // Document Ready
 (function($){
-	// Don't show the video and audio controls
+	// Don't show the A/V controls, errorBar, or Tag button
 	$("#video").hide();
 	$("#audio").hide();
 	$("#errorBar").hide();
+	$("#tag-segment-btn").hide();
 
 	// Initiate close buttons
 	closeButtons();
