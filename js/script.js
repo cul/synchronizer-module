@@ -312,13 +312,52 @@ function updateTimestamp() {
 	time = time - minutes * 60;
 	var seconds = time.toFixed(3);
 
-	$("#tag-timestamp").val(minutes + ":" + seconds);
+	if (minutes === 0) $("#tag-timestamp").val(seconds);
+	else $("#tag-timestamp").val(minutes + ":" + seconds);
 };
 
 // Here we save the contents of the Tag Segment modal
-// TODO: write this
 function tagSave() {
+	var timestamp = $("#tag-timestamp").val();
+	var title = $("#tag-segment-title").val();
+	var transcript = $("#tag-partial-transcript").val();
+	var keywords = $("#tag-keywords").val();
+	var subjects = $("#tag-subjects").val();
+	var synopsis = $("#tag-segment-synopsis").val();
+
+	var panel = '<h3>' + timestamp + " - " + title + '</h3>';
+	panel += '<div>';
+	panel += "Partial Transcript: " + transcript + "<br />";
+	panel += "Keywords: " + keywords + "<br />";
+	panel += "Subjects: " + subjects + "<br />";
+	panel += "Synopsis: " + synopsis;
+	panel += '</div>';
+
+	$("#indexAccordion").append(panel);
+	sortAccordion();
+	$("#indexAccordion").accordion("refresh");
 	$("#index-tag").modal('hide');
+}
+
+// Here we sort the accordion according to the titles to keep the parts in proper time order
+function sortAccordion() {
+	var accordion = $("#indexAccordion");
+
+  // Get an array of jQuery objects containing each h3 and the div that follows it
+  var entries = $.map(accordion.children("h3").get(), function(entry) {
+    var $entry = $(entry);
+    return $entry.add($entry.next());
+  });
+
+  // Sort the array by the h3's text
+  entries.sort(function(a, b) {
+    return a.filter("h3").text().localeCompare(b.filter("h3").text());
+  });
+
+  // Put them in the right order in the container
+  $.each(entries, function() {
+    this.detach().appendTo(accordion);
+  });
 }
 
 // Document Ready
@@ -329,13 +368,27 @@ function tagSave() {
 	$("#errorBar").hide();
 	$("#tag-segment-btn").hide();
 
-	// Initiate close buttons
+	// Initialize close buttons, tabs, and accordion
 	closeButtons();
 
-	// Initiate tabs
   $("#text-tabs").tabs({
 		active: 0
 	});
+
+	$("#indexAccordion").accordion({
+    header: "> h3",
+    autoHeight: false,
+    collapsible: true,
+    active: false
+  })
+  .sortable({
+    axis: "y",
+    handle: "h3",
+    sorting: true,
+    stop: function() {
+      stop = true;
+    }
+  });
 
 	// Update the Tag Segment timestamp when the modal opens
 	$('#index-tag').on('shown.bs.modal', function () { updateTimestamp(); });

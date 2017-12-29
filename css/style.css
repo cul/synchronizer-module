@@ -51,6 +51,11 @@ input[type="file"] {
 	margin-bottom: 10px;
 }
 
+#indexAccordion {
+  clear: both;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
 /*  */
 
 /* Error and Success Bars */
