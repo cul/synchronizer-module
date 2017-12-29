@@ -90,7 +90,7 @@
 						<div id="tabs-index">
 							<div id="input-index">
 								<h2 class="col-md-5">Index Document</h2>
-								<button id="tag-segment-btn" type="button" class="btn btn-primary pull-right" data-toggle="modal" data-target=".index-tag">Add Segment</button>
+								<button id="tag-segment-btn" type="button" class="btn btn-primary pull-right" data-toggle="modal" data-target=".index-tag" data-backdrop="static" data-keyboard="false">Add Segment</button>
 								<textarea id="index" rows="15" class="col-md-12"></textarea>
 							</div>
 						</div><!-- /#tabs-index -->
@@ -125,7 +125,7 @@
 	    </div><!-- /#main -->
 
 			<!-- Modal popup for Index Tagging -->
-			<div class="modal fade index-tag" tabindex="-1" role="dialog" aria-labelledby="indexTag" aria-hidden="true">
+			<div id="index-tag" class="modal fade index-tag" tabindex="-1" role="dialog" aria-labelledby="indexTag" aria-hidden="true">
 				<div class="modal-dialog">
 					<div class="modal-content col-md-11">
 						<h2>Tag Segment</h2>
@@ -133,13 +133,13 @@
 							<div class="form-group row">
 								<label for="tag-interview-title" class="col-md-3 col-form-label">Interview Title</label>
 								<div class="col-md-9">
-									<input id="tag-interview-title" class="form-control" type="text" placeholder="Interview Title" readonly>
+									<input id="tag-interview-title" class="form-control" type="text" readonly>
 								</div>
 							</div>
 							<div class="form-group row">
 								<label for="tag-timestamp" class="col-md-3 col-form-label">Timestamp</label>
 								<div class="col-md-9">
-									<input id="tag-timestamp" class="form-control" type="text" placeholder="Timestamp" readonly>
+									<input id="tag-timestamp" class="form-control" type="text" readonly>
 								</div>
 							</div>
 							<div id="tag-controls" class="form-group row btn-group" role="group">
@@ -183,8 +183,8 @@
 							</div>
 							<div class="form-group row">
 								<div class="col-md-1">&nbsp;</div>
-								<button type="button" class="btn btn-primary">Save</button>
-								<button type="button" class="btn btn-secondary">Cancel</button>
+								<button type="button" class="btn btn-primary" onclick="tagSave()">Save</button>
+								<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
 							</div>
 						</form>
 					</div>

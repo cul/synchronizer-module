@@ -29,6 +29,7 @@ function renderVideo(file) {
 			$("#video").show();
 			$("#audio").hide();
 			$("#tag-segment-btn").show();
+			uploadSuccess(file);
   	}
   }
   catch (e) {
@@ -55,6 +56,7 @@ function renderAudio(file) {
 			$("#audio").show();
 			$("#video").hide();
 			$("#tag-segment-btn").show();
+			uploadSuccess(file);
   	}
   }
   catch (e) {
@@ -74,6 +76,7 @@ function renderText(file, ext) {
 	try {
 		reader.onload = function(event) {
 			var target = event.target.result;
+			uploadSuccess(file);
 
 			if (target.indexOf("WebVTT") > -1 || ext == "vtt") {
 				if (target.indexOf("Kind:") > -1) {
@@ -136,6 +139,14 @@ function exportFile(sender) {
 	}
 }
 
+// Here we post success messages for uploaded files
+function uploadSuccess(file) {
+	var success = "";
+	success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />File Name: ' + file.name + "<br />File Size: " + parseInt(file.size / 1024, 10) + "<br />File Type: " + file.type + "<br />Last Modified Date: " + new Date(file.lastModified) + "</div>";
+	$("#successBar").append(success);
+	closeButtons();
+}
+
 // Here we ensure the extension is usable by the system
 function checkExt(ext) {
 	var allowed = ["txt",
@@ -159,11 +170,6 @@ function determineFile(file, ext, sender) {
 	console.log("File Type: " + file.type);
 	console.log("Last Modified Date: " + new Date(file.lastModified));
 	console.groupEnd();
-
-	var success = "";
-	success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />File Name: ' + file.name + "<br />File Size: " + parseInt(file.size / 1024, 10) + "<br />File Type: " + file.type + "<br />Last Modified Date: " + new Date(file.lastModified) + "</div>";
-	$("#successBar").append(success);
-	closeButtons();
 
 	// We can't depend upon the file.type (Chrome, IE, and Safari break)
 	// Based upon the extension of the file, display its contents in specific locations
@@ -266,13 +272,13 @@ function playerControls(button) {
 	else if ($("#video").is(':visible')) player = document.getElementById("video-player");
 
 	switch(button) {
-		// case "beginning":
-		// 	player.play();
-		// 	break;
-    //
-		// case "backward":
-		// 	player.pause();
-		// 	break;
+		case "beginning":
+			player.currentTime = 0;
+			break;
+
+		case "backward":
+			player.currentTime -= 15;
+			break;
 
 		case "play":
 			player.play();
@@ -281,18 +287,38 @@ function playerControls(button) {
 		case "stop":
 			player.pause();
 			break;
-    //
-		// case "forward":
-		// 	player.play();
-		// 	break;
-    //
-		// case "update":
-		// 	player.pause();
-		// 	break;
+
+		case "forward":
+			player.currentTime += 15;
+			break;
+
+		case "update":
+			updateTimestamp();
+			break;
 
 		default:
 			break;
 	}
+}
+
+// Here we update the timestamp for the Tag Segment function
+function updateTimestamp() {
+	var player = "";
+	if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
+	else if ($("#video").is(':visible')) player = document.getElementById("video-player");
+
+	var time = player.currentTime;
+	var minutes = Math.floor(time / 60);
+	time = time - minutes * 60;
+	var seconds = time.toFixed(3);
+
+	$("#tag-timestamp").val(minutes + ":" + seconds);
+};
+
+// Here we save the contents of the Tag Segment modal
+// TODO: write this
+function tagSave() {
+	$("#index-tag").modal('hide');
 }
 
 // Document Ready
@@ -310,4 +336,7 @@ function playerControls(button) {
   $("#text-tabs").tabs({
 		active: 0
 	});
+
+	// Update the Tag Segment timestamp when the modal opens
+	$('#index-tag').on('shown.bs.modal', function () { updateTimestamp(); });
 }(jQuery));
