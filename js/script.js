@@ -10,7 +10,7 @@
 // Here is our error handling
 function errorHandler(e) {
 	$("#errorBar").show();
-  $('#errorBar').html('<i id="close" class="fa fa-times-circle-o close"></i><p class="error-bar"><i class="fa fa-exclamation-circle"></i> ' + e + '</p><hr />');
+  $('#errorBar').html('<i id="close" class="fa fa-times-circle-o close"></i><p class="error-bar"><i class="fa fa-exclamation-circle"></i> ' + e + '</p>');
 	$('html, body').animate({ scrollTop: 0 }, 'fast');
 
 	closeButtons();
@@ -19,7 +19,9 @@ function errorHandler(e) {
 // Here we play audio files in the video control player
 function renderVideo(file) {
 	var reader = new FileReader();
+	console.log("in video render");
   try {
+		console.log("in video try");
   	reader.onload = function(event) {
   		var target = event.target.result;
   		var videoNode = document.querySelector('video');
@@ -169,11 +171,13 @@ function determineFile(file, ext, sender) {
 	console.log("File Size: " + parseInt(file.size / 1024, 10));
 	console.log("File Type: " + file.type);
 	console.log("Last Modified Date: " + new Date(file.lastModified));
+	console.log("ext: " + ext);
+	console.log("sender: " + sender);
 	console.groupEnd();
 
 	// We can't depend upon the file.type (Chrome, IE, and Safari break)
 	// Based upon the extension of the file, display its contents in specific locations
-	if (sender === "media-file-upload") {
+	if (sender === "media-file-upload" || sender === "media-url-upload") {
 		switch(ext) {
 			case "mp4":
 			case "webm":
@@ -239,20 +243,29 @@ function uploadURLFile(sender) {
 	// Get file extension from url
 	var urlArr = url.split('.');
 	var ext = urlArr[urlArr.length - 1];
+	var urlArr2 = urlArr[0].split(':');
+	var http = urlArr2[0].toLowerCase();
 
-	// We only allow URL uploads of media files, not any text files
-	if (ext == "mp3" || ext == "ogg" || ext == "mp4" || ext == "webm") {
-		fetch(url)
-			.then(res => res.blob())
-			.then(blob => {
-				if (checkExt(ext)) determineFile(blob, ext);
-				else errorHandler(new Error("Bad File - cannot load data from " + url));
-			})
-			.catch(function(e) { errorHandler(e);	});
+	// HTTP will throw errors
+	if (http !== "https") {
+		var error = new Error("This field only accepts HTTPS URLs.");
+		errorHandler(error);
 	}
 	else {
-		var error = new Error("This field only accepts audio and video file URLs.");
-		errorHandler(error);
+		// We only allow URL uploads of media files, not any text files
+		if (ext == "mp3" || ext == "ogg" || ext == "mp4" || ext == "webm") {
+			fetch(url)
+				.then(res => res.blob())
+				.then(blob => {
+					if (checkExt(ext)) determineFile(blob, ext, sender);
+					else errorHandler(new Error("Bad File - cannot load data from " + url));
+				})
+				.catch(function(e) { errorHandler(e);	});
+		}
+		else {
+			var error = new Error("This field only accepts audio and video file URLs.");
+			errorHandler(error);
+		}
 	}
 }
 
