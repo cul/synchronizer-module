@@ -230,6 +230,66 @@ function uploadFile(sender) {
 	}
 }
 
+// Here we embed the empty YouTube video player
+var ytplayer;
+function onYouTubeIframeAPIReady() {}
+
+// Here we set up segment controls for the YouTube playback
+function initializeYTControls(event) {
+  var playButton = document.getElementById("control-beginning-yt");
+  playButton.addEventListener("click", function() {
+    ytplayer.seekTo(0);
+  });
+
+  var pauseButton = document.getElementById("control-backward-yt");
+  pauseButton.addEventListener("click", function() {
+		var now = ytplayer.getCurrentTime();
+		ytplayer.seekTo(now - 15);
+  });
+
+  var playButton = document.getElementById("control-play-yt");
+  playButton.addEventListener("click", function() {
+    ytplayer.playVideo();
+  });
+
+  var pauseButton = document.getElementById("control-stop-yt");
+  pauseButton.addEventListener("click", function() {
+    ytplayer.pauseVideo();
+  });
+
+  var playButton = document.getElementById("control-forward-yt");
+  playButton.addEventListener("click", function() {
+		var now = ytplayer.getCurrentTime();
+		ytplayer.seekTo(now + 15);
+  });
+
+  var pauseButton = document.getElementById("control-update-time-yt");
+  pauseButton.addEventListener("click", function() {
+    updateTimestampYT();
+  });
+}
+
+function loadYouTube(id) {
+	// Create the iFrame for the YouTube player with the requested video
+	$("#tag-segment-btn").show();
+	$("#media-upload").hide();
+
+	var iframe = document.createElement("iframe");
+	iframe.setAttribute("id", "ytvideo");
+	iframe.setAttribute("frameborder", "0");
+	iframe.setAttribute("allowfullscreen", "0");
+	iframe.setAttribute("src", "https://www.youtube.com/embed/" + id + "?rel=0&enablejsapi=1");
+	iframe.setAttribute("width", "100%");
+	iframe.setAttribute("height", "400px");
+
+	$('#ytplayer').html(iframe);
+	ytplayer = new YT.Player('ytvideo', {
+		events: {
+			'onReady': initializeYTControls
+		}
+	});
+}
+
 // Here we accept URL-based files
 // This function is no longer utilized for non-AV files
 function uploadURLFile(sender) {
@@ -241,16 +301,31 @@ function uploadURLFile(sender) {
 	var url = input.value;
 
 	// Get file extension from url
-	var urlArr = url.split('.');
+	var urlArr = url.toLowerCase().split('.');
 	var ext = urlArr[urlArr.length - 1];
-	var urlArr2 = urlArr[0].split(':');
-	var http = urlArr2[0].toLowerCase();
+
+	// Find https protocol
+	var https = false;
+	if (url.toLowerCase().indexOf("https") > -1) https = true;
+
+	// Find YouTube information, if present
+	if (url.toLowerCase().indexOf("youtube") > -1) {
+		// Full YouTube URL
+		var urlArr2 = url.split('=');
+		id = urlArr2[urlArr2.length - 1];
+	}
+	else if (url.toLowerCase().indexOf("youtu.be") > -1) {
+		// Short YouTube URL
+		var urlArr2 = url.split('/');
+		id = urlArr2[urlArr2.length - 1];
+	}
 
 	// HTTP will throw errors
-	if (http !== "https") {
+	if (!https) {
 		var error = new Error("This field only accepts HTTPS URLs.");
 		errorHandler(error);
 	}
+	else if (id !== '') loadYouTube(id);
 	else {
 		// We only allow URL uploads of media files, not any text files
 		if (ext == "mp3" || ext == "ogg" || ext == "mp4" || ext == "webm") {
@@ -287,9 +362,10 @@ function closeButtons() {
 	}
 }
 
-// Here we handle the Tag Segment player controls
+// Here we handle the Tag Segment player controls, only for AblePlayer
 function playerControls(button) {
   var player = "";
+
 	if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
 	else if ($("#video").is(':visible')) player = document.getElementById("video-player");
 
@@ -323,13 +399,27 @@ function playerControls(button) {
 	}
 }
 
-// Here we update the timestamp for the Tag Segment function
+// Here we update the timestamp for the Tag Segment function for AblePlayer
 function updateTimestamp() {
 	var player = "";
+
 	if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
 	else if ($("#video").is(':visible')) player = document.getElementById("video-player");
 
 	var time = player.currentTime;
+	var minutes = Math.floor(time / 60);
+	time = time - minutes * 60;
+	var seconds = time.toFixed(3);
+
+	if (minutes === 0) $("#tag-timestamp").val(seconds);
+	else $("#tag-timestamp").val(minutes + ":" + seconds);
+};
+
+// Here we update the timestamp for the Tag Segment function for YouTube
+function updateTimestampYT() {
+	var player = "";
+
+	var time = ytplayer.getCurrentTime();
 	var minutes = Math.floor(time / 60);
 	time = time - minutes * 60;
 	var seconds = time.toFixed(3);
@@ -405,6 +495,8 @@ function sortAccordion() {
 	$("#audio").hide();
 	$("#errorBar").hide();
 	$("#tag-segment-btn").hide();
+	$("#tag-controls-ap").hide();
+	$("#tag-controls-yt").hide();
 
 	// Initialize close buttons, tabs, and accordion
 	closeButtons();
@@ -429,5 +521,22 @@ function sortAccordion() {
   });
 
 	// Update the Tag Segment timestamp when the modal opens
-	$('#index-tag').on('shown.bs.modal', function () { updateTimestamp(); });
+	$('#index-tag').on('shown.bs.modal', function () {
+		if (($("#audio").is(':visible')) || ($("#video").is(':visible')))	{
+			$("#tag-controls-yt").hide();
+			$("#tag-controls-ap").show();
+			updateTimestamp();
+		}
+		else {
+			$("#tag-controls-ap").hide();
+			$("#tag-controls-yt").show();
+			updateTimestampYT();
+		}
+	});
+
+	// Load YouTube API
+	var tag = document.createElement('script');
+	tag.src = "https://www.youtube.com/iframe_api";
+	var firstScriptTag = document.getElementsByTagName('script')[0];
+	firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 }(jQuery));
