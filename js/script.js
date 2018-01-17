@@ -3,7 +3,7 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 12/29/2017
+   Date: 01/17/2018
 	 Version: 0.3.1
 */
 
@@ -19,9 +19,7 @@ function errorHandler(e) {
 // Here we play audio files in the video control player
 function renderVideo(file) {
 	var reader = new FileReader();
-	console.log("in video render");
   try {
-		console.log("in video try");
   	reader.onload = function(event) {
   		var target = event.target.result;
   		var videoNode = document.querySelector('video');
@@ -167,13 +165,13 @@ function checkExt(ext) {
 // Here we determine what kind of file was uploaded
 function determineFile(file, ext, sender) {
 	// List the information from the files
-	console.group("File Name: " + file.name);
-	console.log("File Size: " + parseInt(file.size / 1024, 10));
-	console.log("File Type: " + file.type);
-	console.log("Last Modified Date: " + new Date(file.lastModified));
-	console.log("ext: " + ext);
-	console.log("sender: " + sender);
-	console.groupEnd();
+	// console.group("File Name: " + file.name);
+	// console.log("File Size: " + parseInt(file.size / 1024, 10));
+	// console.log("File Type: " + file.type);
+	// console.log("Last Modified Date: " + new Date(file.lastModified));
+	// console.log("ext: " + ext);
+	// console.log("sender: " + sender);
+	// console.groupEnd();
 
 	// We can't depend upon the file.type (Chrome, IE, and Safari break)
 	// Based upon the extension of the file, display its contents in specific locations
@@ -212,7 +210,6 @@ function clearBoxes() {
 
 // Here we accept locally uploaded files
 function uploadFile(sender) {
-	console.log(sender);
 	// Clear error
 	$("#errorBar").fadeOut();
 
@@ -345,6 +342,7 @@ function uploadURLFile(sender) {
 }
 
 // Here we hide items the user no longer wishes to see
+// Includes Segment Tags
 function closeButtons() {
 	for (var close of document.querySelectorAll('.close')) {
 	  close.addEventListener('click', function(){
@@ -354,10 +352,8 @@ function closeButtons() {
 
 	for (var close of document.querySelectorAll('.tag-delete')) {
 	  close.addEventListener('click', function(){
-				var panel = $(this).parents('div').get(1);
-				var header = panel.closest('h3');
+				var panel = $(this).parents('div').get(2);
 				panel.remove();
-				header.remove();
 		}, false);
 	}
 }
@@ -437,23 +433,51 @@ function tagSave() {
 	var subjects = $("#tag-subjects").val();
 	var synopsis = $("#tag-segment-synopsis").val();
 
+	// Get an array of jQuery objects for each accordion panel
+	var accordion = $("#indexAccordion");
+  var panelIDs = $.map(accordion.children("div").get(), function(panel) {
+		var id = $(panel).attr('id');
+    return id;
+  });
+
 	if (title === "" || title === null) alert("You must enter a title.");
+	else if ($.inArray(timestamp, panelIDs) > -1) alert("A segment for this timestamp already exists.");
 	else {
-		var panel = '<h3>' + timestamp + " - " + title + '</h3>';
+		var panel = '<div id="' + timestamp + '" class="segment-panel">';
+		panel += '<h3>' + timestamp + " - " + title + '</h3>';
 		panel += '<div>';
-		panel += '<div class="col-md-2 pull-right"><button class="btn btn-xs btn-secondary">Edit</button> ';
+		panel += '<div class="col-md-2 pull-right"><button class="btn btn-xs btn-secondary tag-edit">Edit</button> ';
 		panel += '<button class="btn btn-xs btn-primary tag-delete">Delete</button></div>';
 		panel += "Partial Transcript: " + transcript + "<br />";
 		panel += "Keywords: " + keywords + "<br />";
 		panel += "Subjects: " + subjects + "<br />";
 		panel += "Synopsis: " + synopsis;
-		panel += '</div>';
+		panel += '</div></div>';
 
 		$("#indexAccordion").append(panel);
 		sortAccordion();
 		$("#indexAccordion").accordion("refresh");
+		tagEdit();
 		tagCancel();
 		closeButtons();
+	}
+}
+
+// Here we enable the edit buttons for segments
+function tagEdit() {
+	for (var edit of document.querySelectorAll('.tag-edit')) {
+		edit.addEventListener('click', function(){
+				var id = $(this).parent().parent().parent().attr('id');
+				console.log($(this).parent());
+
+
+				// $("#tag-timestamp").val();
+				// var title = $("#tag-segment-title").val();
+				// var transcript = $("#tag-partial-transcript").val();
+				// var keywords = $("#tag-keywords").val();
+				// var subjects = $("#tag-subjects").val();
+				// var synopsis = $("#tag-segment-synopsis").val();
+		}, false);
 	}
 }
 
@@ -467,22 +491,22 @@ function tagCancel() {
 	$("#index-tag").modal('hide');
 }
 
-// Here we sort the accordion according to the titles to keep the parts in proper time order
+// Here we sort the accordion according to the timestamp to keep the parts in proper time order
 function sortAccordion() {
 	var accordion = $("#indexAccordion");
 
-  // Get an array of jQuery objects containing each h3 and the div that follows it
-  var entries = $.map(accordion.children("h3").get(), function(entry) {
+  // Get an array of jQuery objects for each accordion panel
+  var entries = $.map(accordion.children("div").get(), function(entry) {
     var $entry = $(entry);
-    return $entry.add($entry.next());
+    return $entry;
   });
 
-  // Sort the array by the h3's text
+  // Sort the array by the div's id
   entries.sort(function(a, b) {
-    return a.filter("h3").text().localeCompare(b.filter("h3").text());
+    return a.attr('id') - b.attr('id');
   });
 
-  // Put them in the right order in the container
+  // Put them in the right order in the accordion
   $.each(entries, function() {
     this.detach().appendTo(accordion);
   });
@@ -506,7 +530,7 @@ function sortAccordion() {
 	});
 
 	$("#indexAccordion").accordion({
-    header: "> h3",
+    header: "> div > h3",
     autoHeight: false,
     collapsible: true,
     active: false

@@ -22,198 +22,217 @@
 
 	<body>
 		<nav class="navbar navbar-inverse">
-	      <div class="container">
-	        <div class="navbar-header">
-	          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-	            <span class="sr-only">Toggle navigation</span>
-	            <span class="icon-bar"></span>
-	            <span class="icon-bar"></span>
-	            <span class="icon-bar"></span>
-	          </button>
-	          <a class="navbar-brand" href="#">Synchronizer Module</a>
-	        </div>
-	        <div id="navbar" class="collapse navbar-collapse">
-	          <ul class="nav navbar-nav">
-	            <!-- <li><a href="index.html">Home</a></li> -->
-	            <li class="active"><a href="#">Upload</a></li>
-	            <!-- <li><a href="#">Something</a></li> -->
-	          </ul>
-	        </div><!--/.nav-collapse -->
-	      </div>
-	    </nav>
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Synchronizer Module</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <!-- <li><a href="index.html">Home</a></li> -->
+            <li class="active"><a href="#">Upload</a></li>
+            <!-- <li><a href="#">Something</a></li> -->
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
 
-	    <div id="main" class="">
-        <!-- <h1>Synchronizer Module</h1> -->
+    <div id="main" class="">
+      <!-- <h1>Synchronizer Module</h1> -->
 
-				<div id="errorBar" class="col-md-12"></div>
-				<div id="successBar" class="col-md-12"></div>
+			<div id="errorBar" class="col-md-12"></div>
+			<div id="successBar" class="col-md-12"></div>
 
-				<div id="working-area" class="col-md-12">
-					<div id="left-sidebar" class="col-md-4 container">
-						<div id="media-playback" class="">
-							<div id="media-upload" class="col-md-12 upload-box">
-								<i class="fa fa-times-circle-o close"></i>
-								<p>Click browse to select an applicable audio or video file from your local file system, or enter a URL.</p>
-								<p>
-									<label class="btn btn-primary">
-								    <input id="media-file-upload" type="file" onchange="uploadFile('media-file-upload')">
-								    Browse Locally
-									</label>
-								</p>
-								<p>&nbsp;</p>
-								<p><input id="media-url-upload" type="text" placeholder="Enter a URL here">
-									<button id="media-url-submit" class="btn btn-primary" onclick="uploadURLFile('media-url-upload')">Submit</button>
-								</p>
-							</div>
+			<div id="working-area" class="col-md-12">
+				<div id="left-sidebar" class="col-md-4 container">
+					<div id="media-playback" class="">
+						<div id="media-upload" class="col-md-12 upload-box">
+							<i class="fa fa-times-circle-o close"></i>
+							<p>Click browse to select an applicable audio or video file from your local file system, or enter a URL.</p>
+							<p>
+								<label class="btn btn-primary">
+							    <input id="media-file-upload" type="file" onchange="uploadFile('media-file-upload')">
+							    Browse Locally
+								</label>
+							</p>
+							<p>&nbsp;</p>
+							<p><input id="media-url-upload" type="text" placeholder="Enter a URL here">
+								<button id="media-url-submit" class="btn btn-primary" onclick="uploadURLFile('media-url-upload')">Submit</button>
+							</p>
+						</div>
 
-							<div id="ytplayer"></div>
-							<div id="video"><video id="video-player" data-able-player preload="auto"></video></div>
-							<div id="audio"><audio id="audio-player" data-able-player preload="auto"></audio></div>
-						</div><!-- /#media-playback -->
+						<div id="ytplayer"></div>
+						<div id="video"><video id="video-player" data-able-player preload="auto"></video></div>
+						<div id="audio"><audio id="audio-player" data-able-player preload="auto"></audio></div>
+					</div><!-- /#media-playback -->
 
+					<div id="interview-metadata">
+						<div id="interview-kind"></div>
+						<div id="interview-identifier"></div>
+						<div id="interview-title"></div>
+						<div id="interview-date"></div>
+
+						<!-- This is just the dump for all the metadata before implementation of parsing -->
 						<div id="metadata"></div>
-					</div><!-- /#left-sidebar -->
+					</div>
+				</div><!-- /#left-sidebar -->
 
-					<div id="upload-text" class="col-md-8 pull-right upload-box">
-						<i class="fa fa-times-circle-o close"></i>
-						<p>Click browse to select an applicable interview metadata, index, or transcript file from your local file system or enter a URL in the file name box.</p>
+				<div id="upload-text" class="col-md-8 pull-right upload-box">
+					<i class="fa fa-times-circle-o close"></i>
+					<p>Click browse to select an applicable interview metadata, index, or transcript file from your local file system or enter a URL in the file name box. Index and Transcript uploads automatically look for Interview-level metadata.</p>
+					<p>
+						I am uploading:
+						<select id="file-type">
+							<option selected="selected">-- Select --</option>
+							<option value="interview">Interview Metadata</option>
+						  <option value="index">Index</option>
+						  <option value="transcript">Transcript</option>
+						  <option value="multi">Index and Transcript Data</option>
+						</select>
+						&nbsp;
 						<label class="btn btn-primary">
 							<input id="input-text" type="file" multiple onchange="uploadFile('input-text')">
 							Browse
 						</label>
-					</div>
-
-					<div id="text-tabs" class="col-md-8 pull-right">
-						<ul>
-							<li><a href="#tabs-index">Index</a></li>
-							<li><a href="#tabs-transcript">Transcript</a></li>
-						</ul>
-						<div id="tabs-index">
-							<div id="input-index">
-								<h2 class="col-md-5">Index Document</h2>
-								<button id="tag-segment-btn" type="button" class="btn btn-primary pull-right" data-toggle="modal" data-target=".index-tag" data-backdrop="static" data-keyboard="false">Add Segment</button>
-
-								<div id="indexAccordion"></div>
-
-								<textarea id="index" rows="5" class="col-md-12"></textarea>
-							</div>
-						</div><!-- /#tabs-index -->
-
-						<div id="tabs-transcript">
-							<div id="input-transcript">
-								<h2>Transcript</h2>
-								<div id="transcript" class="col-md-12"></div>
-							</div>
-						</div><!-- /#tabs-transcript -->
-
-					</div><!-- /#display-results -->
-				</div><!-- /#working-area -->
-
-				<div id="finish-area" class="col-md-8 pull-right">
-					<p>These buttons do not currently function.</p>
-					<div class="btn-group" role="group">
-						<button id="preview" class="btn btn-secondary" onclick="errorHandler(new Error('I do not yet function'))">Preview</button>
-						<div class="btn-group" role="group">
-					    <button id="export" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-					      Export
-					    </button>
-					    <div class="dropdown-menu" aria-labelledby="btnGroupExport">
-					      <a id="downloadXML" class="dropdown-item" onclick="exportFile('xml')">Download XML</a>
-					      <a id="downloadVTT" class="dropdown-item" onclick="exportFile('vtt')">Download VTT</a>
-					      <a id="downloadAnno" class="dropdown-item" onclick="exportFile('anno')">Download WebAnno</a>
-					    </div>
-					  </div>
-					</div>
-				</div><!-- /#finish-area -->
-
-	    </div><!-- /#main -->
-
-			<!-- Modal popup for Index Tagging -->
-			<div id="index-tag" class="modal fade index-tag" tabindex="-1" role="dialog" aria-labelledby="indexTag" aria-hidden="true">
-				<div class="modal-dialog">
-					<div class="modal-content col-md-11">
-						<h2>Tag Segment</h2>
-						<form>
-							<div class="form-group row">
-								<label for="tag-interview-title" class="col-md-3 col-form-label">Interview Title</label>
-								<div class="col-md-9">
-									<input id="tag-interview-title" class="form-control" type="text" readonly>
-								</div>
-							</div>
-							<div class="form-group row">
-								<label for="tag-timestamp" class="col-md-3 col-form-label">Timestamp</label>
-								<div class="col-md-9">
-									<input id="tag-timestamp" class="form-control" type="text" readonly>
-								</div>
-							</div>
-							<!-- AblePlayer Controls -->
-							<div id="tag-controls-ap" class="form-group row btn-group" role="group">
-								<div class="col-md-1">&nbsp;</div>
-								<button id="control-beginning-ap" type="button" class="btn btn-secondary" onclick="playerControls('beginning')"><i class="fa fa-fast-backward" title="Jump to Beginning of Segment"></i></button>
-								<button id="control-backward-ap" type="button" class="btn btn-secondary" onclick="playerControls('backward')"><i class="fa fa-arrow-left" title="Jump Back 15 Seconds"></i></button>
-								<button id="control-play-ap" type="button" class="btn btn-secondary" onclick="playerControls('play')"><i class="fa fa-play" title="Play"></i></button>
-								<button id="control-stop-ap" type="button" class="btn btn-secondary" onclick="playerControls('stop')"><i class="fa fa-stop" title="Stop"></i></button>
-								<button id="control-forward-ap" type="button" class="btn btn-secondary" onclick="playerControls('forward')"><i class="fa fa-arrow-right" title="Jump Forward 15 Seconds"></i></button>
-								<button id="control-update-time-ap" type="button" class="btn btn-secondary" onclick="playerControls('update')">Update Time</button>
-							</div>
-							<!-- YouTube Controls -->
-							<div id="tag-controls-yt" class="form-group row btn-group" role="group">
-								<div class="col-md-1">&nbsp;</div>
-								<button id="control-beginning-yt" type="button" class="btn btn-secondary"><i class="fa fa-fast-backward" title="Jump to Beginning of Segment"></i></button>
-								<button id="control-backward-yt" type="button" class="btn btn-secondary"><i class="fa fa-arrow-left" title="Jump Back 15 Seconds"></i></button>
-								<button id="control-play-yt" type="button" class="btn btn-secondary"><i class="fa fa-play" title="Play"></i></button>
-								<button id="control-stop-yt" type="button" class="btn btn-secondary"><i class="fa fa-stop" title="Stop"></i></button>
-								<button id="control-forward-yt" type="button" class="btn btn-secondary"><i class="fa fa-arrow-right" title="Jump Forward 15 Seconds"></i></button>
-								<button id="control-update-time-yt" type="button" class="btn btn-secondary">Update Time</button>
-							</div>
-							<div class="form-group row">
-								<label for="tag-segment-title" class="col-md-3 col-form-label"><i class="fa fa-asterisk"></i>Segment Title</label>
-								<div class="col-md-9">
-									<input id="tag-segment-title" class="form-control" type="text">
-								</div>
-							</div>
-							<div class="form-group row">
-								<label for="tag-partial-transcript" class="col-md-3 col-form-label">Partial Transcript</label>
-								<div class="col-md-9">
-									<textarea id="tag-partial-transcript" class="form-control" rows="4"></textarea>
-								</div>
-							</div>
-							<div class="form-group row">
-								<label for="tag-keywords" class="col-md-3 col-form-label">Keywords</label>
-								<div class="col-md-9">
-									<textarea id="tag-keywords" class="form-control" rows="3"></textarea>
-								</div>
-							</div>
-							<div class="form-group row">
-								<label for="tag-subjects" class="col-md-3 col-form-label">Subjects</label>
-								<div class="col-md-9">
-									<textarea id="tag-subjects" class="form-control" rows="3"></textarea>
-								</div>
-							</div>
-							<div class="form-group row">
-								<label for="tag-segment-synopsis" class="col-md-3 col-form-label">Segment Synopsis</label>
-								<div class="col-md-9">
-									<textarea id="tag-segment-synopsis" class="form-control" rows="4"></textarea>
-								</div>
-							</div>
-							<div class="form-group row">
-								<div class="col-md-1">&nbsp;</div>
-								<button type="button" class="btn btn-primary" onclick="tagSave()">Save</button>
-								<button type="button" class="btn btn-secondary" onclick="tagCancel()">Cancel</button>
-							</div>
-						</form>
-					</div>
+					</p>
 				</div>
-			</div><!-- /#index-tag -->
 
-			<!-- Scripts Loading -->
-			<script src="./js/modernizr.custom.js"></script>
-			<script src="./js/jquery-3.2.1.min.js"></script>
-			<script src="./js/jquery-ui.min.js"></script>
-			<script src="./js/js.cookie.js"></script>
-			<script src="./js/bootstrap.min.js"></script>
-			<script src="./js/ableplayer.min.js"></script>
-			<script src="./js/script.js"></script>
+				<div id="text-tabs" class="col-md-8 pull-right">
+					<ul>
+						<li><a href="#tabs-index">Index</a></li>
+						<li><a href="#tabs-transcript">Transcript</a></li>
+					</ul>
+					<div id="tabs-index">
+						<div id="input-index">
+							<h2 class="col-md-5">Index Document</h2>
+							<button id="tag-segment-btn" type="button" class="btn btn-primary pull-right" data-toggle="modal" data-target=".index-tag" data-backdrop="static" data-keyboard="false">Add Segment</button>
+
+							<div id="indexAccordion"></div>
+
+							<textarea id="index" rows="5" class="col-md-12"></textarea>
+						</div>
+					</div><!-- /#tabs-index -->
+
+					<div id="tabs-transcript">
+						<div id="input-transcript">
+							<h2>Transcript</h2>
+							<div id="transcript" class="col-md-12"></div>
+						</div>
+					</div><!-- /#tabs-transcript -->
+
+				</div><!-- /#display-results -->
+			</div><!-- /#working-area -->
+
+			<div id="finish-area" class="col-md-8 pull-right">
+				<p>These buttons do not currently function.</p>
+				<div class="btn-group" role="group">
+					<button id="preview" class="btn btn-secondary" onclick="errorHandler(new Error('I do not yet function'))">Preview</button>
+					<div class="btn-group" role="group">
+				    <button id="export" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+				      Export
+				    </button>
+				    <div class="dropdown-menu" aria-labelledby="btnGroupExport">
+				      <a id="downloadXML" class="dropdown-item" onclick="exportFile('xml')">Download XML</a>
+				      <a id="downloadVTT" class="dropdown-item" onclick="exportFile('vtt')">Download VTT</a>
+				      <a id="downloadAnno" class="dropdown-item" onclick="exportFile('anno')">Download WebAnno</a>
+				    </div>
+				  </div>
+				</div>
+			</div><!-- /#finish-area -->
+
+    </div><!-- /#main -->
+
+		<!-- Modal popup for Index Tagging -->
+		<div id="index-tag" class="modal fade index-tag" tabindex="-1" role="dialog" aria-labelledby="indexTag" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content col-md-11">
+					<h2>Tag Segment</h2>
+					<form>
+						<div class="form-group row">
+							<label for="tag-interview-title" class="col-md-3 col-form-label">Interview Title</label>
+							<div class="col-md-9">
+								<input id="tag-interview-title" class="form-control" type="text" readonly>
+							</div>
+						</div>
+						<div class="form-group row">
+							<label for="tag-timestamp" class="col-md-3 col-form-label">Timestamp</label>
+							<div class="col-md-9">
+								<input id="tag-timestamp" class="form-control" type="text" readonly>
+							</div>
+						</div>
+						<!-- AblePlayer Controls -->
+						<div id="tag-controls-ap" class="form-group row btn-group" role="group">
+							<div class="col-md-1">&nbsp;</div>
+							<button id="control-beginning-ap" type="button" class="btn btn-secondary" onclick="playerControls('beginning')"><i class="fa fa-fast-backward" title="Jump to Beginning of Segment"></i></button>
+							<button id="control-backward-ap" type="button" class="btn btn-secondary" onclick="playerControls('backward')"><i class="fa fa-arrow-left" title="Jump Back 15 Seconds"></i></button>
+							<button id="control-play-ap" type="button" class="btn btn-secondary" onclick="playerControls('play')"><i class="fa fa-play" title="Play"></i></button>
+							<button id="control-stop-ap" type="button" class="btn btn-secondary" onclick="playerControls('stop')"><i class="fa fa-stop" title="Stop"></i></button>
+							<button id="control-forward-ap" type="button" class="btn btn-secondary" onclick="playerControls('forward')"><i class="fa fa-arrow-right" title="Jump Forward 15 Seconds"></i></button>
+							<button id="control-update-time-ap" type="button" class="btn btn-secondary" onclick="playerControls('update')">Update Time</button>
+						</div>
+						<!-- YouTube Controls -->
+						<div id="tag-controls-yt" class="form-group row btn-group" role="group">
+							<div class="col-md-1">&nbsp;</div>
+							<button id="control-beginning-yt" type="button" class="btn btn-secondary"><i class="fa fa-fast-backward" title="Jump to Beginning of Segment"></i></button>
+							<button id="control-backward-yt" type="button" class="btn btn-secondary"><i class="fa fa-arrow-left" title="Jump Back 15 Seconds"></i></button>
+							<button id="control-play-yt" type="button" class="btn btn-secondary"><i class="fa fa-play" title="Play"></i></button>
+							<button id="control-stop-yt" type="button" class="btn btn-secondary"><i class="fa fa-stop" title="Stop"></i></button>
+							<button id="control-forward-yt" type="button" class="btn btn-secondary"><i class="fa fa-arrow-right" title="Jump Forward 15 Seconds"></i></button>
+							<button id="control-update-time-yt" type="button" class="btn btn-secondary">Update Time</button>
+						</div>
+						<div class="form-group row">
+							<label for="tag-segment-title" class="col-md-3 col-form-label"><i class="fa fa-asterisk"></i>Segment Title</label>
+							<div class="col-md-9">
+								<input id="tag-segment-title" class="form-control" type="text">
+							</div>
+						</div>
+						<div class="form-group row">
+							<label for="tag-segment-synopsis" class="col-md-3 col-form-label">Description / Synopsis</label>
+							<div class="col-md-9">
+								<textarea id="tag-segment-synopsis" class="form-control" rows="4"></textarea>
+							</div>
+						</div>
+						<div class="form-group row">
+							<label for="tag-keywords" class="col-md-3 col-form-label">Keywords</label>
+							<div class="col-md-9">
+								<textarea id="tag-keywords" class="form-control" rows="3"></textarea>
+							</div>
+						</div>
+						<div class="form-group row">
+							<label for="tag-subjects" class="col-md-3 col-form-label">Subjects</label>
+							<div class="col-md-9">
+								<textarea id="tag-subjects" class="form-control" rows="3"></textarea>
+							</div>
+						</div>
+						<div class="form-group row">
+							<label for="tag-partial-transcript" class="col-md-3 col-form-label">Partial Transcript</label>
+							<div class="col-md-9">
+								<textarea id="tag-partial-transcript" class="form-control" rows="4"></textarea>
+							</div>
+						</div>
+						<div class="form-group row">
+							<div class="col-md-1">&nbsp;</div>
+							<button type="button" class="btn btn-primary" onclick="tagSave()">Save</button>
+							<button type="button" class="btn btn-secondary" onclick="tagCancel()">Cancel</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div><!-- /#index-tag -->
+
+		<!-- Scripts Loading -->
+		<script src="./js/modernizr.custom.js"></script>
+		<script src="./js/jquery-3.2.1.min.js"></script>
+		<script src="./js/jquery-ui.min.js"></script>
+		<script src="./js/js.cookie.js"></script>
+		<script src="./js/bootstrap.min.js"></script>
+		<script src="./js/ableplayer.min.js"></script>
+		<script src="./js/script.js"></script>
 	</body>
 
 </html>
