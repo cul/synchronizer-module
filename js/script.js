@@ -424,6 +424,7 @@ function updateTimestampYT() {
 	else $("#tag-timestamp").val(minutes + ":" + seconds);
 };
 
+// TODO: need to allow edited segments to be saved OVER or remove original segment and replace with new
 // Here we save the contents of the Tag Segment modal
 function tagSave() {
 	var timestamp = $("#tag-timestamp").val();
@@ -444,14 +445,14 @@ function tagSave() {
 	else if ($.inArray(timestamp, panelIDs) > -1) alert("A segment for this timestamp already exists.");
 	else {
 		var panel = '<div id="' + timestamp + '" class="segment-panel">';
-		panel += '<h3>' + timestamp + " - " + title + '</h3>';
+		panel += '<h3>' + timestamp + "-" + title + '</h3>';
 		panel += '<div>';
 		panel += '<div class="col-md-2 pull-right"><button class="btn btn-xs btn-secondary tag-edit">Edit</button> ';
 		panel += '<button class="btn btn-xs btn-primary tag-delete">Delete</button></div>';
-		panel += "Partial Transcript: " + transcript + "<br />";
-		panel += "Keywords: " + keywords + "<br />";
-		panel += "Subjects: " + subjects + "<br />";
-		panel += "Synopsis: " + synopsis;
+		panel += '<p>Synopsis: <span class="tag-segment-synopsis">' + synopsis + "</span></p>";
+		panel += '<p>Keywords: <span class="tag-keywords">' + keywords + "</span></p>";
+		panel += '<p>Subjects: <span class="tag-subjects">' + subjects + "</span></p>";
+		panel += '<p>Partial Transcript: <span class="tag-partial-transcript">' + transcript + "</span></p>";
 		panel += '</div></div>';
 
 		$("#indexAccordion").append(panel);
@@ -467,16 +468,32 @@ function tagSave() {
 function tagEdit() {
 	for (var edit of document.querySelectorAll('.tag-edit')) {
 		edit.addEventListener('click', function(){
-				var id = $(this).parent().parent().parent().attr('id');
-				console.log($(this).parent());
+			$('#index-tag').modal('show');
+			var id = $(this).parent().parent().parent();
+			// TODO: set video to playback from here
+			var timestamp = id.attr('id');
+			var title = id.find("h3").text();
+			var synopsis = id.find("span.tag-segment-synopsis").text();
+			var keywords = id.find("span.tag-keywords").text();
+			var subjects = id.find("span.tag-subjects").text();
+			var transcript = id.find("span.tag-partial-transcript").text();
 
+			$("#tag-timestamp").val(timestamp);
+			$("#tag-segment-title").val(title.split(/-(.+)/)[1]);
+			$("#tag-segment-synopsis").val(synopsis);
+			$("#tag-keywords").val(keywords);
+			$("#tag-subjects").val(subjects);
+			$("#tag-partial-transcript").val(transcript);
 
-				// $("#tag-timestamp").val();
-				// var title = $("#tag-segment-title").val();
-				// var transcript = $("#tag-partial-transcript").val();
-				// var keywords = $("#tag-keywords").val();
-				// var subjects = $("#tag-subjects").val();
-				// var synopsis = $("#tag-segment-synopsis").val();
+			// Show appropriate player controls
+			if (($("#audio").is(':visible')) || ($("#video").is(':visible')))	{
+				$("#tag-controls-yt").hide();
+				$("#tag-controls-ap").show();
+			}
+			else {
+				$("#tag-controls-ap").hide();
+				$("#tag-controls-yt").show();
+			}
 		}, false);
 	}
 }
@@ -544,8 +561,8 @@ function sortAccordion() {
     }
   });
 
-	// Update the Tag Segment timestamp when the modal opens
-	$('#index-tag').on('shown.bs.modal', function () {
+	// Update the Tag Segment timestamp when the modal opens from Add Segment
+	$('#tag-segment-btn').click(function () {
 		if (($("#audio").is(':visible')) || ($("#video").is(':visible')))	{
 			$("#tag-controls-yt").hide();
 			$("#tag-controls-ap").show();
