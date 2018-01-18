@@ -296,6 +296,7 @@ function uploadURLFile(sender) {
 	// Continue onward, grab the URL value
 	var input = document.getElementById(sender);
 	var url = input.value;
+	var id = '';
 
 	// Get file extension from url
 	var urlArr = url.toLowerCase().split('.');
@@ -470,7 +471,6 @@ function tagEdit() {
 		edit.addEventListener('click', function(){
 			$('#index-tag').modal('show');
 			var id = $(this).parent().parent().parent();
-			// TODO: set video to playback from here
 			var timestamp = id.attr('id');
 			var title = id.find("h3").text();
 			var synopsis = id.find("span.tag-segment-synopsis").text();
