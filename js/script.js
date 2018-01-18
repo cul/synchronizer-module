@@ -3,7 +3,7 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 01/17/2018
+   Date: 01/18/2018
 	 Version: 0.3.1
 */
 
@@ -425,7 +425,6 @@ function updateTimestampYT() {
 	else $("#tag-timestamp").val(minutes + ":" + seconds);
 };
 
-// TODO: need to allow edited segments to be saved OVER or remove original segment and replace with new
 // Here we save the contents of the Tag Segment modal
 function tagSave() {
 	var timestamp = $("#tag-timestamp").val();
@@ -434,6 +433,13 @@ function tagSave() {
 	var keywords = $("#tag-keywords").val();
 	var subjects = $("#tag-subjects").val();
 	var synopsis = $("#tag-segment-synopsis").val();
+
+	// If we're editing a panel, we need to remove the existing panel from the accordion
+	var edit = $("#editVar").val();
+	if (edit === "true") {
+		var editPanel = document.getElementById(timestamp);
+		editPanel.remove();
+	}
 
 	// Get an array of jQuery objects for each accordion panel
 	var accordion = $("#indexAccordion");
@@ -469,7 +475,10 @@ function tagSave() {
 function tagEdit() {
 	for (var edit of document.querySelectorAll('.tag-edit')) {
 		edit.addEventListener('click', function(){
+			// Pop up the modal
 			$('#index-tag').modal('show');
+
+			// Get our data for editing
 			var id = $(this).parent().parent().parent();
 			var timestamp = id.attr('id');
 			var title = id.find("h3").text();
@@ -478,6 +487,7 @@ function tagEdit() {
 			var subjects = id.find("span.tag-subjects").text();
 			var transcript = id.find("span.tag-partial-transcript").text();
 
+			// Set the fields to the appropriate values
 			$("#tag-timestamp").val(timestamp);
 			$("#tag-segment-title").val(title.split(/-(.+)/)[1]);
 			$("#tag-segment-synopsis").val(synopsis);
@@ -485,15 +495,24 @@ function tagEdit() {
 			$("#tag-subjects").val(subjects);
 			$("#tag-partial-transcript").val(transcript);
 
-			// Show appropriate player controls
+			// Show appropriate player controls and jump to the appropriate time
 			if (($("#audio").is(':visible')) || ($("#video").is(':visible')))	{
 				$("#tag-controls-yt").hide();
 				$("#tag-controls-ap").show();
+			  var player = "";
+
+				if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
+				else if ($("#video").is(':visible')) player = document.getElementById("video-player");
+				player.currentTime = timestamp;
 			}
 			else {
 				$("#tag-controls-ap").hide();
 				$("#tag-controls-yt").show();
+				ytplayer.seekTo(timestamp);
 			}
+
+			// Tell the global variable we're editing
+			$("#editVar").val("true");
 		}, false);
 	}
 }
@@ -506,6 +525,7 @@ function tagCancel() {
 	$("#tag-subjects").val("");
 	$("#tag-segment-synopsis").val("");
 	$("#index-tag").modal('hide');
+	$("#editVar").val("false");
 }
 
 // Here we sort the accordion according to the timestamp to keep the parts in proper time order
