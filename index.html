@@ -89,10 +89,9 @@
 						I am uploading:
 						<select id="file-type">
 							<option selected="selected">-- Select --</option>
-							<option value="interview">Interview Metadata</option>
 						  <option value="index">Index</option>
 						  <option value="transcript">Transcript</option>
-						  <option value="multi">Index and Transcript Data</option>
+						  <option value="multi">Index and Transcript</option>
 						</select>
 						&nbsp;
 						<label class="btn btn-primary">
@@ -104,9 +103,17 @@
 
 				<div id="text-tabs" class="col-md-8 pull-right">
 					<ul>
-						<li><a href="#tabs-index">Index</a></li>
 						<li><a href="#tabs-transcript">Transcript</a></li>
+						<li><a href="#tabs-index">Index</a></li>
 					</ul>
+
+					<div id="tabs-transcript">
+						<div id="input-transcript">
+							<h2>Transcript</h2>
+							<div id="transcript" class="col-md-12"></div>
+						</div>
+					</div><!-- /#tabs-transcript -->
+
 					<div id="tabs-index">
 						<div id="input-index">
 							<h2 class="col-md-5">Index Document</h2>
@@ -115,16 +122,9 @@
 							<div id="indexAccordion"></div>
 
 							<textarea id="index" rows="5" class="col-md-12"></textarea>
-							<p id="editVar" class="hidden">false</p>
+							<div id="editVar" class="hidden">-1</div>
 						</div>
 					</div><!-- /#tabs-index -->
-
-					<div id="tabs-transcript">
-						<div id="input-transcript">
-							<h2>Transcript</h2>
-							<div id="transcript" class="col-md-12"></div>
-						</div>
-					</div><!-- /#tabs-transcript -->
 
 				</div><!-- /#display-results -->
 			</div><!-- /#working-area -->

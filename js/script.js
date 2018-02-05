@@ -78,31 +78,39 @@ function renderText(file, ext) {
 			var target = event.target.result;
 			uploadSuccess(file);
 
-			if (target.indexOf("WebVTT") > -1 || ext == "vtt") {
-				if (target.indexOf("Kind:") > -1) {
-					var breaks = target.split(/(00:00:0)/);
-					for (var i = 0; i < breaks.length; i++) {
-						// The end bits are the index segments
-						if (i >= breaks.length - 2) document.getElementById('index').value += breaks[i];
-						// Metadata information is at the beginning
-						else $('#metadata').append(breaks[i]);
-					}
-				}
-				else if (target.indexOf("WebAnno") > -1) document.getElementById('index').value += target;
-				// Either cannot discern metadata from transcript, or there isn't any
-				else $('#transcript').append(target);
-			}
-			else if (ext == "txt" || ext == "srt") $('#transcript').append(target);
-			else if (target.indexOf("</metadata>") > -1) document.getElementById('index').value += target;
-			else if (ext == "xml") {
-				// Index information from Root to Transcript
-				document.getElementById('index').value += target.slice(0, target.indexOf("<transcript>"));
-				// Then there is Transcript
-				$('transcript').append(target.slice(target.indexOf("<transcript>"), target.indexOf("<transcript_alt>")));
-				// Then more index information
-				document.getElementById('index').value += target.slice(target.indexOf("<transcript_alt>"));
-			}
-			else errorHandler(new Error("Cannot determine as interview metadata, index, or transcript."));
+		  var fileType = $("#file-type").val();
+			if (fileType == 'index') $('index').append(target);
+			else if (fileType == 'transcript') $('transcript').append(target);
+			else $('transcript').append(target);
+
+			console.log(target);
+
+      // Former "parsing" functionality
+			// if (target.indexOf("WebVTT") > -1 || ext == "vtt") {
+			// 	if (target.indexOf("Kind:") > -1) {
+			// 		var breaks = target.split(/(00:00:0)/);
+			// 		for (var i = 0; i < breaks.length; i++) {
+			// 			// The end bits are the index segments
+			// 			if (i >= breaks.length - 2) document.getElementById('index').value += breaks[i];
+			// 			// Metadata information is at the beginning
+			// 			else $('#metadata').append(breaks[i]);
+			// 		}
+			// 	}
+			// 	else if (target.indexOf("WebAnno") > -1) document.getElementById('index').value += target;
+			// 	// Either cannot discern metadata from transcript, or there isn't any
+			// 	else $('#transcript').append(target);
+			// }
+			// else if (ext == "txt" || ext == "srt") $('#transcript').append(target);
+			// else if (target.indexOf("</metadata>") > -1) document.getElementById('index').value += target;
+			// else if (ext == "xml") {
+			// 	// Index information from Root to Transcript
+			// 	document.getElementById('index').value += target.slice(0, target.indexOf("<transcript>"));
+			// 	// Then there is Transcript
+			// 	$('transcript').append(target.slice(target.indexOf("<transcript>"), target.indexOf("<transcript_alt>")));
+			// 	// Then more index information
+			// 	document.getElementById('index').value += target.slice(target.indexOf("<transcript_alt>"));
+			// }
+			// else errorHandler(new Error("Cannot determine as interview metadata, index, or transcript."));
 		}
 	}
 	catch (e) { errorHandler(e); }
@@ -435,9 +443,9 @@ function tagSave() {
 	var synopsis = $("#tag-segment-synopsis").val();
 
 	// If we're editing a panel, we need to remove the existing panel from the accordion
-	var edit = $("#editVar").val();
-	if (edit === "true") {
-		var editPanel = document.getElementById(timestamp);
+	var edit = document.getElementById("editVar").innerHTML;
+	if (edit !== "-1") {
+		var editPanel = document.getElementById(edit);
 		editPanel.remove();
 	}
 
@@ -512,7 +520,7 @@ function tagEdit() {
 			}
 
 			// Tell the global variable we're editing
-			$("#editVar").val("true");
+			document.getElementById("editVar").innerHTML = timestamp;
 		}, false);
 	}
 }
@@ -525,7 +533,7 @@ function tagCancel() {
 	$("#tag-subjects").val("");
 	$("#tag-segment-synopsis").val("");
 	$("#index-tag").modal('hide');
-	$("#editVar").val("false");
+	document.getElementById("editVar").innerHTML = "-1";
 }
 
 // Here we sort the accordion according to the timestamp to keep the parts in proper time order
@@ -571,14 +579,6 @@ function sortAccordion() {
     autoHeight: false,
     collapsible: true,
     active: false
-  })
-  .sortable({
-    axis: "y",
-    handle: "h3",
-    sorting: true,
-    stop: function() {
-      stop = true;
-    }
   });
 
 	// Update the Tag Segment timestamp when the modal opens from Add Segment
