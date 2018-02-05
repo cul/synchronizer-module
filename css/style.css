@@ -45,6 +45,13 @@ input[type="file"] {
 }
 /*  */
 
+/* Transcript Syncing */
+.transcript-word:hover {
+  background-color: #00f;
+  color: #fff;
+}
+/*  */
+
 /* Segment Tagging */
 label i {
   color: #f00;

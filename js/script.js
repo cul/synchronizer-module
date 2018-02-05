@@ -3,8 +3,8 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 01/18/2018
-	 Version: 0.3.1
+   Date: 02/05/2018
+	 Version: 0.4.0
 */
 
 // Here is our error handling
@@ -79,38 +79,35 @@ function renderText(file, ext) {
 			uploadSuccess(file);
 
 		  var fileType = $("#file-type").val();
-			if (fileType == 'index') $('index').append(target);
-			else if (fileType == 'transcript') $('transcript').append(target);
-			else $('transcript').append(target);
+			if (fileType == 'index') {
+				$("#index").show();
+				// if (target.indexOf("WebAnno") > -1) document.getElementById('index').value += target;
+				document.getElementById('index').innerHTML += target;
+			}
+			else if (fileType == 'transcript') {
+				$("#transcript").show();
 
-			console.log(target);
+				// VTT Parsing
+				if (ext === 'vtt') {
+					// We'll break up the file line by line
+					var text = target.split(/\r\n/);
 
-      // Former "parsing" functionality
-			// if (target.indexOf("WebVTT") > -1 || ext == "vtt") {
-			// 	if (target.indexOf("Kind:") > -1) {
-			// 		var breaks = target.split(/(00:00:0)/);
-			// 		for (var i = 0; i < breaks.length; i++) {
-			// 			// The end bits are the index segments
-			// 			if (i >= breaks.length - 2) document.getElementById('index').value += breaks[i];
-			// 			// Metadata information is at the beginning
-			// 			else $('#metadata').append(breaks[i]);
-			// 		}
-			// 	}
-			// 	else if (target.indexOf("WebAnno") > -1) document.getElementById('index').value += target;
-			// 	// Either cannot discern metadata from transcript, or there isn't any
-			// 	else $('#transcript').append(target);
-			// }
-			// else if (ext == "txt" || ext == "srt") $('#transcript').append(target);
-			// else if (target.indexOf("</metadata>") > -1) document.getElementById('index').value += target;
-			// else if (ext == "xml") {
-			// 	// Index information from Root to Transcript
-			// 	document.getElementById('index').value += target.slice(0, target.indexOf("<transcript>"));
-			// 	// Then there is Transcript
-			// 	$('transcript').append(target.slice(target.indexOf("<transcript>"), target.indexOf("<transcript_alt>")));
-			// 	// Then more index information
-			// 	document.getElementById('index').value += target.slice(target.indexOf("<transcript_alt>"));
-			// }
-			// else errorHandler(new Error("Cannot determine as interview metadata, index, or transcript."));
+					// We implement a Web Worker because larger transcript files will freeze the browser
+					if (window.Worker) {
+						var textWorker = new Worker("js/text.js");
+						textWorker.postMessage(text);
+						textWorker.onmessage = function(e) { document.getElementById('transcript').innerHTML += e.data;	}
+					}
+				}
+				else if (ext == "txt" || ext == "srt" || "xml") document.getElementById('transcript').innerHTML = target;
+				else errorHandler(new Error("Not a valid file extension."));
+			}
+			else {
+				errorHandler(new Error("No example file for parsing index and transcript data together available."));
+				$("#index").show();
+				$("#transcript").show();
+				document.getElementById('transcript').innerHTML += target;
+			}
 		}
 	}
 	catch (e) { errorHandler(e); }
@@ -200,7 +197,10 @@ function determineFile(file, ext, sender) {
 				break;
 		}
 	}
-	else if (sender === "input-text") renderText(file, ext);
+	else if (sender === "input-text") {
+		if ($("#file-type").val() == 'none') errorHandler(new Error("Please select the type of file you are uploading from the dropdown list provided."));
+		else renderText(file, ext);
+	}
 	else errorHandler(new Error("Bad File - cannot display data."));
 }
 
@@ -566,6 +566,8 @@ function sortAccordion() {
 	$("#tag-segment-btn").hide();
 	$("#tag-controls-ap").hide();
 	$("#tag-controls-yt").hide();
+	$("#index").hide();
+	$("#transcript").hide();
 
 	// Initialize close buttons, tabs, and accordion
 	closeButtons();
