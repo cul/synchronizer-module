@@ -88,15 +88,14 @@
 					<p>
 						I am uploading:
 						<select id="file-type">
-							<option selected="selected">-- Select --</option>
-							<option value="interview">Interview Metadata</option>
+							<option selected="selected" value="none">-- Select --</option>
 						  <option value="index">Index</option>
 						  <option value="transcript">Transcript</option>
-						  <option value="multi">Index and Transcript Data</option>
+						  <option value="multi">Index and Transcript</option>
 						</select>
 						&nbsp;
 						<label class="btn btn-primary">
-							<input id="input-text" type="file" multiple onchange="uploadFile('input-text')">
+							<input id="input-text" type="file" onchange="uploadFile('input-text')">
 							Browse
 						</label>
 					</p>
@@ -104,9 +103,17 @@
 
 				<div id="text-tabs" class="col-md-8 pull-right">
 					<ul>
-						<li><a href="#tabs-index">Index</a></li>
 						<li><a href="#tabs-transcript">Transcript</a></li>
+						<li><a href="#tabs-index">Index</a></li>
 					</ul>
+
+					<div id="tabs-transcript">
+						<div id="input-transcript">
+							<h2>Transcript</h2>
+							<div id="transcript" class="col-md-12" ></div>
+						</div>
+					</div><!-- /#tabs-transcript -->
+
 					<div id="tabs-index">
 						<div id="input-index">
 							<h2 class="col-md-5">Index Document</h2>
@@ -114,17 +121,10 @@
 
 							<div id="indexAccordion"></div>
 
-							<textarea id="index" rows="5" class="col-md-12"></textarea>
-							<p id="editVar" class="hidden">false</p>
+							<div id="index" class="col-md-12" readonly></div>
+							<div id="editVar" class="hidden">-1</div>
 						</div>
 					</div><!-- /#tabs-index -->
-
-					<div id="tabs-transcript">
-						<div id="input-transcript">
-							<h2>Transcript</h2>
-							<div id="transcript" class="col-md-12"></div>
-						</div>
-					</div><!-- /#tabs-transcript -->
 
 				</div><!-- /#display-results -->
 			</div><!-- /#working-area -->
@@ -138,9 +138,9 @@
 				      Export
 				    </button>
 				    <div class="dropdown-menu" aria-labelledby="btnGroupExport">
-				      <a id="downloadXML" class="dropdown-item" onclick="exportFile('xml')">Download XML</a>
 				      <a id="downloadVTT" class="dropdown-item" onclick="exportFile('vtt')">Download VTT</a>
 				      <a id="downloadAnno" class="dropdown-item" onclick="exportFile('anno')">Download WebAnno</a>
+				      <a id="downloadXML" class="dropdown-item" onclick="exportFile('xml')">Download XML</a>
 				    </div>
 				  </div>
 				</div>
@@ -218,7 +218,7 @@
 						</div>
 						<div class="form-group row">
 							<div class="col-md-1">&nbsp;</div>
-							<button type="button" class="btn btn-primary" onclick="tagSave()">Save</button>
+							<button type="button" class="btn btn-primary" onclick="tagSave()">Accept</button>
 							<button type="button" class="btn btn-secondary" onclick="tagCancel()">Cancel</button>
 						</div>
 					</form>
