@@ -260,7 +260,6 @@ function renderText(file, ext) {
 			else if (fileType == 'transcript') {
 				// VTT Parsing
 				if (ext === 'vtt') {
-					$("#transcript").show();
 					$("#sync-controls").show();
 
 					// We'll break up the file line by line
@@ -270,7 +269,32 @@ function renderText(file, ext) {
 					if (window.Worker) {
 						var textWorker = new Worker("js/text.js");
 						textWorker.postMessage(text);
-						textWorker.onmessage = function(e) { document.getElementById('transcript').innerHTML += e.data;	}
+						textWorker.onmessage = function(e) {
+							document.getElementById('transcript').innerHTML += e.data;
+
+						  // Enable click functions
+							// Update Transcript Timestamp
+							for (var close of document.getElementsByClassName('transcript-timestamp')) {
+								close.addEventListener('click', function(){
+									console.log($(this));
+									var mark = $(this)[0].innerHTML;
+									mark = mark.replace("{", '');
+									var num = mark.split(":");
+									document.getElementById("sync-minute").innerHTML = num[0];
+								}, false);
+							}
+
+							// Remove a Transcript Sync Marker
+							for (var close of document.getElementsByClassName('transcript-timestamp')) {
+								close.addEventListener('dblclick', function(){
+									var mark = $(this)[0].innerHTML;
+									mark = mark.replace("{", '');
+									var num = mark.split(":");
+									document.getElementById("sync-minute").innerHTML = num[0];
+									$(this).remove();
+								}, false);
+							}
+						}
 					}
 				}
 				// else if (ext == "txt" || ext == "srt" || "xml") document.getElementById('transcript').innerHTML = target;
@@ -635,8 +659,8 @@ function closeButtons() {
 
 	for (var close of document.querySelectorAll('.tag-delete')) {
 	  close.addEventListener('click', function(){
-				var panel = $(this).parents('div').get(2);
-				panel.remove();
+			var panel = $(this).parents('div').get(2);
+			panel.remove();
 		}, false);
 	}
 }
@@ -651,7 +675,6 @@ function closeButtons() {
 	$("#tag-controls-ap").hide();
 	$("#tag-controls-yt").hide();
 	$("#index").hide();
-	$("#transcript").hide();
 	$("#sync-controls").hide();
 
 	// Initialize close buttons, tabs, and accordion
@@ -671,6 +694,16 @@ function closeButtons() {
 	// Watch the AblePlayer time status for Transcript Syncing
 	document.getElementById("video-player").ontimeupdate = function() { transcriptTimestamp() };
 	document.getElementById("audio-player").ontimeupdate = function() { transcriptTimestamp() };
+
+	// // Watch for clicks within Transcript for Syncing
+	// $('#transcript').click(function () {
+	// 	var sender = $(this);
+	// 	console.log(sender);
+	// 	switch(sender) {
+	// 		default:
+	// 			break;
+	// 	}
+	// });
 
 	// Update the Tag Segment timestamp when the modal opens from Add Segment
 	$('#tag-segment-btn').click(function () {

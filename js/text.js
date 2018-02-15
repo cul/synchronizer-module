@@ -14,7 +14,7 @@ onmessage = function(e) {
   for (var i = 0; i < e.data.length; i++) {
     // If we don't have timestamps yet, we need to skip any metadata and find the actual transcript
     if (/(<v)+/.test(e.data[i])) first = true;
-    
+
     // We don't save any interview-level data from the transcript, so we ignore everything until the first timestamp
     if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(e.data[i])) {
       if (!first) first = true;
