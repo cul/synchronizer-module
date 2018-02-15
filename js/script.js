@@ -260,39 +260,22 @@ function renderText(file, ext) {
 			else if (fileType == 'transcript') {
 				// VTT Parsing
 				if (ext === 'vtt') {
-					$("#sync-controls").show();
+					if (!(/(<v)+/.test(target))) errorHandler(new Error("Not a valid VTT transcript file."));
+					else {
+						$("#sync-controls").show();
 
-					// We'll break up the file line by line
-					var text = target.split(/\r\n/);
+						// We'll break up the file line by line
+						var text = target.split(/\r\n/);
 
-					// We implement a Web Worker because larger transcript files will freeze the browser
-					if (window.Worker) {
-						var textWorker = new Worker("js/text.js");
-						textWorker.postMessage(text);
-						textWorker.onmessage = function(e) {
-							document.getElementById('transcript').innerHTML += e.data;
+						// We implement a Web Worker because larger transcript files will freeze the browser
+						if (window.Worker) {
+							var textWorker = new Worker("js/text.js");
+							textWorker.postMessage(text);
+							textWorker.onmessage = function(e) {
+								document.getElementById('transcript').innerHTML += e.data;
 
-						  // Enable click functions
-							// Update Transcript Timestamp
-							for (var close of document.getElementsByClassName('transcript-timestamp')) {
-								close.addEventListener('click', function(){
-									console.log($(this));
-									var mark = $(this)[0].innerHTML;
-									mark = mark.replace("{", '');
-									var num = mark.split(":");
-									document.getElementById("sync-minute").innerHTML = num[0];
-								}, false);
-							}
-
-							// Remove a Transcript Sync Marker
-							for (var close of document.getElementsByClassName('transcript-timestamp')) {
-								close.addEventListener('dblclick', function(){
-									var mark = $(this)[0].innerHTML;
-									mark = mark.replace("{", '');
-									var num = mark.split(":");
-									document.getElementById("sync-minute").innerHTML = num[0];
-									$(this).remove();
-								}, false);
+							  // Enable click functions, addSyncMarker calls all three functions
+								addSyncMarker();
 							}
 						}
 					}
@@ -394,6 +377,58 @@ function playerControls(button) {
 
 /** Transcript Sync Functions **/
 
+// Here we add a Sync Marker
+function addSyncMarker() {
+	for (var word of document.getElementsByClassName('transcript-word')) {
+		word.addEventListener('click', function(){
+			var minute = parseInt(document.getElementById("sync-minute").innerHTML);
+			if (minute == 0) minute++;
+			var marker = "{" + minute + ":00}";
+			var regEx = new RegExp(marker);
+
+			// If a marker already exists for this minute, remove it and remove the word highlighting
+			for (var sync of document.getElementsByClassName('transcript-timestamp')) {
+				var mark = sync.innerText;
+				if (regEx.test(mark)) {
+					$(sync).next(".transcript-clicked").removeClass('transcript-clicked');
+					sync.remove();
+				}
+			}
+
+			$(this).addClass('transcript-clicked');
+			$('<span class="transcript-timestamp">{' + minute + ':00}&nbsp;</span>').insertBefore($(this));
+
+			// Increase the Sync Current Mark
+			document.getElementById("sync-minute").innerHTML = minute + 1;
+
+			updateCurrentMark();
+			removeSyncMarker();
+		}, false);
+	}
+}
+
+// Here we update Transcript Sync Current Mark
+function updateCurrentMark() {
+	for (var sync of document.getElementsByClassName('transcript-timestamp')) {
+		sync.addEventListener('click', function(){
+			var mark = $(this)[0].innerHTML;
+			mark = mark.replace("{", '');
+			var num = mark.split(":");
+			document.getElementById("sync-minute").innerHTML = num[0];
+		}, false);
+	}
+}
+
+// Here we remove a Transcript Sync Marker
+function removeSyncMarker() {
+	for (var sync of document.getElementsByClassName('transcript-timestamp')) {
+		sync.addEventListener('dblclick', function(){
+			$(this).next(".transcript-clicked").removeClass('transcript-clicked');
+			$(this).remove();
+		}, false);
+	}
+}
+
 // Here we capture sync control clicks
 function syncControl(type) {
 	var youTube = document.getElementById("ytplayer").innerHTML;
@@ -416,6 +451,23 @@ function syncControl(type) {
 
 			if (youTube !== "") ytplayer.seekTo(minute * 60);
 			else playerControls("seek");
+			break;
+
+		case "play":
+			if (youTube !== "") {
+				if (ytplayer.getPlayerState() == 1) ytplayer.pauseVideo();
+				else ytplayer.playVideo();
+			}
+			else {
+			  var player = "";
+
+				if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
+				else if ($("#video").is(':visible')) player = document.getElementById("video-player");
+
+				if(player.paused)	player.play();
+				else player.pause();
+
+			}
 			break;
 
 		default:

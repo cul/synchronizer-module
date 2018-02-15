@@ -3,7 +3,7 @@
    File: style.css
 	 Description: Stylesheet with specific styling outside of Bootstrap
    Author: Ashley Pressley
-   Date: 02/13/2018
+   Date: 02/15/2018
    Version: 0.4.0
 */
 
@@ -70,7 +70,7 @@ input[type="file"] {
 #sync-controls {
 	z-index: 5;
 	position: fixed;
-	width: 250px;
+	width: 275px;
 	right: 10px;
 	/* background: #000; */
 }
@@ -78,6 +78,8 @@ input[type="file"] {
 #sync-minute,
 #sync-time {
   background-color: #fff;
+  font-weight: bold;
+  font-size: 1.2em;
 }
 
 /*  */
