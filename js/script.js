@@ -195,6 +195,25 @@ function loadYouTube(id) {
 			'onReady': initializeYTControls
 		}
 	});
+
+	// This will monitor the YouTube video time and keep the transcript timestamp updated
+	window.setInterval(tween_time, 500);
+	    function tween_time() {
+	        time_update = (ytplayer.getCurrentTime()*1000)
+	        playing=ytplayer.getPlayerState();
+	            if (playing == 1) {
+	                if (last_time_update == time_update) current_time_msec += 25;
+	                if (last_time_update != time_update) current_time_msec = time_update;
+	            }
+
+					var time = ytplayer.getCurrentTime();
+					var minutes = Math.floor(time / 60);
+					var hours = Math.floor(minutes / 60);
+					time = time - minutes * 60;
+					var seconds = time.toFixed(0);
+					document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
+	        last_time_update = time_update;
+	    }
 }
 
 // Here we play audio files in the audio control player
@@ -351,8 +370,9 @@ function playerControls(button) {
 
 /** Transcript Sync Functions **/
 
+// Here we capture sync control clicks
 function syncControl(type) {
-	var youTube = document.getElementById("ytplayer");
+	var youTube = document.getElementById("ytplayer").innerHTML;
 
 	switch(type) {
 		case "back":
@@ -361,7 +381,7 @@ function syncControl(type) {
 			if (minute <= 0) document.getElementById("sync-minute").innerHTML = 0;
 			else document.getElementById("sync-minute").innerHTML = minute;
 
-			if (youTube !== null) ytplayer.seekTo(minute * 60);
+			if (youTube !== "") ytplayer.seekTo(minute * 60);
 			else playerControls("seek");
 			break;
 
@@ -370,13 +390,29 @@ function syncControl(type) {
 			minute += 1;
 			document.getElementById("sync-minute").innerHTML = minute;
 
-			if (youTube !== null) ytplayer.seekTo(minute * 60);
+			if (youTube !== "") ytplayer.seekTo(minute * 60);
 			else playerControls("seek");
 			break;
 
 		default:
 			break;
 	}
+}
+
+// Here we continually update the timestamp on the sync controls
+// Only for AblePlayer
+function transcriptTimestamp() {
+	var player = "";
+
+	if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
+	else if ($("#video").is(':visible')) player = document.getElementById("video-player");
+
+	var time = player.currentTime;
+	var minutes = Math.floor(time / 60);
+	var hours = Math.floor(minutes / 60);
+	time = time - minutes * 60;
+	var seconds = time.toFixed(0);
+	document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
 }
 
 /** Index Segment Functions **/
@@ -631,6 +667,10 @@ function closeButtons() {
     collapsible: true,
     active: false
   });
+
+	// Watch the AblePlayer time status for Transcript Syncing
+	document.getElementById("video-player").ontimeupdate = function() { transcriptTimestamp() };
+	document.getElementById("audio-player").ontimeupdate = function() { transcriptTimestamp() };
 
 	// Update the Tag Segment timestamp when the modal opens from Add Segment
 	$('#tag-segment-btn').click(function () {
