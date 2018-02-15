@@ -243,7 +243,7 @@ function renderText(file, ext) {
 				if (ext === 'vtt') {
 					$("#transcript").show();
 					$("#sync-controls").show();
-					
+
 					// We'll break up the file line by line
 					var text = target.split(/\r\n/);
 
@@ -270,29 +270,7 @@ function renderText(file, ext) {
 	reader.readAsText(file);
 }
 
-/** Transcript Sync Functions **/
-
-function syncControl(type) {
-	switch(type) {
-		case "back":
-			var minute = parseInt(document.getElementById("sync-minute").innerHTML);
-			minute -= 1;
-			if (minute <= 1) document.getElementById("sync-minute").innerHTML = 1;
-			else document.getElementById("sync-minute").innerHTML = minute;
-			break;
-
-		case "forward":
-			var minute = parseInt(document.getElementById("sync-minute").innerHTML);
-			minute += 1;
-			document.getElementById("sync-minute").innerHTML = minute;
-			break;
-
-		default:
-			break;
-	}
-}
-
-/** Index Segment Functions **/
+/** Player Functions **/
 
 // Here we set up segment controls for the YouTube playback
 function initializeYTControls(event) {
@@ -329,7 +307,7 @@ function initializeYTControls(event) {
   });
 }
 
-// Here we handle the Tag Segment player controls, only for AblePlayer
+// Here we handle the player controls, only for AblePlayer
 function playerControls(button) {
   var player = "";
 
@@ -361,10 +339,47 @@ function playerControls(button) {
 			updateTimestamp();
 			break;
 
+		case "seek":
+			var minute = parseInt(document.getElementById("sync-minute").innerHTML);
+			player.currentTime = minute * 60;
+			break;
+
 		default:
 			break;
 	}
 }
+
+/** Transcript Sync Functions **/
+
+function syncControl(type) {
+	var youTube = document.getElementById("ytplayer");
+
+	switch(type) {
+		case "back":
+			var minute = parseInt(document.getElementById("sync-minute").innerHTML);
+			minute -= 1;
+			if (minute <= 0) document.getElementById("sync-minute").innerHTML = 0;
+			else document.getElementById("sync-minute").innerHTML = minute;
+
+			if (youTube !== null) ytplayer.seekTo(minute * 60);
+			else playerControls("seek");
+			break;
+
+		case "forward":
+			var minute = parseInt(document.getElementById("sync-minute").innerHTML);
+			minute += 1;
+			document.getElementById("sync-minute").innerHTML = minute;
+
+			if (youTube !== null) ytplayer.seekTo(minute * 60);
+			else playerControls("seek");
+			break;
+
+		default:
+			break;
+	}
+}
+
+/** Index Segment Functions **/
 
 // Here we update the timestamp for the Tag Segment function for AblePlayer
 function updateTimestamp() {
@@ -616,11 +631,6 @@ function closeButtons() {
     collapsible: true,
     active: false
   });
-
-	// Update Transcript Sync items upon control usage
-	// $('#sync-minute').onchange(function () {
-  //
-	// });
 
 	// Update the Tag Segment timestamp when the modal opens from Add Segment
 	$('#tag-segment-btn').click(function () {
