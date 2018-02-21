@@ -261,10 +261,50 @@ function renderText(file, ext) {
 
 		  var fileType = $("#file-type").val();
 			if (fileType == 'index') {
-				$("#index").show();
-				// if (target.indexOf("WebAnno") > -1) document.getElementById('index').value += target;
-				document.getElementById('index').innerHTML += target;
-				uploadSuccess(file);
+				// VTT Parsing
+				if (ext === 'vtt') {
+					if (target.indexOf("WEBVTT") === -1) errorHandler(new Error("Not a valid VTT index file."));
+					else {
+						$("#index").show();
+
+						// If there is interview-level metadata, we need to grab it
+						if (/(Title:)+/.test(target) && /(Date:)+/.test(target) && /(Identifier:)+/.test(target)) {
+							uploadSuccess(file);
+
+							// We'll break up the file line by line
+							var text = target.split(/\r\n/);
+
+							// First we pull out the interview-level metadata
+							var i = 0;
+							for (i; i < text.length; i++) {
+								// If we make it to the timestamp segments, time to stop
+								if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[i])) { break; }
+
+								// Once we find the metadata, we need all of it
+								if (/(Title:)+/.test(text[i])) {
+									while (text[i] !== '' && i < text.length) {
+										document.getElementById('interview-metadata').innerHTML += text[i] + '<br />';
+										i++;
+									}
+								}
+							}
+
+							// And we can remove the lines we've already seen to make segment parsing easier
+							for (var j = i - 1; j >= 0; j--) {
+								text.shift();
+							}
+
+							// We implement a Web Worker because larger transcript files will freeze the browser
+							if (window.Worker) {
+								var textWorker = new Worker("js/index.js");
+								textWorker.postMessage(text);
+								textWorker.onmessage = function(e) { document.getElementById('index').innerHTML += e.data; }
+							}
+						}
+						else errorHandler(new Error("Not a valid index file - missing interview-level metadata."));
+					}
+				}
+				else errorHandler(new Error("Not a valid file extension."));
 			}
 			else if (fileType == 'transcript') {
 				// VTT Parsing
@@ -279,7 +319,7 @@ function renderText(file, ext) {
 
 						// We implement a Web Worker because larger transcript files will freeze the browser
 						if (window.Worker) {
-							var textWorker = new Worker("js/text.js");
+							var textWorker = new Worker("js/transcript.js");
 							textWorker.postMessage(text);
 							textWorker.onmessage = function(e) {
 								document.getElementById('transcript').innerHTML += e.data;
@@ -290,7 +330,6 @@ function renderText(file, ext) {
 						}
 					}
 				}
-				// else if (ext == "txt" || ext == "srt" || "xml") document.getElementById('transcript').innerHTML = target;
 				else errorHandler(new Error("Not a valid file extension."));
 			}
 			else {
