@@ -275,41 +275,104 @@ function renderText(file, ext) {
 							var text = target.split(/\r\n/);
 
 							// First we pull out the interview-level metadata
-							var i = 0;
-							for (i; i < text.length; i++) {
+							var k = 0;
+							for (k; k < text.length; k++) {
 								// If we make it to the timestamp segments, time to stop
-								if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[i])) { break; }
+								if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[k])) { break; }
 
 								// Once we find the metadata, we need all of it
-								if (/(Title:)+/.test(text[i])) {
-									while (text[i] !== '' && i < text.length) {
-										document.getElementById('interview-metadata').innerHTML += text[i] + '<br />';
-										i++;
+								if (/(Title:)+/.test(text[k])) {
+									while (text[k] !== '' && k < text.length) {
+										document.getElementById('interview-metadata').innerHTML += text[k] + '<br />';
+										k++;
 									}
 								}
 							}
 
 							// And we can remove the lines we've already seen to make segment parsing easier
-							for (var j = i - 1; j >= 0; j--) {
+							for (var j = k - 1; j >= 0; j--) {
 								text.shift();
 							}
 
-							// We implement a Web Worker because of the processing required for these files
-							if (window.Worker) {
-								var accordion = $("#indexAccordion");
-								var textWorker = new Worker("js/index.js");
-								textWorker.postMessage(text);
-								// Each message returned will be a new accordion panel
-								textWorker.onmessage = function(e) {
-									// We need to append the panels and refresh the accordion
-									accordion.append(e.data);
-									sortAccordion();
-									accordion.accordion("refresh");
-									tagEdit();
-									tagCancel();
-									closeButtons();
+							// Now we build segment panels
+							var accordion = $("#indexAccordion");
+							var panel = '';
+							var timestamp = '';
+							var title = '';
+							var transcript = '';
+							var synopsis = '';
+							var keywords = '';
+							var subjects = '';
+
+							for (var i = 0; i < text.length; i++) {
+								// We are only concerned with timestamped segments at this point of the parsing
+								if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[i])) {
+									timestamp = text[i].substring(0, 12);
+
+									while (text[i] !== "}" && i < text.length) {
+										if (/("title":)+/.test(text[i])) {
+											title = text[i].substring(text[i].indexOf('"title":') + 9);
+											while (!/("partial_transcript":)+/.test(text[i + 1]) &&  i < text.length) {
+												i++;
+												title += text[i];
+											}
+										}
+
+										if (/("partial_transcript":)+/.test(text[i])) {
+											transcript = text[i].substring(text[i].indexOf('"partial_transcript":') + 22);
+											while (!/("description":)+/.test(text[i + 1]) &&  i < text.length) {
+												i++;
+												transcript += text[i];
+											}
+										}
+
+										if (/("description":)+/.test(text[i])) {
+											synopsis = text[i].substring(text[i].indexOf('"description":') + 15);
+											while (!/("keywords":)+/.test(text[i + 1]) &&  i < text.length) {
+												i++;
+												synopsis += text[i];
+											}
+										}
+
+										if (/("keywords":)+/.test(text[i])) {
+											keywords = text[i].substring(text[i].indexOf('"keywords":') + 12);
+											while (!/("subjects":)+/.test(text[i + 1]) &&  i < text.length) {
+												i++;
+												keywords += text[i];
+											}
+										}
+
+										if (/("subjects":)+/.test(text[i])) {
+											subjects = text[i].substring(text[i].indexOf('"subjects":') + 12);
+											while (text[i + 1] !== "}" &&  i < text.length) {
+												i++;
+												subjects += text[i];
+											}
+										}
+
+										i++;
+									}
+
+									// Now that we've gathered all the data for the variables, we build a panel
+									panel = '<div id="' + timestamp + '" class="segment-panel">';
+									panel += '<h3>' + timestamp + "-" + title + '</h3>';
+									panel += '<div>';
+									panel += '<div class="col-md-2 pull-right"><button class="btn btn-xs btn-secondary tag-edit">Edit</button> ';
+									panel += '<button class="btn btn-xs btn-primary tag-delete">Delete</button></div>';
+									panel += '<p>Synopsis: <span class="tag-segment-synopsis">' + synopsis + "</span></p>";
+									panel += '<p>Keywords: <span class="tag-keywords">' + keywords + "</span></p>";
+									panel += '<p>Subjects: <span class="tag-subjects">' + subjects + "</span></p>";
+									panel += '<p>Partial Transcript: <span class="tag-partial-transcript">' + transcript + "</span></p>";
+									panel += '</div></div>';
 								}
+								accordion.append(panel);
+								panel = '';
 							}
+							sortAccordion();
+							accordion.accordion("refresh");
+							tagEdit();
+							tagCancel();
+							closeButtons();
 						}
 						else errorHandler(new Error("Not a valid index file - missing interview-level metadata."));
 					}
@@ -678,7 +741,7 @@ function tagEdit() {
 				else if ($("#video").is(':visible')) player = document.getElementById("video-player");
 				player.currentTime = timestamp;
 			}
-			else {
+			else if (document.getElementById("ytplayer").innerHTML != ''){
 				$("#tag-controls-ap").hide();
 				$("#tag-controls-yt").show();
 				ytplayer.seekTo(timestamp);
