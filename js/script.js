@@ -3,7 +3,7 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 02/15/2018
+   Date: 02/21/2018
 	 Version: 0.4.1
 */
 
@@ -249,19 +249,20 @@ function renderText(file, ext) {
 	try {
 		reader.onload = function(event) {
 			var target = event.target.result;
-			uploadSuccess(file);
 
 		  var fileType = $("#file-type").val();
 			if (fileType == 'index') {
 				$("#index").show();
 				// if (target.indexOf("WebAnno") > -1) document.getElementById('index').value += target;
 				document.getElementById('index').innerHTML += target;
+				uploadSuccess(file);
 			}
 			else if (fileType == 'transcript') {
 				// VTT Parsing
 				if (ext === 'vtt') {
 					if (!(/(<v)+/.test(target))) errorHandler(new Error("Not a valid VTT transcript file."));
 					else {
+						uploadSuccess(file);
 						$("#sync-controls").show();
 
 						// We'll break up the file line by line
