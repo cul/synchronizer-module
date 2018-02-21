@@ -199,18 +199,25 @@ function loadYouTube(id) {
 	uploadSuccess(id);
 
 	// This will monitor the YouTube video time and keep the transcript timestamp updated
-	window.setInterval(tween_time, 500);
+	// And we play chimes at the #:50 and #:60 second marks
+	window.setInterval(tween_time, 250);
 	    function tween_time() {
-	        time_update = (ytplayer.getCurrentTime()*1000)
-	        playing=ytplayer.getPlayerState();
+	        time_update = (ytplayer.getCurrentTime() * 1000)
+	        playing = ytplayer.getPlayerState();
 	            if (playing == 1) {
 	                if (last_time_update == time_update) current_time_msec += 25;
 	                if (last_time_update != time_update) current_time_msec = time_update;
 	            }
 
+					var chime1 = document.getElementById("audio-chime1");
+					var chime2 = document.getElementById("audio-chime2");
 					var time = ytplayer.getCurrentTime();
 					var minutes = Math.floor(time / 60);
 					var hours = Math.floor(minutes / 60);
+
+					if (Math.floor(time) % 60 == 50) { chime1.play(); }
+					if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0) { chime2.play(); }
+
 					time = time - minutes * 60;
 					var seconds = time.toFixed(0);
 					document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
@@ -486,9 +493,12 @@ function syncControl(type) {
 }
 
 // Here we continually update the timestamp on the sync controls
+// And we play chimes at the #:50 and #:60 second marks
 // Only for AblePlayer
 function transcriptTimestamp() {
 	var player = "";
+	var chime1 = document.getElementById("audio-chime1");
+	var chime2 = document.getElementById("audio-chime2");
 
 	if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
 	else if ($("#video").is(':visible')) player = document.getElementById("video-player");
@@ -496,6 +506,10 @@ function transcriptTimestamp() {
 	var time = player.currentTime;
 	var minutes = Math.floor(time / 60);
 	var hours = Math.floor(minutes / 60);
+
+	if (Math.floor(time) % 60 == 50) { chime1.play(); }
+	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0) { chime2.play(); }
+
 	time = time - minutes * 60;
 	var seconds = time.toFixed(0);
 	document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
