@@ -196,6 +196,8 @@ function loadYouTube(id) {
 		}
 	});
 
+	uploadSuccess(id);
+
 	// This will monitor the YouTube video time and keep the transcript timestamp updated
 	window.setInterval(tween_time, 500);
 	    function tween_time() {
@@ -433,39 +435,46 @@ function removeSyncMarker() {
 // Here we capture sync control clicks
 function syncControl(type) {
 	var youTube = document.getElementById("ytplayer").innerHTML;
+	var minute = parseInt(document.getElementById("sync-minute").innerHTML);
+	var offset = $('#sync-roll').val();
 
 	switch(type) {
+		// Hitting back/forward are offset by the roll interval
 		case "back":
-			var minute = parseInt(document.getElementById("sync-minute").innerHTML);
 			minute -= 1;
 			if (minute <= 0) document.getElementById("sync-minute").innerHTML = 0;
 			else document.getElementById("sync-minute").innerHTML = minute;
 
-			if (youTube !== "") ytplayer.seekTo(minute * 60);
+			if (youTube !== "") ytplayer.seekTo(minute * 60 - offset);
 			else playerControls("seek");
 			break;
 
 		case "forward":
-			var minute = parseInt(document.getElementById("sync-minute").innerHTML);
 			minute += 1;
 			document.getElementById("sync-minute").innerHTML = minute;
 
-			if (youTube !== "") ytplayer.seekTo(minute * 60);
+			if (youTube !== "") ytplayer.seekTo(minute * 60 - offset);
 			else playerControls("seek");
 			break;
 
+		// Hitting play always resets back to the current minute marker and is offset by the roll interval
 		case "play":
 			if (youTube !== "") {
 				if (ytplayer.getPlayerState() == 1) ytplayer.pauseVideo();
-				else ytplayer.playVideo();
+				else {
+					ytplayer.seekTo(minute * 60 - offset);
+					ytplayer.playVideo();
+				}
 			}
 			else {
 			  var player = "";
-
 				if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
 				else if ($("#video").is(':visible')) player = document.getElementById("video-player");
 
-				if(player.paused)	player.play();
+				if(player.paused)	{
+					player.currentTime = minute * 60 - offset;
+					player.play();
+				}
 				else player.pause();
 
 			}
@@ -748,15 +757,18 @@ function closeButtons() {
 	document.getElementById("video-player").ontimeupdate = function() { transcriptTimestamp() };
 	document.getElementById("audio-player").ontimeupdate = function() { transcriptTimestamp() };
 
-	// // Watch for clicks within Transcript for Syncing
-	// $('#transcript').click(function () {
-	// 	var sender = $(this);
-	// 	console.log(sender);
-	// 	switch(sender) {
-	// 		default:
-	// 			break;
-	// 	}
-	// });
+	// Disallow non-numerical values in transcript controls
+	// Only allow 0-9, backspace, and delete
+	$('#sync-roll').keypress(function (event) {
+    if (event.shiftKey == true) { event.preventDefault(); }
+    if ((event.charCode >= 48 && event.charCode <= 57) || event.keyCode == 8 || event.keyCode == 46 || event.keyCode == 37 || event.keyCode == 39) { }
+		else { event.preventDefault(); }
+	});
+
+	// Never let the transcript roll control be empty
+	$('#sync-roll').blur(function () {
+		if(!$(this).val()) { $(this).val('0'); }
+	});
 
 	// Update the Tag Segment timestamp when the modal opens from Add Segment
 	$('#tag-segment-btn').click(function () {
