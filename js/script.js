@@ -260,7 +260,7 @@ function renderText(file, ext) {
 			else if (fileType == 'transcript') {
 				// VTT Parsing
 				if (ext === 'vtt') {
-					if (!(/(<v)+/.test(target))) errorHandler(new Error("Not a valid VTT transcript file."));
+					if (!(/(<v)+/.test(target)) || target.indexOf("WEBVTT") === -1) errorHandler(new Error("Not a valid VTT transcript file."));
 					else {
 						uploadSuccess(file);
 						$("#sync-controls").show();
