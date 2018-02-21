@@ -265,7 +265,7 @@ function renderText(file, ext) {
 				if (ext === 'vtt') {
 					if (target.indexOf("WEBVTT") === -1) errorHandler(new Error("Not a valid VTT index file."));
 					else {
-						$("#index").show();
+						$("#tag-segment-btn").show();
 
 						// If there is interview-level metadata, we need to grab it
 						if (/(Title:)+/.test(target) && /(Date:)+/.test(target) && /(Identifier:)+/.test(target)) {
@@ -294,11 +294,21 @@ function renderText(file, ext) {
 								text.shift();
 							}
 
-							// We implement a Web Worker because larger transcript files will freeze the browser
+							// We implement a Web Worker because of the processing required for these files
 							if (window.Worker) {
+								var accordion = $("#indexAccordion");
 								var textWorker = new Worker("js/index.js");
 								textWorker.postMessage(text);
-								textWorker.onmessage = function(e) { document.getElementById('index').innerHTML += e.data; }
+								// Each message returned will be a new accordion panel
+								textWorker.onmessage = function(e) {
+									// We need to append the panels and refresh the accordion
+									accordion.append(e.data);
+									sortAccordion();
+									accordion.accordion("refresh");
+									tagEdit();
+									tagCancel();
+									closeButtons();
+								}
 							}
 						}
 						else errorHandler(new Error("Not a valid index file - missing interview-level metadata."));
@@ -332,12 +342,7 @@ function renderText(file, ext) {
 				}
 				else errorHandler(new Error("Not a valid file extension."));
 			}
-			else {
-				errorHandler(new Error("No example file for parsing index and transcript data together available."));
-				$("#index").show();
-				$("#transcript").show();
-				document.getElementById('transcript').innerHTML += target;
-			}
+			else { errorHandler(new Error("No example file for parsing index and transcript data together available.")); }
 		}
 	}
 	catch (e) { errorHandler(e); }
@@ -565,11 +570,15 @@ function updateTimestamp() {
 
 	var time = player.currentTime;
 	var minutes = Math.floor(time / 60);
+	var hours = Math.floor(minutes / 60);
 	time = time - minutes * 60;
 	var seconds = time.toFixed(3);
 
-	if (minutes === 0) $("#tag-timestamp").val(seconds);
-	else $("#tag-timestamp").val(minutes + ":" + seconds);
+	if (hours < 10) hours = '0' + hours;
+	if (minutes < 10) minutes = '0' + minutes;
+	if (seconds < 10) seconds = '0' + seconds;
+
+	$("#tag-timestamp").val(hours + ":" + minutes + ":" + seconds);
 };
 
 // Here we update the timestamp for the Tag Segment function for YouTube
@@ -578,11 +587,15 @@ function updateTimestampYT() {
 
 	var time = ytplayer.getCurrentTime();
 	var minutes = Math.floor(time / 60);
+	var hours = Math.floor(minutes / 60);
 	time = time - minutes * 60;
 	var seconds = time.toFixed(3);
 
-	if (minutes === 0) $("#tag-timestamp").val(seconds);
-	else $("#tag-timestamp").val(minutes + ":" + seconds);
+	if (hours < 10) hours = '0' + hours;
+	if (minutes < 10) minutes = '0' + minutes;
+	if (seconds < 10) seconds = '0' + seconds;
+
+	$("#tag-timestamp").val(hours + ":" + minutes + ":" + seconds);
 };
 
 // Here we save the contents of the Tag Segment modal
@@ -789,7 +802,6 @@ function closeButtons() {
 	$("#tag-segment-btn").hide();
 	$("#tag-controls-ap").hide();
 	$("#tag-controls-yt").hide();
-	$("#index").hide();
 	$("#sync-controls").hide();
 
 	// Initialize close buttons, tabs, and accordion
