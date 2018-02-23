@@ -188,7 +188,7 @@ function loadYouTube(id) {
 	iframe.setAttribute("id", "ytvideo");
 	iframe.setAttribute("frameborder", "0");
 	iframe.setAttribute("allowfullscreen", "0");
-	iframe.setAttribute("src", "https://www.youtube.com/embed/" + id + "?rel=0&enablejsapi=1");
+	iframe.setAttribute("src", "https://www.youtube.com/embed/" + id + "?rel=0&enablejsapi=1&autoplay=1");
 	iframe.setAttribute("width", "100%");
 	iframe.setAttribute("height", "400px");
 
