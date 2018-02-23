@@ -162,6 +162,7 @@ function renderVideo(file) {
 			$("#video").show();
 			$("#audio").hide();
 			$("#tag-segment-btn").show();
+			if (document.getElementById('transcript').innerHTML != '') $("#sync-controls").show();
 			uploadSuccess(file);
   	}
   }
@@ -171,16 +172,18 @@ function renderVideo(file) {
 		$("#video").hide();
 		$("#audio").hide();
 		$("#tag-segment-btn").hide();
+		$("#sync-controls").hide();
 	}
 
 	reader.readAsDataURL(file);
 }
 
 function loadYouTube(id) {
-	// Create the iFrame for the YouTube player with the requested video
+	if (document.getElementById('transcript').innerHTML != '') $("#sync-controls").show();
 	$("#tag-segment-btn").show();
 	$("#media-upload").hide();
 
+	// Create the iFrame for the YouTube player with the requested video
 	var iframe = document.createElement("iframe");
 	iframe.setAttribute("id", "ytvideo");
 	iframe.setAttribute("frameborder", "0");
@@ -238,6 +241,7 @@ function renderAudio(file) {
 			$("#audio").show();
 			$("#video").hide();
 			$("#tag-segment-btn").show();
+			if (document.getElementById('transcript').innerHTML != '') $("#sync-controls").show();
 			uploadSuccess(file);
   	}
   }
@@ -247,6 +251,7 @@ function renderAudio(file) {
 		$("#video").hide();
 		$("#audio").hide();
 		$("#tag-segment-btn").hide();
+		$("#sync-controls").hide();
 	}
 
 	reader.readAsDataURL(file);
@@ -309,42 +314,42 @@ function renderText(file, ext) {
 
 									while (text[i] !== "}" && i < text.length) {
 										if (/("title":)+/.test(text[i])) {
-											title = text[i].substring(text[i].indexOf('"title":') + 9);
+											title = text[i].substring(text[i].indexOf('"title":') + 9).replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
 											while (!/("partial_transcript":)+/.test(text[i + 1]) &&  i < text.length) {
 												i++;
-												title += text[i];
+												title += text[i].replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
 											}
 										}
 
 										if (/("partial_transcript":)+/.test(text[i])) {
-											transcript = text[i].substring(text[i].indexOf('"partial_transcript":') + 22);
+											transcript = text[i].substring(text[i].indexOf('"partial_transcript":') + 22).replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
 											while (!/("description":)+/.test(text[i + 1]) &&  i < text.length) {
 												i++;
-												transcript += text[i];
+												transcript += text[i].replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
 											}
 										}
 
 										if (/("description":)+/.test(text[i])) {
-											synopsis = text[i].substring(text[i].indexOf('"description":') + 15);
+											synopsis = text[i].substring(text[i].indexOf('"description":') + 15).replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
 											while (!/("keywords":)+/.test(text[i + 1]) &&  i < text.length) {
 												i++;
-												synopsis += text[i];
+												synopsis += text[i].replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
 											}
 										}
 
 										if (/("keywords":)+/.test(text[i])) {
-											keywords = text[i].substring(text[i].indexOf('"keywords":') + 12);
+											keywords = text[i].substring(text[i].indexOf('"keywords":') + 12).replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
 											while (!/("subjects":)+/.test(text[i + 1]) &&  i < text.length) {
 												i++;
-												keywords += text[i];
+												keywords += text[i].replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
 											}
 										}
 
 										if (/("subjects":)+/.test(text[i])) {
-											subjects = text[i].substring(text[i].indexOf('"subjects":') + 12);
+											subjects = text[i].substring(text[i].indexOf('"subjects":') + 12).replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
 											while (text[i + 1] !== "}" &&  i < text.length) {
 												i++;
-												subjects += text[i];
+												subjects += text[i].replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
 											}
 										}
 
@@ -381,10 +386,10 @@ function renderText(file, ext) {
 			else if (fileType == 'transcript') {
 				// VTT Parsing
 				if (ext === 'vtt') {
-					if (!(/(<v)+/.test(target)) || target.indexOf("WEBVTT") === -1) errorHandler(new Error("Not a valid VTT transcript file."));
+					if (!(/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(target)) || target.indexOf("WEBVTT") === -1) errorHandler(new Error("Not a valid VTT transcript file."));
 					else {
+						if ($("#audio").is(':visible') || $("#video").is(':visible') || document.getElementById("ytplayer").innerHTML != '') $("#sync-controls").show();
 						uploadSuccess(file);
-						$("#sync-controls").show();
 
 						// We'll break up the file line by line
 						var text = target.split(/\r\n/);
