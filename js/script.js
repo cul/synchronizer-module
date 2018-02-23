@@ -691,13 +691,6 @@ function tagSave() {
 	var subjects = $("#tag-subjects").val();
 	var synopsis = $("#tag-segment-synopsis").val();
 
-	// If we're editing a panel, we need to remove the existing panel from the accordion
-	var edit = document.getElementById("editVar").innerHTML;
-	if (edit !== "-1") {
-		var editPanel = document.getElementById(edit);
-		editPanel.remove();
-	}
-
 	// Get an array of jQuery objects for each accordion panel
 	var accordion = $("#indexAccordion");
   var panelIDs = $.map(accordion.children("div").get(), function(panel) {
@@ -708,6 +701,13 @@ function tagSave() {
 	if (title === "" || title === null) alert("You must enter a title.");
 	else if ($.inArray(timestamp, panelIDs) > -1) alert("A segment for this timestamp already exists.");
 	else {
+		// If we're editing a panel, we need to remove the existing panel from the accordion
+		var edit = document.getElementById("editVar").innerHTML;
+		if (edit !== "-1") {
+			var editPanel = document.getElementById(edit);
+			editPanel.remove();
+		}
+		
 		var panel = '<div id="' + timestamp + '" class="segment-panel">';
 		panel += '<h3>' + timestamp + "-" + title + '</h3>';
 		panel += '<div>';
@@ -744,6 +744,9 @@ function tagEdit() {
 			var subjects = id.find("span.tag-subjects").text();
 			var transcript = id.find("span.tag-partial-transcript").text();
 
+			// Tell the global variable we're editing
+			document.getElementById("editVar").innerHTML = timestamp;
+
 			// Set the fields to the appropriate values
 			$("#tag-timestamp").val(timestamp);
 			$("#tag-segment-title").val(title.split(/-(.+)/)[1]);
@@ -767,9 +770,6 @@ function tagEdit() {
 				$("#tag-controls-yt").show();
 				ytplayer.seekTo(timestamp);
 			}
-
-			// Tell the global variable we're editing
-			document.getElementById("editVar").innerHTML = timestamp;
 		}, false);
 	}
 }
@@ -863,7 +863,7 @@ function clearBoxes() {
 }
 
 // Here we remove items the user no longer wishes to see
-// Includes Segment Tags
+// Includes deleting Segment Tags
 function closeButtons() {
 	for (var close of document.querySelectorAll('.close')) {
 	  close.addEventListener('click', function(){
