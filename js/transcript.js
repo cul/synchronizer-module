@@ -1,6 +1,6 @@
 /* Columbia University Library
    Project: Synchronizer Module
-   File: text.js
+   File: transcript.js
 	 Description: Web Worker for Manipulating Transcript File Data
    Author: Ashley Pressley
    Date: 02/15/2018

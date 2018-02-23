@@ -67,19 +67,11 @@
 						</div>
 
 						<div id="ytplayer"></div>
-						<div id="video"><video id="video-player" data-able-player preload="auto"></video></div>
-						<div id="audio"><audio id="audio-player" data-able-player preload="auto"></audio></div>
+						<div id="video"><video id="video-player" data-able-player preload="auto" autoplay></video></div>
+						<div id="audio"><audio id="audio-player" data-able-player preload="auto" autoplay></audio></div>
 					</div><!-- /#media-playback -->
 
-					<div id="interview-metadata">
-						<div id="interview-kind"></div>
-						<div id="interview-identifier"></div>
-						<div id="interview-title"></div>
-						<div id="interview-date"></div>
-
-						<!-- This is just the dump for all the metadata before implementation of parsing -->
-						<div id="metadata"></div>
-					</div>
+					<div id="interview-metadata"></div><!-- /#interview-metadata -->
 				</div><!-- /#left-sidebar -->
 
 				<div id="right-sidebar">
@@ -117,6 +109,8 @@
 									<div id="sync-minute" class="btn btn-secondary" type="button">0</div>
 									<span id="sync-forward" class="btn btn-info" type="button" onclick="syncControl('forward')"><i class="fa fa-forward"></i></span>
 									<span id="sync-play" class="btn btn-info" type="button" onclick="syncControl('play')"><i class="fa fa-play"></i><i class="fa fa-pause"></i></span>
+									<div id="sync-posneg" class="btn btn-secondary" type="button"><i class="fa fa-plus"></i><i class="fa fa-minus"></i></div>
+									<input id="sync-roll" class="btn btn-secondary" type="text" maxlength="3" size="3" value="10" name="sync-roll">
 									<div id="sync-time" class="btn btn-secondary" type="button">00:00:00</div>
 								</div>
 								<div id="transcript" class="col-md-12" ></div>
@@ -129,8 +123,6 @@
 								<button id="tag-segment-btn" type="button" class="btn btn-primary pull-right" data-toggle="modal" data-target=".index-tag" data-backdrop="static" data-keyboard="false">Add Segment</button>
 
 								<div id="indexAccordion"></div>
-
-								<div id="index" class="col-md-12" readonly></div>
 								<div id="editVar" class="hidden">-1</div>
 							</div>
 						</div><!-- /#tabs-index -->
@@ -240,6 +232,12 @@
 				</div>
 			</div>
 		</div><!-- /#index-tag -->
+
+		<!-- Audio files for transcript syncing markers -->
+		<div id="transcript-chimes" class="hidden">
+			<audio id="audio-chime1" src="./includes/startBeep.mp3" autostart="false"></audio>
+			<audio id="audio-chime2" src="./includes/midBeep.mp3" autostart="false"></audio>
+		</div>
 
 		<!-- Scripts Loading -->
 		<script src="./js/modernizr.custom.js"></script>
