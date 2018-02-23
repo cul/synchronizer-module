@@ -3,7 +3,7 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 02/21/2018
+   Date: 02/23/2018
 	 Version: 0.4.1
 */
 
@@ -265,8 +265,6 @@ function renderText(file, ext) {
 				if (ext === 'vtt') {
 					if (target.indexOf("WEBVTT") === -1) errorHandler(new Error("Not a valid VTT index file."));
 					else {
-						$("#tag-segment-btn").show();
-
 						// If there is interview-level metadata, we need to grab it
 						if (/(Title:)+/.test(target) && /(Date:)+/.test(target) && /(Identifier:)+/.test(target)) {
 							uploadSuccess(file);
@@ -368,6 +366,7 @@ function renderText(file, ext) {
 								accordion.append(panel);
 								panel = '';
 							}
+
 							sortAccordion();
 							accordion.accordion("refresh");
 							tagEdit();
@@ -776,7 +775,9 @@ function sortAccordion() {
 
   // Sort the array by the div's id
   entries.sort(function(a, b) {
-    return a.attr('id') - b.attr('id');
+		var timeA = new Date('1970-01-01T' + a.attr('id') + 'Z');
+		var timeB = new Date('1970-01-01T' + b.attr('id') + 'Z');
+    return timeA - timeB;
   });
 
   // Put them in the right order in the accordion
