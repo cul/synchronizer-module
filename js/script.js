@@ -199,7 +199,24 @@ function loadYouTube(id) {
 		}
 	});
 
-	uploadSuccess(id);
+	// We need to make a second call in order to get video information.
+	// CUL's Google API Key will need to go here
+	// var apiKey = 'culAPIkey';
+	// var url = 'https://www.googleapis.com/youtube/v3/videos?id=' + id + '&key=' + apiKey + '&part=snippet';
+	//
+	// $.ajax({
+  //   url: url,
+  //   dataType: "jsonp",
+  //   success: function(data){
+	// 		var success = "";
+	// 		success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />Title: ' + data.items[0].snippet.title + "<br />Publish Date: " + new Date(data.items[0].snippet.publishedAt) + "</div>";
+	// 		$("#successBar").append(success);
+	// 		closeButtons();
+  //   },
+  //   error: function(jqXHR, textStatus, errorThrown) {
+	// 		console.log(textStatus, + ' | ' + errorThrown);
+  //   }
+  // });
 
 	// This will monitor the YouTube video time and keep the transcript timestamp updated
 	// And we play chimes at the #:50 and #:60 second marks
