@@ -884,15 +884,19 @@ function exportFile(sender) {
 		switch (sender) {
 			case "vtt":
 				var currTime = '';
-				var nextTime = $('#endTime').innerHTML;
+				var currIndex0 = 0;
+				var currIndex1 = 0;
+				var nextTime = '';
 				var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n\r');
 				var content = 'WEBVTT\n\r\n\r' + metadata + '\n\r' + $('#indexAccordion')[0].innerHTML;
 
-				// We will need to know what the upcoming time segment is (if it's not the end)
-
-				currTime = content.substring(content.indexOf('<div id="') + 1, content.indexOf('" class="segment-panel">'));
-				console.log(currTime);
-				// minute = minute.substring(0, minute.indexOf(':'));
+				// We will need to know what the current and upcoming time segments are
+				currIndex0 = content.indexOf('<div id="') + 9;
+				currIndex1 = content.indexOf('" class="segment-panel">');
+				currTime = content.substring(currIndex0, currIndex1);
+				nextTime = content.substring(content.indexOf('<div id="', currIndex1) + 9, content.indexOf('" class="segment-panel">', currIndex1 + 1));
+				// If there isn't a nextTime, then it's the end
+				nextTime = nextTime == "" ? $('#endTime').innerHTML : nextTime;
 
 				// This will create a temporary link DOM element that we will click for the user to download the generated file
 				var element = document.createElement('a');
@@ -925,7 +929,7 @@ function errorHandler(e) {
 	closeButtons();
 }
 
-// Here we empty the text areas
+// Here we reload the page
 function clearBoxes() {
 	if (confirm("This will clear the work in all areas.") == true) {
 		location.reload(true);
