@@ -820,29 +820,52 @@ function sortAccordion() {
 // Here we prepare the information for export
 function exportFile(sender) {
 	var file = null;
+	var type = $("ul#list-tabs li.ui-tabs-active > a")[0].innerHTML;
 
-	switch(sender) {
-		// case "xml":
-		// 	errorHandler(new Error('I do not yet function'));
-			// var content = $('#index').value + $('#transcript').value;
-			// var data = new Blob(file, {type: 'text/xml'});
-      //
-	    // file = window.URL.createObjectURL(data);
-      //
-	    // return file;
-			// break;
+	if (type.toLowerCase() == "transcript" && document.getElementById('transcript').innerHTML != '') {
+		switch (sender) {
+			case "vtt":
+			console.log($('#transcript'));
+			var content = document.getElementById('transcript').innerHTML;
 
-		case "vtt":
-			errorHandler(new Error('I do not yet function'));
+			var element = document.createElement('a');
+		  element.setAttribute('href', 'data:text/vtt;charset=utf-8,' + encodeURIComponent(content));
+		  element.setAttribute('download', 'transcript.vtt');
+
+		  element.style.display = 'none';
+		  document.body.appendChild(element);
+		  element.click();
+		  document.body.removeChild(element);
+
 			break;
 
-		// case "anno":
-		// 	errorHandler(new Error('I do not yet function'));
-		//   break;
+			default:
+				errorHandler(new Error("This function is still under development."));
+				break;
+		}
+	}
+	else if (type.toLowerCase() == "index" && $('indexAccordion') != '') {
+		switch (sender) {
+			case "vtt":
+			var content = $('indexAccordion').innerHTML;
 
-		default:
-			errorHandler(new Error('This function is still in development.'));
+			var element = document.createElement('a');
+		  element.setAttribute('href', 'data:text/vtt;charset=utf-8,' + encodeURIComponent(content));
+		  element.setAttribute('download', 'transcript.vtt');
+
+		  element.style.display = 'none';
+		  document.body.appendChild(element);
+		  element.click();
+		  document.body.removeChild(element);
 			break;
+
+			default:
+				errorHandler(new Error("This function is still under development."));
+				break;
+		}
+	}
+	else {
+		errorHandler(new Error("The selected transcript or index document is empty."));
 	}
 }
 
