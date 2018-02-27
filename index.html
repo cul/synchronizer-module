@@ -72,6 +72,25 @@
 					</div><!-- /#media-playback -->
 
 					<div id="interview-metadata"></div><!-- /#interview-metadata -->
+
+					<div><p>&nbsp;</p></div>
+
+					<div id="finish-area" class="hidden">
+						<!-- Whether you're previewing or exporting a transcript or an index is determined by which tab is active. -->
+						<div class="btn-group" role="group">
+							<button id="preview" type="button" class="btn btn-secondary">Preview</button>
+							<div class="btn-group" role="group">
+						    <button id="export" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						      Export
+						    </button>
+						    <div class="dropdown-menu" aria-labelledby="btnGroupExport">
+						      <a id="downloadVTT" class="dropdown-item" onclick="exportFile('vtt')">Download VTT</a>
+						      <!-- <a id="downloadAnno" class="dropdown-item" onclick="exportFile('anno')">Download WebAnno</a>
+						      <a id="downloadXML" class="dropdown-item" onclick="exportFile('xml')">Download XML</a> -->
+						    </div>
+						  </div>
+						</div>
+					</div><!-- /#finish-area -->
 				</div><!-- /#left-sidebar -->
 
 				<div id="right-sidebar">
@@ -137,21 +156,6 @@
 					</div><!-- /#text-tabs -->
 				</div><!-- /#right-sidebar -->
 			</div><!-- /#working-area -->
-
-			<div id="finish-area" class="col-md-8 pull-right hidden">
-				<div class="btn-group" role="group">
-					<div class="btn-group" role="group">
-				    <button id="export" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-				      Export
-				    </button>
-				    <div class="dropdown-menu" aria-labelledby="btnGroupExport">
-				      <a id="downloadVTT" class="dropdown-item" onclick="exportFile('vtt')">Download VTT</a>
-				      <a id="downloadAnno" class="dropdown-item" onclick="exportFile('anno')">Download WebAnno</a>
-				      <a id="downloadXML" class="dropdown-item" onclick="exportFile('xml')">Download XML</a>
-				    </div>
-				  </div>
-				</div>
-			</div><!-- /#finish-area -->
 
     </div><!-- /#main -->
 

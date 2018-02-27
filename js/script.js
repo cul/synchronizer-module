@@ -3,8 +3,8 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 02/23/2018
-	 Version: 0.4.1
+   Date: 02/27/2018
+	 Version: 0.4.2
 */
 
 /** Import Functions **/
@@ -162,7 +162,8 @@ function renderVideo(file) {
 			$("#video").show();
 			$("#audio").hide();
 			$("#tag-segment-btn").show();
-			if (document.getElementById('transcript').innerHTML != '') $("#sync-controls").show();
+			$("#finish-area").show();
+			if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
 			uploadSuccess(file);
   	}
   }
@@ -179,7 +180,8 @@ function renderVideo(file) {
 }
 
 function loadYouTube(id) {
-	if (document.getElementById('transcript').innerHTML != '') $("#sync-controls").show();
+	if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
+	$("#finish-area").show();
 	$("#tag-segment-btn").show();
 	$("#media-upload").hide();
 
@@ -258,7 +260,8 @@ function renderAudio(file) {
 			$("#audio").show();
 			$("#video").hide();
 			$("#tag-segment-btn").show();
-			if (document.getElementById('transcript').innerHTML != '') $("#sync-controls").show();
+			$("#finish-area").show();
+			if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
 			uploadSuccess(file);
   	}
   }
@@ -285,6 +288,8 @@ function renderText(file, ext) {
 			if (fileType == 'index') {
 				// VTT Parsing
 				if (ext === 'vtt') {
+					$("#finish-area").show();
+
 					if (target.indexOf("WEBVTT") === -1) errorHandler(new Error("Not a valid VTT index file."));
 					else {
 						// If there is interview-level metadata, we need to grab it
@@ -292,7 +297,7 @@ function renderText(file, ext) {
 							uploadSuccess(file);
 
 							// We'll break up the file line by line
-							var text = target.split(/\r\n/);
+							var text = target.split(/\r?\n|\r/);
 
 							// First we pull out the interview-level metadata
 							var k = 0;
@@ -403,13 +408,15 @@ function renderText(file, ext) {
 			else if (fileType == 'transcript') {
 				// VTT Parsing
 				if (ext === 'vtt') {
+					$("#finish-area").show();
+
 					if (!(/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(target)) || target.indexOf("WEBVTT") === -1) errorHandler(new Error("Not a valid VTT transcript file."));
 					else {
 						if ($("#audio").is(':visible') || $("#video").is(':visible') || document.getElementById("ytplayer").innerHTML != '') $("#sync-controls").show();
 						uploadSuccess(file);
 
 						// We'll break up the file line by line
-						var text = target.split(/\r\n/);
+						var text = target.split(/\r?\n|\r/);
 
 						// We implement a Web Worker because larger transcript files will freeze the browser
 						if (window.Worker) {
@@ -707,7 +714,7 @@ function tagSave() {
 			var editPanel = document.getElementById(edit);
 			editPanel.remove();
 		}
-		
+
 		var panel = '<div id="' + timestamp + '" class="segment-panel">';
 		panel += '<h3>' + timestamp + "-" + title + '</h3>';
 		panel += '<div>';
@@ -815,26 +822,26 @@ function exportFile(sender) {
 	var file = null;
 
 	switch(sender) {
-		case "xml":
-			errorHandler(new Error('I do not yet function'));
+		// case "xml":
+		// 	errorHandler(new Error('I do not yet function'));
 			// var content = $('#index').value + $('#transcript').value;
 			// var data = new Blob(file, {type: 'text/xml'});
       //
 	    // file = window.URL.createObjectURL(data);
       //
 	    // return file;
-			break;
+			// break;
 
 		case "vtt":
 			errorHandler(new Error('I do not yet function'));
 			break;
 
-		case "anno":
-			errorHandler(new Error('I do not yet function'));
-		  break;
+		// case "anno":
+		// 	errorHandler(new Error('I do not yet function'));
+		//   break;
 
 		default:
-			errorHandler(new Error('I do not yet function'));
+			errorHandler(new Error('This function is still in development.'));
 			break;
 	}
 }
@@ -889,6 +896,7 @@ function closeButtons() {
 	$("#tag-controls-ap").hide();
 	$("#tag-controls-yt").hide();
 	$("#sync-controls").hide();
+	$("#finish-area").hide();
 
 	// Initialize close buttons, tabs, and accordion
 	closeButtons();
