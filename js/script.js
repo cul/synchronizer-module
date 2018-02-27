@@ -819,40 +819,77 @@ function sortAccordion() {
 
 // Here we prepare the information for export
 function exportFile(sender) {
-	var file = null;
 	var type = $("ul#list-tabs li.ui-tabs-active > a")[0].innerHTML;
 
 	if (type.toLowerCase() == "transcript" && document.getElementById('transcript').innerHTML != '') {
 		switch (sender) {
 			case "vtt":
-			console.log($('#transcript'));
-			var content = document.getElementById('transcript').innerHTML;
+				var minute = '';
+				var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n\r');
+				var content = document.getElementById('transcript').innerHTML;
 
-			var element = document.createElement('a');
-		  element.setAttribute('href', 'data:text/vtt;charset=utf-8,' + encodeURIComponent(content));
-		  element.setAttribute('download', 'transcript.vtt');
+				// Need to find the first minute marker, because the first chunk of transcript is 0 to that minute
+				minute = content.substring(content.indexOf("{") + 1, content.indexOf("}"));
+				minute = minute.substring(0, minute.indexOf(':'));
+				minute = (parseInt(minute) < 10) ? '0' + minute : minute;
 
-		  element.style.display = 'none';
-		  document.body.appendChild(element);
-		  element.click();
-		  document.body.removeChild(element);
+				// Replace our temporary content with the real data for the export
+				content = 'WEBVTT\n\r\n\r' + metadata + '\n\r';
+				content += '\n\r00:00:00.000 --> 00:' + minute + ':00.000\n\r';
+				content += document.getElementById('transcript').innerHTML;
+				content = content.replace(/<\/span>/g, '').replace(/<span class="transcript-word">/g, '').replace(/&nbsp;/g, ' ').replace(/<span class="transcript-word transcript-clicked">/g, '');
 
-			break;
+				// This will help us find the rest of the minutes, as they are marked appropriately
+				while (/([0-9]:00})+/.test(content)) {
+					var newMin = '';
+					var currMin = '';
+
+					minute = content.substring(content.indexOf("{") + 1, content.indexOf("}"));
+					minute = minute.substring(0, minute.indexOf(':'));
+					currMin = (parseInt(minute) < 10) ? '0' + minute : minute;
+					newMin = (parseInt(currMin) + 1);
+					newMin = (parseInt(newMin) < 10) ? '0' + newMin : newMin;
+
+					if (parseInt(currMin) < 60) {
+						content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} ', '\n\r00:' + currMin + ':00.000 --> 00:' + newMin + ':00.000\n\r');
+					}
+					else {
+						var hour = '';
+						hour = (parseInt(newMin) % 60);
+						currMin -= (parseInt(hour) * 60);
+						newMin = (parseInt(currMin) + 1);
+
+						hour = (parseInt(hour) < 10) ? '0' + hour : hour;
+						content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} <span class="transcript-word transcript-clicked">', '\n\r' + hour + ':' + currMin + ':00.000 --> ' + hour + ':' + newMin + ':00.000\n\r');
+					}
+				}
+
+				// This will create a temporary link DOM element that we will click for the user to download the generated file
+				var element = document.createElement('a');
+			  element.setAttribute('href', 'data:text/vtt;charset=utf-8,' + encodeURIComponent(content));
+			  element.setAttribute('download', 'transcript.vtt');
+			  element.style.display = 'none';
+			  document.body.appendChild(element);
+			  element.click();
+			  document.body.removeChild(element);
+
+				break;
 
 			default:
 				errorHandler(new Error("This function is still under development."));
 				break;
 		}
 	}
-	else if (type.toLowerCase() == "index" && $('indexAccordion') != '') {
+	else if (type.toLowerCase() == "index" && $('#indexAccordion') != '') {
 		switch (sender) {
 			case "vtt":
-			var content = $('indexAccordion').innerHTML;
+			var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n\r');
+			var content = 'WEBVTT\n\r\n\r' + metadata + '\n\r' + $('#indexAccordion')[0].innerHTML;
 
+			// This will create a temporary link DOM element that we will click for the user to download the generated file
 			var element = document.createElement('a');
 		  element.setAttribute('href', 'data:text/vtt;charset=utf-8,' + encodeURIComponent(content));
-		  element.setAttribute('download', 'transcript.vtt');
-
+		  element.setAttribute('download', 'index.vtt');
 		  element.style.display = 'none';
 		  document.body.appendChild(element);
 		  element.click();
