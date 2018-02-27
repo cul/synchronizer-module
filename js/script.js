@@ -333,6 +333,7 @@ function renderText(file, ext) {
 								// We are only concerned with timestamped segments at this point of the parsing
 								if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[i])) {
 									timestamp = text[i].substring(0, 12);
+									$('#endTime').innerHTML = text[i].substring(17);;
 
 									while (text[i] !== "}" && i < text.length) {
 										if (/("title":)+/.test(text[i])) {
@@ -836,8 +837,7 @@ function exportFile(sender) {
 				// Replace our temporary content with the real data for the export
 				content = 'WEBVTT\n\r\n\r' + metadata + '\n\r';
 				content += '\n\r00:00:00.000 --> 00:' + minute + ':00.000\n\r';
-				content += document.getElementById('transcript').innerHTML;
-				content = content.replace(/<\/span>/g, '').replace(/<span class="transcript-word">/g, '').replace(/&nbsp;/g, ' ').replace(/<span class="transcript-word transcript-clicked">/g, '');
+				content += document.getElementById('transcript').innerHTML.replace(/<\/span>/g, '').replace(/<span class="transcript-word">/g, '').replace(/&nbsp;/g, ' ').replace(/<span class="transcript-word transcript-clicked">/g, '');
 
 				// This will help us find the rest of the minutes, as they are marked appropriately
 				while (/([0-9]:00})+/.test(content)) {
@@ -851,7 +851,7 @@ function exportFile(sender) {
 					newMin = (parseInt(newMin) < 10) ? '0' + newMin : newMin;
 
 					if (parseInt(currMin) < 60) {
-						content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} ', '\n\r00:' + currMin + ':00.000 --> 00:' + newMin + ':00.000\n\r');
+						content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} ', '\n\r\n\r00:' + currMin + ':00.000 --> 00:' + newMin + ':00.000\n\r');
 					}
 					else {
 						var hour = '';
@@ -860,7 +860,7 @@ function exportFile(sender) {
 						newMin = (parseInt(currMin) + 1);
 
 						hour = (parseInt(hour) < 10) ? '0' + hour : hour;
-						content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} <span class="transcript-word transcript-clicked">', '\n\r' + hour + ':' + currMin + ':00.000 --> ' + hour + ':' + newMin + ':00.000\n\r');
+						content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} <span class="transcript-word transcript-clicked">', '\n\r\n\r' + hour + ':' + currMin + ':00.000 --> ' + hour + ':' + newMin + ':00.000\n\r');
 					}
 				}
 
@@ -883,18 +883,26 @@ function exportFile(sender) {
 	else if (type.toLowerCase() == "index" && $('#indexAccordion') != '') {
 		switch (sender) {
 			case "vtt":
-			var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n\r');
-			var content = 'WEBVTT\n\r\n\r' + metadata + '\n\r' + $('#indexAccordion')[0].innerHTML;
+				var currTime = '';
+				var nextTime = $('#endTime').innerHTML;
+				var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n\r');
+				var content = 'WEBVTT\n\r\n\r' + metadata + '\n\r' + $('#indexAccordion')[0].innerHTML;
 
-			// This will create a temporary link DOM element that we will click for the user to download the generated file
-			var element = document.createElement('a');
-		  element.setAttribute('href', 'data:text/vtt;charset=utf-8,' + encodeURIComponent(content));
-		  element.setAttribute('download', 'index.vtt');
-		  element.style.display = 'none';
-		  document.body.appendChild(element);
-		  element.click();
-		  document.body.removeChild(element);
-			break;
+				// We will need to know what the upcoming time segment is (if it's not the end)
+
+				currTime = content.substring(content.indexOf('<div id="') + 1, content.indexOf('" class="segment-panel">'));
+				console.log(currTime);
+				// minute = minute.substring(0, minute.indexOf(':'));
+
+				// This will create a temporary link DOM element that we will click for the user to download the generated file
+				var element = document.createElement('a');
+			  element.setAttribute('href', 'data:text/vtt;charset=utf-8,' + encodeURIComponent(content));
+			  element.setAttribute('download', 'index.vtt');
+			  element.style.display = 'none';
+			  document.body.appendChild(element);
+			  // element.click();
+			  document.body.removeChild(element);
+				break;
 
 			default:
 				errorHandler(new Error("This function is still under development."));
@@ -918,14 +926,9 @@ function errorHandler(e) {
 }
 
 // Here we empty the text areas
-// Not currently in use
 function clearBoxes() {
-	if (confirm("This will clear the URL, index, and transcript areas.") == true) {
-		$("#index").val("");
-  	$("#transcript").val("");
-		$("#media-url-upload").val("");
-		$("#url-upload").val("");
-		$("#errorBar").hide();
+	if (confirm("This will clear the work in all areas.") == true) {
+		location.reload(true);
 	}
 }
 
