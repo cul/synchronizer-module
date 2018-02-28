@@ -372,7 +372,7 @@ function renderText(file, ext) {
 											subjects = text[i].substring(text[i].indexOf('"subjects":') + 12).replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
 											while (text[i + 1] !== "}" &&  i < text.length) {
 												i++;
-												subjects += text[i].replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
+												subjects += text[i].replace(/(\\")/g,'"').replace(/(")$/,'').replace(/^"/,'');
 											}
 										}
 
@@ -1002,6 +1002,7 @@ function closeButtons() {
     header: "> div > h3",
     autoHeight: false,
     collapsible: true,
+		clearStyle: true,
     active: false
   });
 
