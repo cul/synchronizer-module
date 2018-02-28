@@ -600,11 +600,18 @@ function syncControl(type) {
 
 		// Hitting play always resets back to the current minute marker and is offset by the roll interval
 		case "play":
+			// Begin or pause the looping [[Looping not yet implemented]]
 			if (youTube !== "") {
-				if (ytplayer.getPlayerState() == 1) ytplayer.pauseVideo();
+				if (ytplayer.getPlayerState() == 1) {
+					ytplayer.pauseVideo();
+					$('#sync-play').addClass('btn-outline-info');
+					$('#sync-play').removeClass('btn-info');
+				}
 				else {
 					ytplayer.seekTo(minute * 60 - offset);
 					ytplayer.playVideo();
+					$('#sync-play').removeClass('btn-outline-info');
+					$('#sync-play').addClass('btn-info');
 				}
 			}
 			else {
@@ -615,9 +622,14 @@ function syncControl(type) {
 				if(player.paused)	{
 					player.currentTime = minute * 60 - offset;
 					player.play();
+					$('#sync-play').removeClass('btn-outline-info');
+					$('#sync-play').addClass('btn-info');
 				}
-				else player.pause();
-
+				else {
+					player.pause();
+					$('#sync-play').addClass('btn-outline-info');
+					$('#sync-play').removeClass('btn-info');
+				}
 			}
 			break;
 
