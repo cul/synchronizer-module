@@ -292,20 +292,18 @@ function renderText(file, ext) {
 
 					if (target.indexOf("WEBVTT") !== 0) errorHandler(new Error("Not a valid VTT index file."));
 					else {
-						// If there is interview-level metadata, we need to grab it
+						// Having interview-level metadata is required
 						if (/(Title:)+/.test(target) && /(Date:)+/.test(target) && /(Identifier:)+/.test(target)) {
 							uploadSuccess(file);
 
 							// We'll break up the file line by line
 							var text = target.split(/\r?\n|\r/);
 
-							// First we pull out the interview-level metadata
 							var k = 0;
 							for (k; k < text.length; k++) {
-								// If we make it to the timestamp segments, time to stop
 								if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[k])) { break; }
 
-								// Once we find the metadata, we need all of it
+								// First we pull out the interview-level metadata
 								if (/(Title:)+/.test(text[k])) {
 									while (text[k] !== '' && k < text.length) {
 										document.getElementById('interview-metadata').innerHTML += text[k] + '<br />';
@@ -369,7 +367,7 @@ function renderText(file, ext) {
 										}
 
 										if (/("subjects":)+/.test(text[i])) {
-											subjects = text[i].substring(text[i].indexOf('"subjects":') + 12).replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
+											subjects = text[i].substring(text[i].indexOf('"subjects":') + 12).replace(/(\\")/g,'"').replace(/(")$/,'').replace(/^"/,'');
 											while (text[i + 1] !== "}" &&  i < text.length) {
 												i++;
 												subjects += text[i].replace(/(\\")/g,'"').replace(/(")$/,'').replace(/^"/,'');
@@ -826,7 +824,7 @@ function exportFile(sender) {
 		switch (sender) {
 			case "vtt":
 				var minute = '';
-				var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n\r');
+				var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
 				var content = document.getElementById('transcript').innerHTML;
 
 				// Need to find the first minute marker, because the first chunk of transcript is 0 to that minute
@@ -883,8 +881,8 @@ function exportFile(sender) {
 	else if (type.toLowerCase() == "index" && $('#indexAccordion') != '') {
 		switch (sender) {
 			case "vtt":
-				var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n\r');
-				var content = 'WEBVTT\n\r\n\r' + metadata + '\n\r';
+				var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
+				var content = 'WEBVTT\n\r\n\r' + metadata + '\n\r\n\r';
 
 				// We'll break up the text by segments
 				var text = $('#indexAccordion')[0].innerHTML.split(/<\/div><\/div>/);
@@ -916,11 +914,11 @@ function exportFile(sender) {
 					partialTranscript = text[i].substring(text[i].indexOf("tag-partial-transcript") + 24, text[i].indexOf("</span>", text[i].indexOf("tag-partial-transcript")));
 
 					content += currTime + ' --> ' + nextTime + '\n\r{\n\r';
-					content += '\t"title": "' + title + '",\n\r';
-					content += '\t"partial_transcript": "' + partialTranscript + '",\n\r';
-					content += '\t"description": "' + description + '",\n\r';
-					content += '\t"keywords": "' + keywords + '",\n\r';
-					content += '\t"subjects": "' + subjects + '"\n\r';
+					content += '  "title": "' + title.replace(/"/g, '\\"') + '",\n\r';
+					content += '  "partial_transcript": "' + partialTranscript.replace(/"/g, '\\"') + '",\n\r';
+					content += '  "description": "' + description.replace(/"/g, '\\"') + '",\n\r';
+					content += '  "keywords": "' + keywords.replace(/"/g, '\\"') + '",\n\r';
+					content += '  "subjects": "' + subjects.replace(/"/g, '\\"') + '"\n\r';
 					content += '}\n\r\n\r\n\r';
 				}
 
@@ -1036,6 +1034,12 @@ function closeButtons() {
 			updateTimestampYT();
 		}
 	});
+
+	// If the dropdown list is changed, change the active tab to the selected dropdown item
+	$("#file-type").click(function() {
+		var selected = "#tabs-" + $("#file-type").val();
+    $('#text-tabs a[href="' + selected + '"]').trigger('click');
+  });
 
 	// Load YouTube API
 	var tag = document.createElement('script');
