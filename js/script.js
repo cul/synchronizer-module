@@ -3,7 +3,7 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 02/27/2018
+   Date: 02/28/2018
 	 Version: 0.4.2
 */
 
@@ -290,7 +290,7 @@ function renderText(file, ext) {
 				if (ext === 'vtt') {
 					$("#finish-area").show();
 
-					if (target.indexOf("WEBVTT") === -1) errorHandler(new Error("Not a valid VTT index file."));
+					if (target.indexOf("WEBVTT") !== 0) errorHandler(new Error("Not a valid VTT index file."));
 					else {
 						// If there is interview-level metadata, we need to grab it
 						if (/(Title:)+/.test(target) && /(Date:)+/.test(target) && /(Identifier:)+/.test(target)) {
@@ -333,7 +333,7 @@ function renderText(file, ext) {
 								// We are only concerned with timestamped segments at this point of the parsing
 								if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[i])) {
 									timestamp = text[i].substring(0, 12);
-									$('#endTime').innerHTML = text[i].substring(17);;
+									document.getElementById('endTime').innerHTML = text[i].substring(17);
 
 									while (text[i] !== "}" && i < text.length) {
 										if (/("title":)+/.test(text[i])) {
@@ -411,7 +411,7 @@ function renderText(file, ext) {
 				if (ext === 'vtt') {
 					$("#finish-area").show();
 
-					if (!(/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(target)) || target.indexOf("WEBVTT") === -1) errorHandler(new Error("Not a valid VTT transcript file."));
+					if (!(/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(target)) || target.indexOf("WEBVTT") !== 0) errorHandler(new Error("Not a valid VTT transcript file."));
 					else {
 						if ($("#audio").is(':visible') || $("#video").is(':visible') || document.getElementById("ytplayer").innerHTML != '') $("#sync-controls").show();
 						uploadSuccess(file);
@@ -883,20 +883,46 @@ function exportFile(sender) {
 	else if (type.toLowerCase() == "index" && $('#indexAccordion') != '') {
 		switch (sender) {
 			case "vtt":
-				var currTime = '';
-				var currIndex0 = 0;
-				var currIndex1 = 0;
-				var nextTime = '';
 				var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n\r');
-				var content = 'WEBVTT\n\r\n\r' + metadata + '\n\r' + $('#indexAccordion')[0].innerHTML;
+				var content = 'WEBVTT\n\r\n\r' + metadata + '\n\r';
 
-				// We will need to know what the current and upcoming time segments are
-				currIndex0 = content.indexOf('<div id="') + 9;
-				currIndex1 = content.indexOf('" class="segment-panel">');
-				currTime = content.substring(currIndex0, currIndex1);
-				nextTime = content.substring(content.indexOf('<div id="', currIndex1) + 9, content.indexOf('" class="segment-panel">', currIndex1 + 1));
-				// If there isn't a nextTime, then it's the end
-				nextTime = nextTime == "" ? $('#endTime').innerHTML : nextTime;
+				// We'll break up the text by segments
+				var text = $('#indexAccordion')[0].innerHTML.split(/<\/div><\/div>/);
+
+				for (var i = 0; i < text.length - 1; i++) {
+					var currTime = '';
+					var currIndex0 = 0;
+					var currIndex1 = 0;
+					var nextTime = '';
+					var title = '';
+					var partialTranscript = '';
+					var description = '';
+					var keywords = '';
+					var subjects = '';
+
+					// We will need to know what the current and upcoming time segments are
+					currIndex0 = text[i].indexOf('<div id="') + 9;
+					currIndex1 = text[i].indexOf('" class="segment-panel">');
+					currTime = text[i].substring(currIndex0, currIndex1);
+
+					// If there isn't a nextTime, then it's the end
+					nextTime = i < text.length - 2 ? text[i + 1].substring(text[i + 1].indexOf('<div id="') + 9, text[i + 1].indexOf('" class="segment-panel">')) : document.getElementById('endTime').innerHTML;
+
+					// Substring city to get all of the data
+					title = text[i].substring(text[i].indexOf('</span>' + currTime + '-') + 20, text[i].indexOf("</h3>"));
+					description = text[i].substring(text[i].indexOf("tag-segment-synopsis") + 22, text[i].indexOf("</span>", text[i].indexOf("tag-segment-synopsis")));
+					keywords = text[i].substring(text[i].indexOf("tag-keywords") + 14, text[i].indexOf("</span>", text[i].indexOf("tag-keywords")));
+					subjects = text[i].substring(text[i].indexOf("tag-subjects") + 14, text[i].indexOf("</span>", text[i].indexOf("tag-subjects")));
+					partialTranscript = text[i].substring(text[i].indexOf("tag-partial-transcript") + 24, text[i].indexOf("</span>", text[i].indexOf("tag-partial-transcript")));
+
+					content += currTime + ' --> ' + nextTime + '\n\r{\n\r';
+					content += '\t"title": "' + title + '",\n\r';
+					content += '\t"partial_transcript": "' + partialTranscript + '",\n\r';
+					content += '\t"description": "' + description + '",\n\r';
+					content += '\t"keywords": "' + keywords + '",\n\r';
+					content += '\t"subjects": "' + subjects + '"\n\r';
+					content += '}\n\r\n\r\n\r';
+				}
 
 				// This will create a temporary link DOM element that we will click for the user to download the generated file
 				var element = document.createElement('a');
@@ -904,7 +930,7 @@ function exportFile(sender) {
 			  element.setAttribute('download', 'index.vtt');
 			  element.style.display = 'none';
 			  document.body.appendChild(element);
-			  // element.click();
+			  element.click();
 			  document.body.removeChild(element);
 				break;
 
