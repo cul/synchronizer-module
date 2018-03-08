@@ -3,7 +3,7 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 02/28/2018
+   Date: 03/08/2018
 	 Version: 0.4.2
 */
 
@@ -405,32 +405,36 @@ function renderText(file, ext) {
 				else errorHandler(new Error("Not a valid file extension."));
 			}
 			else if (fileType == 'transcript') {
+				// If there's no A/V present, there is no transcript Syncing
+				if (!($("#audio").is(':visible')) && !($("#video").is(':visible')) && document.getElementById("ytplayer").innerHTML === '') errorHandler(new Error("You must first upload an A/V file in order to sync a transcript."));
 				// VTT Parsing
-				if (ext === 'vtt') {
-					$("#finish-area").show();
+				else {
+					if (ext === 'vtt') {
+						$("#finish-area").show();
 
-					if (!(/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(target)) || target.indexOf("WEBVTT") !== 0) errorHandler(new Error("Not a valid VTT transcript file."));
-					else {
-						if ($("#audio").is(':visible') || $("#video").is(':visible') || document.getElementById("ytplayer").innerHTML != '') $("#sync-controls").show();
-						uploadSuccess(file);
+						if (!(/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(target)) || target.indexOf("WEBVTT") !== 0) errorHandler(new Error("Not a valid VTT transcript file."));
+						else {
+							if ($("#audio").is(':visible') || $("#video").is(':visible') || document.getElementById("ytplayer").innerHTML != '') $("#sync-controls").show();
+							uploadSuccess(file);
 
-						// We'll break up the file line by line
-						var text = target.split(/\r?\n|\r/);
+							// We'll break up the file line by line
+							var text = target.split(/\r?\n|\r/);
 
-						// We implement a Web Worker because larger transcript files will freeze the browser
-						if (window.Worker) {
-							var textWorker = new Worker("js/transcript.js");
-							textWorker.postMessage(text);
-							textWorker.onmessage = function(e) {
-								document.getElementById('transcript').innerHTML += e.data;
+							// We implement a Web Worker because larger transcript files will freeze the browser
+							if (window.Worker) {
+								var textWorker = new Worker("js/transcript.js");
+								textWorker.postMessage(text);
+								textWorker.onmessage = function(e) {
+									document.getElementById('transcript').innerHTML += e.data;
 
-							  // Enable click functions, addSyncMarker calls all three functions
-								addSyncMarker();
+								  // Enable click functions, addSyncMarker calls all three functions
+									addSyncMarker();
+								}
 							}
 						}
 					}
+					else errorHandler(new Error("Not a valid file extension."));
 				}
-				else errorHandler(new Error("Not a valid file extension."));
 			}
 			else { errorHandler(new Error("No example file for parsing index and transcript data together available.")); }
 		}
@@ -599,8 +603,8 @@ function syncControl(type) {
 			break;
 
 		// Hitting play always resets back to the current minute marker and is offset by the roll interval
+		// Begin or pause the looping [[Looping not yet implemented]]
 		case "play":
-			// Begin or pause the looping [[Looping not yet implemented]]
 			if (youTube !== "") {
 				if (ytplayer.getPlayerState() == 1) {
 					ytplayer.pauseVideo();
@@ -828,51 +832,152 @@ function sortAccordion() {
 
 /** Export Functions **/
 
-// Here we prepare the information for export
+// Here we prepare transcript data for VTT files
+function transcriptVTT() {
+	var minute = '';
+	var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
+	var content = document.getElementById('transcript').innerHTML;
+
+	// Need to find the first minute marker, because the first chunk of transcript is 0 to that minute
+	minute = content.substring(content.indexOf("{") + 1, content.indexOf("}"));
+	minute = minute.substring(0, minute.indexOf(':'));
+	minute = (parseInt(minute) < 10) ? '0' + minute : minute;
+
+	// Replace our temporary content with the real data for the export
+	content = 'WEBVTT\n\r\n\r' + metadata + '\n\r';
+	content += '\n\r00:00:00.000 --> 00:' + minute + ':00.000\n\r';
+	content += document.getElementById('transcript').innerHTML.replace(/<\/span>/g, '').replace(/<span class="transcript-word">/g, '').replace(/&nbsp;/g, ' ').replace(/<span class="transcript-word transcript-clicked">/g, '');
+
+	// This will help us find the rest of the minutes, as they are marked appropriately
+	while (/([0-9]:00})+/.test(content)) {
+		var newMin = '';
+		var currMin = '';
+
+		minute = content.substring(content.indexOf("{") + 1, content.indexOf("}"));
+		minute = minute.substring(0, minute.indexOf(':'));
+		currMin = (parseInt(minute) < 10) ? '0' + minute : minute;
+		newMin = (parseInt(currMin) + 1);
+		newMin = (parseInt(newMin) < 10) ? '0' + newMin : newMin;
+
+		if (parseInt(currMin) < 60) {
+			content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} ', '\n\r\n\r00:' + currMin + ':00.000 --> 00:' + newMin + ':00.000\n\r');
+		}
+		else {
+			var hour = '';
+			hour = (parseInt(newMin) % 60);
+			currMin -= (parseInt(hour) * 60);
+			newMin = (parseInt(currMin) + 1);
+
+			hour = (parseInt(hour) < 10) ? '0' + hour : hour;
+			content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} <span class="transcript-word transcript-clicked">', '\n\r\n\r' + hour + ':' + currMin + ':00.000 --> ' + hour + ':' + newMin + ':00.000\n\r');
+		}
+	}
+}
+
+// Here we prepare index data for VTT files
+function indexVTT() {
+	var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
+	var content = 'WEBVTT\n\r\n\r' + metadata + '\n\r\n\r';
+
+	// We'll break up the text by segments
+	var text = $('#indexAccordion')[0].innerHTML.split(/<\/div><\/div>/);
+
+	for (var i = 0; i < text.length - 1; i++) {
+		var currTime = '';
+		var currIndex0 = 0;
+		var currIndex1 = 0;
+		var nextTime = '';
+		var title = '';
+		var partialTranscript = '';
+		var description = '';
+		var keywords = '';
+		var subjects = '';
+
+		// We will need to know what the current and upcoming time segments are
+		currIndex0 = text[i].indexOf('<div id="') + 9;
+		currIndex1 = text[i].indexOf('" class="segment-panel">');
+		currTime = text[i].substring(currIndex0, currIndex1);
+
+		// If there isn't a nextTime, then it's the end
+		nextTime = i < text.length - 2 ? text[i + 1].substring(text[i + 1].indexOf('<div id="') + 9, text[i + 1].indexOf('" class="segment-panel">')) : document.getElementById('endTime').innerHTML;
+
+		// Substring city to get all of the data
+		title = text[i].substring(text[i].indexOf('</span>' + currTime + '-') + 20, text[i].indexOf("</h3>"));
+		description = text[i].substring(text[i].indexOf("tag-segment-synopsis") + 22, text[i].indexOf("</span>", text[i].indexOf("tag-segment-synopsis")));
+		keywords = text[i].substring(text[i].indexOf("tag-keywords") + 14, text[i].indexOf("</span>", text[i].indexOf("tag-keywords")));
+		subjects = text[i].substring(text[i].indexOf("tag-subjects") + 14, text[i].indexOf("</span>", text[i].indexOf("tag-subjects")));
+		partialTranscript = text[i].substring(text[i].indexOf("tag-partial-transcript") + 24, text[i].indexOf("</span>", text[i].indexOf("tag-partial-transcript")));
+
+		content += currTime + ' --> ' + nextTime + '\n\r{\n\r';
+		content += '  "title": "' + title.replace(/"/g, '\\"') + '",\n\r';
+		content += '  "partial_transcript": "' + partialTranscript.replace(/"/g, '\\"') + '",\n\r';
+		content += '  "description": "' + description.replace(/"/g, '\\"') + '",\n\r';
+		content += '  "keywords": "' + keywords.replace(/"/g, '\\"') + '",\n\r';
+		content += '  "subjects": "' + subjects.replace(/"/g, '\\"') + '"\n\r';
+		content += '}\n\r\n\r\n\r';
+	}
+}
+
+// Here we use VTT-prepared data to preview the end result
+// TODO: create the modal and player for this
+// TODO: change youtube player to ableplayer youtube
+function previewWork() {
+	var type = $("ul#list-tabs li.ui-tabs-active > a")[0].innerHTML;
+	var youTube = document.getElementById("ytplayer").innerHTML;
+
+	if ($('#media-upload').visible) errorHandler(new Error("You must first upload media in order to preview."));
+	else if (youTube !== '') errorHandler(new Error("Preview does not currently work with YouTube videos."));
+	else if (type.toLowerCase() == "transcript" && document.getElementById('transcript').innerHTML != '') {
+		var content = transcriptVTT();
+
+		// This will create a temporary link DOM element that we will use as a temp file
+		var element = document.createElement('div');
+		element.id = 'preview-transcript';
+	  element.innerText = encodeURIComponent(content);
+	  document.body.appendChild(element);
+		// Assign the document to the A/V player
+		var videoSrc = document.getElementById('video-player').src;
+
+		var videoPre = document.createElement('video');
+		videoPre.src = videoSrc;
+		video.autoplay = true;
+
+
+		var video = document.getElementById('video-player');
+		var att = document.createElement(tagName)
+		video.appendChild('data-transcript-div', 'preview-transcript');
+
+	  // document.body.removeChild(element);
+	}
+	else if (type.toLowerCase() == "index" && $('#indexAccordion') != '') {
+		var content = indexVTT();
+
+		// This will create a temporary link DOM element that we will use as a temp file
+		var element = document.createElement('div');
+	  element.innerText = encodeURIComponent(content);
+	  element.style.display = 'none';
+	  document.body.appendChild(element);
+		// Assign the document to the A/V player
+		var source = document.createElement('source');
+		source.src = src;
+		source.kind = 'metadata';
+		element.appendChild(source); // video player
+
+	  document.body.removeChild(element);
+	}
+	else {
+		errorHandler(new Error("The selected transcript or index document is empty."));
+	}
+}
+
+// Here we use prepared data for export to a downloadable file
 function exportFile(sender) {
 	var type = $("ul#list-tabs li.ui-tabs-active > a")[0].innerHTML;
 
 	if (type.toLowerCase() == "transcript" && document.getElementById('transcript').innerHTML != '') {
 		switch (sender) {
 			case "vtt":
-				var minute = '';
-				var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
-				var content = document.getElementById('transcript').innerHTML;
-
-				// Need to find the first minute marker, because the first chunk of transcript is 0 to that minute
-				minute = content.substring(content.indexOf("{") + 1, content.indexOf("}"));
-				minute = minute.substring(0, minute.indexOf(':'));
-				minute = (parseInt(minute) < 10) ? '0' + minute : minute;
-
-				// Replace our temporary content with the real data for the export
-				content = 'WEBVTT\n\r\n\r' + metadata + '\n\r';
-				content += '\n\r00:00:00.000 --> 00:' + minute + ':00.000\n\r';
-				content += document.getElementById('transcript').innerHTML.replace(/<\/span>/g, '').replace(/<span class="transcript-word">/g, '').replace(/&nbsp;/g, ' ').replace(/<span class="transcript-word transcript-clicked">/g, '');
-
-				// This will help us find the rest of the minutes, as they are marked appropriately
-				while (/([0-9]:00})+/.test(content)) {
-					var newMin = '';
-					var currMin = '';
-
-					minute = content.substring(content.indexOf("{") + 1, content.indexOf("}"));
-					minute = minute.substring(0, minute.indexOf(':'));
-					currMin = (parseInt(minute) < 10) ? '0' + minute : minute;
-					newMin = (parseInt(currMin) + 1);
-					newMin = (parseInt(newMin) < 10) ? '0' + newMin : newMin;
-
-					if (parseInt(currMin) < 60) {
-						content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} ', '\n\r\n\r00:' + currMin + ':00.000 --> 00:' + newMin + ':00.000\n\r');
-					}
-					else {
-						var hour = '';
-						hour = (parseInt(newMin) % 60);
-						currMin -= (parseInt(hour) * 60);
-						newMin = (parseInt(currMin) + 1);
-
-						hour = (parseInt(hour) < 10) ? '0' + hour : hour;
-						content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} <span class="transcript-word transcript-clicked">', '\n\r\n\r' + hour + ':' + currMin + ':00.000 --> ' + hour + ':' + newMin + ':00.000\n\r');
-					}
-				}
+				var content = transcriptVTT();
 
 				// This will create a temporary link DOM element that we will click for the user to download the generated file
 				var element = document.createElement('a');
@@ -893,46 +998,7 @@ function exportFile(sender) {
 	else if (type.toLowerCase() == "index" && $('#indexAccordion') != '') {
 		switch (sender) {
 			case "vtt":
-				var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
-				var content = 'WEBVTT\n\r\n\r' + metadata + '\n\r\n\r';
-
-				// We'll break up the text by segments
-				var text = $('#indexAccordion')[0].innerHTML.split(/<\/div><\/div>/);
-
-				for (var i = 0; i < text.length - 1; i++) {
-					var currTime = '';
-					var currIndex0 = 0;
-					var currIndex1 = 0;
-					var nextTime = '';
-					var title = '';
-					var partialTranscript = '';
-					var description = '';
-					var keywords = '';
-					var subjects = '';
-
-					// We will need to know what the current and upcoming time segments are
-					currIndex0 = text[i].indexOf('<div id="') + 9;
-					currIndex1 = text[i].indexOf('" class="segment-panel">');
-					currTime = text[i].substring(currIndex0, currIndex1);
-
-					// If there isn't a nextTime, then it's the end
-					nextTime = i < text.length - 2 ? text[i + 1].substring(text[i + 1].indexOf('<div id="') + 9, text[i + 1].indexOf('" class="segment-panel">')) : document.getElementById('endTime').innerHTML;
-
-					// Substring city to get all of the data
-					title = text[i].substring(text[i].indexOf('</span>' + currTime + '-') + 20, text[i].indexOf("</h3>"));
-					description = text[i].substring(text[i].indexOf("tag-segment-synopsis") + 22, text[i].indexOf("</span>", text[i].indexOf("tag-segment-synopsis")));
-					keywords = text[i].substring(text[i].indexOf("tag-keywords") + 14, text[i].indexOf("</span>", text[i].indexOf("tag-keywords")));
-					subjects = text[i].substring(text[i].indexOf("tag-subjects") + 14, text[i].indexOf("</span>", text[i].indexOf("tag-subjects")));
-					partialTranscript = text[i].substring(text[i].indexOf("tag-partial-transcript") + 24, text[i].indexOf("</span>", text[i].indexOf("tag-partial-transcript")));
-
-					content += currTime + ' --> ' + nextTime + '\n\r{\n\r';
-					content += '  "title": "' + title.replace(/"/g, '\\"') + '",\n\r';
-					content += '  "partial_transcript": "' + partialTranscript.replace(/"/g, '\\"') + '",\n\r';
-					content += '  "description": "' + description.replace(/"/g, '\\"') + '",\n\r';
-					content += '  "keywords": "' + keywords.replace(/"/g, '\\"') + '",\n\r';
-					content += '  "subjects": "' + subjects.replace(/"/g, '\\"') + '"\n\r';
-					content += '}\n\r\n\r\n\r';
-				}
+				var content = indexVTT();
 
 				// This will create a temporary link DOM element that we will click for the user to download the generated file
 				var element = document.createElement('a');
