@@ -237,8 +237,9 @@ function loadYouTube(id) {
 					var minutes = Math.floor(time / 60);
 					var hours = Math.floor(minutes / 60);
 
-					if (Math.floor(time) % 60 == 50) { chime1.play(); }
-					if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0) { chime2.play(); }
+					// We only play chimes if on the transcript tab
+					if (Math.floor(time) % 60 == 50 && $("#transcript").is(':visible')) { chime1.play(); }
+					if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible')) { chime2.play(); }
 
 					time = time - minutes * 60;
 					var seconds = time.toFixed(0);
@@ -657,8 +658,9 @@ function transcriptTimestamp() {
 	var minutes = Math.floor(time / 60);
 	var hours = Math.floor(minutes / 60);
 
-	if (Math.floor(time) % 60 == 50) { chime1.play(); }
-	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0) { chime2.play(); }
+	// We only play chimes if we're on the transcript tab
+	if (Math.floor(time) % 60 == 50 && $("#transcript").is(':visible')) { chime1.play(); }
+	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible')) { chime2.play(); }
 
 	time = time - minutes * 60;
 	var seconds = time.toFixed(0);
