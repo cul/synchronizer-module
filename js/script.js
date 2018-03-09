@@ -878,6 +878,8 @@ function transcriptVTT() {
 			content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} <span class="transcript-word transcript-clicked">', '\n\r\n\r' + hour + ':' + currMin + ':00.000 --> ' + hour + ':' + newMin + ':00.000\n\r');
 		}
 	}
+
+	return content;
 }
 
 // Here we prepare index data for VTT files
@@ -922,6 +924,8 @@ function indexVTT() {
 		content += '  "subjects": "' + subjects.replace(/"/g, '\\"') + '"\n\r';
 		content += '}\n\r\n\r\n\r';
 	}
+
+	return content;
 }
 
 // Here we use VTT-prepared data to preview the end result
