@@ -72,6 +72,26 @@
 					</div><!-- /#media-playback -->
 
 					<div id="interview-metadata"></div><!-- /#interview-metadata -->
+
+					<div><p>&nbsp;</p></div>
+
+					<div id="finish-area" class="">
+						<!-- Whether you're previewing or exporting a transcript or an index is determined by which tab is active. -->
+						<div class="btn-group" role="group">
+							<button id="clear" type="button" class="btn btn-secondary" onclick="clearBoxes()">Cancel Session</button>
+							<!-- <button id="preview" type="button" class="btn btn-secondary" onclick="previewWork()">Preview</button> -->
+							<div class="btn-group" role="group">
+						    <button id="export" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						      Export
+						    </button>
+						    <div class="dropdown-menu" aria-labelledby="btnGroupExport">
+						      <a id="downloadVTT" class="dropdown-item" onclick="exportFile('vtt')">Download VTT</a>
+						      <!-- <a id="downloadAnno" class="dropdown-item" onclick="exportFile('anno')">Download WebAnno</a>
+						      <a id="downloadXML" class="dropdown-item" onclick="exportFile('xml')">Download XML</a> -->
+						    </div>
+						  </div>
+						</div>
+					</div><!-- /#finish-area -->
 				</div><!-- /#left-sidebar -->
 
 				<div id="right-sidebar">
@@ -95,7 +115,7 @@
 					</div><!-- /#upload-text -->
 
 					<div id="text-tabs" class="">
-						<ul>
+						<ul id="list-tabs">
 							<li><a href="#tabs-transcript">Transcript</a></li>
 							<li><a href="#tabs-index">Index</a></li>
 							<!-- <li><a href="#tabs-preview">Preview</a></li> -->
@@ -108,7 +128,7 @@
 									<span id="sync-back" class="btn btn-info" type="button" onclick="syncControl('back')"><i class="fa fa-backward"></i></span>
 									<div id="sync-minute" class="btn btn-secondary" type="button">0</div>
 									<span id="sync-forward" class="btn btn-info" type="button" onclick="syncControl('forward')"><i class="fa fa-forward"></i></span>
-									<span id="sync-play" class="btn btn-info" type="button" onclick="syncControl('play')"><i class="fa fa-play"></i><i class="fa fa-pause"></i></span>
+									<span id="sync-play" class="btn btn-outline-info" type="button" onclick="syncControl('play')"><i class="fa fa-retweet"></i></span>
 									<div id="sync-posneg" class="btn btn-secondary" type="button"><i class="fa fa-plus"></i><i class="fa fa-minus"></i></div>
 									<input id="sync-roll" class="btn btn-secondary" type="text" maxlength="3" size="3" value="10" name="sync-roll">
 									<div id="sync-time" class="btn btn-secondary" type="button">00:00:00</div>
@@ -124,34 +144,13 @@
 
 								<div id="indexAccordion"></div>
 								<div id="editVar" class="hidden">-1</div>
+								<div id="endTime" class="hidden">0</div>
 							</div>
 						</div><!-- /#tabs-index -->
-
-						<!-- <div id="tabs-preview">
-							<div id="output-preview">
-								<h2>Preview</h2>
-								<div id="preview" class="col-md-12" >Under development.</div>
-							</div>
-						</div> /#tabs-preview -->
 
 					</div><!-- /#text-tabs -->
 				</div><!-- /#right-sidebar -->
 			</div><!-- /#working-area -->
-
-			<div id="finish-area" class="col-md-8 pull-right hidden">
-				<div class="btn-group" role="group">
-					<div class="btn-group" role="group">
-				    <button id="export" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-				      Export
-				    </button>
-				    <div class="dropdown-menu" aria-labelledby="btnGroupExport">
-				      <a id="downloadVTT" class="dropdown-item" onclick="exportFile('vtt')">Download VTT</a>
-				      <a id="downloadAnno" class="dropdown-item" onclick="exportFile('anno')">Download WebAnno</a>
-				      <a id="downloadXML" class="dropdown-item" onclick="exportFile('xml')">Download XML</a>
-				    </div>
-				  </div>
-				</div>
-			</div><!-- /#finish-area -->
 
     </div><!-- /#main -->
 
@@ -171,6 +170,12 @@
 							<label for="tag-timestamp" class="col-md-3 col-form-label">Timestamp</label>
 							<div class="col-md-9">
 								<input id="tag-timestamp" class="form-control" type="text" readonly>
+							</div>
+						</div>
+						<div class="form-group row">
+							<label for="tag-playhead" class="col-md-3 col-form-label">Current Playhead</label>
+							<div class="col-md-9">
+								<input id="tag-playhead" class="form-control" type="text" readonly>
 							</div>
 						</div>
 						<!-- AblePlayer Controls -->
