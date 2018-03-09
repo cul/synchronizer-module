@@ -3,8 +3,8 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 02/23/2018
-	 Version: 0.4.1
+   Date: 03/08/2018
+	 Version: 0.4.2
 */
 
 /** Import Functions **/
@@ -162,7 +162,8 @@ function renderVideo(file) {
 			$("#video").show();
 			$("#audio").hide();
 			$("#tag-segment-btn").show();
-			if (document.getElementById('transcript').innerHTML != '') $("#sync-controls").show();
+			$("#finish-area").show();
+			if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
 			uploadSuccess(file);
   	}
   }
@@ -179,7 +180,8 @@ function renderVideo(file) {
 }
 
 function loadYouTube(id) {
-	if (document.getElementById('transcript').innerHTML != '') $("#sync-controls").show();
+	if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
+	$("#finish-area").show();
 	$("#tag-segment-btn").show();
 	$("#media-upload").hide();
 
@@ -235,12 +237,15 @@ function loadYouTube(id) {
 					var minutes = Math.floor(time / 60);
 					var hours = Math.floor(minutes / 60);
 
-					if (Math.floor(time) % 60 == 50) { chime1.play(); }
-					if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0) { chime2.play(); }
+					// We only play chimes if on the transcript tab
+					if (Math.floor(time) % 60 == 50 && $("#transcript").is(':visible')) { chime1.play(); }
+					if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible')) { chime2.play(); }
 
 					time = time - minutes * 60;
 					var seconds = time.toFixed(0);
 					document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
+					// If the user is working on an index segment, we need to watch the playhead
+					$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
 	        last_time_update = time_update;
 	    }
 }
@@ -258,7 +263,8 @@ function renderAudio(file) {
 			$("#audio").show();
 			$("#video").hide();
 			$("#tag-segment-btn").show();
-			if (document.getElementById('transcript').innerHTML != '') $("#sync-controls").show();
+			$("#finish-area").show();
+			if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
 			uploadSuccess(file);
   	}
   }
@@ -285,22 +291,22 @@ function renderText(file, ext) {
 			if (fileType == 'index') {
 				// VTT Parsing
 				if (ext === 'vtt') {
-					if (target.indexOf("WEBVTT") === -1) errorHandler(new Error("Not a valid VTT index file."));
+					$("#finish-area").show();
+
+					if (target.indexOf("WEBVTT") !== 0) errorHandler(new Error("Not a valid VTT index file."));
 					else {
-						// If there is interview-level metadata, we need to grab it
+						// Having interview-level metadata is required
 						if (/(Title:)+/.test(target) && /(Date:)+/.test(target) && /(Identifier:)+/.test(target)) {
 							uploadSuccess(file);
 
 							// We'll break up the file line by line
-							var text = target.split(/\r\n/);
+							var text = target.split(/\r?\n|\r/);
 
-							// First we pull out the interview-level metadata
 							var k = 0;
 							for (k; k < text.length; k++) {
-								// If we make it to the timestamp segments, time to stop
 								if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[k])) { break; }
 
-								// Once we find the metadata, we need all of it
+								// First we pull out the interview-level metadata
 								if (/(Title:)+/.test(text[k])) {
 									while (text[k] !== '' && k < text.length) {
 										document.getElementById('interview-metadata').innerHTML += text[k] + '<br />';
@@ -328,6 +334,7 @@ function renderText(file, ext) {
 								// We are only concerned with timestamped segments at this point of the parsing
 								if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[i])) {
 									timestamp = text[i].substring(0, 12);
+									document.getElementById('endTime').innerHTML = text[i].substring(17);
 
 									while (text[i] !== "}" && i < text.length) {
 										if (/("title":)+/.test(text[i])) {
@@ -363,10 +370,10 @@ function renderText(file, ext) {
 										}
 
 										if (/("subjects":)+/.test(text[i])) {
-											subjects = text[i].substring(text[i].indexOf('"subjects":') + 12).replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
+											subjects = text[i].substring(text[i].indexOf('"subjects":') + 12).replace(/(\\")/g,'"').replace(/(")$/,'').replace(/^"/,'');
 											while (text[i + 1] !== "}" &&  i < text.length) {
 												i++;
-												subjects += text[i].replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
+												subjects += text[i].replace(/(\\")/g,'"').replace(/(")$/,'').replace(/^"/,'');
 											}
 										}
 
@@ -401,30 +408,36 @@ function renderText(file, ext) {
 				else errorHandler(new Error("Not a valid file extension."));
 			}
 			else if (fileType == 'transcript') {
+				// If there's no A/V present, there is no transcript Syncing
+				if (!($("#audio").is(':visible')) && !($("#video").is(':visible')) && document.getElementById("ytplayer").innerHTML === '') errorHandler(new Error("You must first upload an A/V file in order to sync a transcript."));
 				// VTT Parsing
-				if (ext === 'vtt') {
-					if (!(/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(target)) || target.indexOf("WEBVTT") === -1) errorHandler(new Error("Not a valid VTT transcript file."));
-					else {
-						if ($("#audio").is(':visible') || $("#video").is(':visible') || document.getElementById("ytplayer").innerHTML != '') $("#sync-controls").show();
-						uploadSuccess(file);
+				else {
+					if (ext === 'vtt') {
+						$("#finish-area").show();
 
-						// We'll break up the file line by line
-						var text = target.split(/\r\n/);
+						if (!(/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(target)) || target.indexOf("WEBVTT") !== 0) errorHandler(new Error("Not a valid VTT transcript file."));
+						else {
+							if ($("#audio").is(':visible') || $("#video").is(':visible') || document.getElementById("ytplayer").innerHTML != '') $("#sync-controls").show();
+							uploadSuccess(file);
 
-						// We implement a Web Worker because larger transcript files will freeze the browser
-						if (window.Worker) {
-							var textWorker = new Worker("js/transcript.js");
-							textWorker.postMessage(text);
-							textWorker.onmessage = function(e) {
-								document.getElementById('transcript').innerHTML += e.data;
+							// We'll break up the file line by line
+							var text = target.split(/\r?\n|\r/);
 
-							  // Enable click functions, addSyncMarker calls all three functions
-								addSyncMarker();
+							// We implement a Web Worker because larger transcript files will freeze the browser
+							if (window.Worker) {
+								var textWorker = new Worker("js/transcript.js");
+								textWorker.postMessage(text);
+								textWorker.onmessage = function(e) {
+									document.getElementById('transcript').innerHTML += e.data;
+
+								  // Enable click functions, addSyncMarker calls all three functions
+									addSyncMarker();
+								}
 							}
 						}
 					}
+					else errorHandler(new Error("Not a valid file extension."));
 				}
-				else errorHandler(new Error("Not a valid file extension."));
 			}
 			else { errorHandler(new Error("No example file for parsing index and transcript data together available.")); }
 		}
@@ -593,12 +606,19 @@ function syncControl(type) {
 			break;
 
 		// Hitting play always resets back to the current minute marker and is offset by the roll interval
+		// Begin or pause the looping [[Looping not yet implemented]]
 		case "play":
 			if (youTube !== "") {
-				if (ytplayer.getPlayerState() == 1) ytplayer.pauseVideo();
+				if (ytplayer.getPlayerState() == 1) {
+					ytplayer.pauseVideo();
+					$('#sync-play').addClass('btn-outline-info');
+					$('#sync-play').removeClass('btn-info');
+				}
 				else {
 					ytplayer.seekTo(minute * 60 - offset);
 					ytplayer.playVideo();
+					$('#sync-play').removeClass('btn-outline-info');
+					$('#sync-play').addClass('btn-info');
 				}
 			}
 			else {
@@ -609,9 +629,14 @@ function syncControl(type) {
 				if(player.paused)	{
 					player.currentTime = minute * 60 - offset;
 					player.play();
+					$('#sync-play').removeClass('btn-outline-info');
+					$('#sync-play').addClass('btn-info');
 				}
-				else player.pause();
-
+				else {
+					player.pause();
+					$('#sync-play').addClass('btn-outline-info');
+					$('#sync-play').removeClass('btn-info');
+				}
 			}
 			break;
 
@@ -635,12 +660,15 @@ function transcriptTimestamp() {
 	var minutes = Math.floor(time / 60);
 	var hours = Math.floor(minutes / 60);
 
-	if (Math.floor(time) % 60 == 50) { chime1.play(); }
-	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0) { chime2.play(); }
+	// We only play chimes if we're on the transcript tab
+	if (Math.floor(time) % 60 == 50 && $("#transcript").is(':visible')) { chime1.play(); }
+	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible')) { chime2.play(); }
 
 	time = time - minutes * 60;
 	var seconds = time.toFixed(0);
 	document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
+	// If the user is working on an index segment, we need to watch the playhead
+	$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
 }
 
 /** Index Segment Functions **/
@@ -707,7 +735,7 @@ function tagSave() {
 			var editPanel = document.getElementById(edit);
 			editPanel.remove();
 		}
-		
+
 		var panel = '<div id="' + timestamp + '" class="segment-panel">';
 		panel += '<h3>' + timestamp + "-" + title + '</h3>';
 		panel += '<div>';
@@ -810,32 +838,195 @@ function sortAccordion() {
 
 /** Export Functions **/
 
-// Here we prepare the information for export
+// Here we prepare transcript data for VTT files
+function transcriptVTT() {
+	var minute = '';
+	var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
+	var content = document.getElementById('transcript').innerHTML;
+
+	// Need to find the first minute marker, because the first chunk of transcript is 0 to that minute
+	minute = content.substring(content.indexOf("{") + 1, content.indexOf("}"));
+	minute = minute.substring(0, minute.indexOf(':'));
+	minute = (parseInt(minute) < 10) ? '0' + minute : minute;
+
+	// Replace our temporary content with the real data for the export
+	content = 'WEBVTT\n\r\n\r' + metadata + '\n\r';
+	content += '\n\r00:00:00.000 --> 00:' + minute + ':00.000\n\r';
+	content += document.getElementById('transcript').innerHTML.replace(/<\/span>/g, '').replace(/<span class="transcript-word">/g, '').replace(/&nbsp;/g, ' ').replace(/<span class="transcript-word transcript-clicked">/g, '');
+
+	// This will help us find the rest of the minutes, as they are marked appropriately
+	while (/([0-9]:00})+/.test(content)) {
+		var newMin = '';
+		var currMin = '';
+
+		minute = content.substring(content.indexOf("{") + 1, content.indexOf("}"));
+		minute = minute.substring(0, minute.indexOf(':'));
+		currMin = (parseInt(minute) < 10) ? '0' + minute : minute;
+		newMin = (parseInt(currMin) + 1);
+		newMin = (parseInt(newMin) < 10) ? '0' + newMin : newMin;
+
+		if (parseInt(currMin) < 60) {
+			content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} ', '\n\r\n\r00:' + currMin + ':00.000 --> 00:' + newMin + ':00.000\n\r');
+		}
+		else {
+			var hour = '';
+			hour = (parseInt(newMin) % 60);
+			currMin -= (parseInt(hour) * 60);
+			newMin = (parseInt(currMin) + 1);
+
+			hour = (parseInt(hour) < 10) ? '0' + hour : hour;
+			content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} <span class="transcript-word transcript-clicked">', '\n\r\n\r' + hour + ':' + currMin + ':00.000 --> ' + hour + ':' + newMin + ':00.000\n\r');
+		}
+	}
+
+	return content;
+}
+
+// Here we prepare index data for VTT files
+function indexVTT() {
+	var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
+	var content = 'WEBVTT\n\r\n\r' + metadata + '\n\r\n\r';
+
+	// We'll break up the text by segments
+	var text = $('#indexAccordion')[0].innerHTML.split(/<\/div><\/div>/);
+
+	for (var i = 0; i < text.length - 1; i++) {
+		var currTime = '';
+		var currIndex0 = 0;
+		var currIndex1 = 0;
+		var nextTime = '';
+		var title = '';
+		var partialTranscript = '';
+		var description = '';
+		var keywords = '';
+		var subjects = '';
+
+		// We will need to know what the current and upcoming time segments are
+		currIndex0 = text[i].indexOf('<div id="') + 9;
+		currIndex1 = text[i].indexOf('" class="segment-panel">');
+		currTime = text[i].substring(currIndex0, currIndex1);
+
+		// If there isn't a nextTime, then it's the end
+		nextTime = i < text.length - 2 ? text[i + 1].substring(text[i + 1].indexOf('<div id="') + 9, text[i + 1].indexOf('" class="segment-panel">')) : document.getElementById('endTime').innerHTML;
+
+		// Substring city to get all of the data
+		title = text[i].substring(text[i].indexOf('</span>' + currTime + '-') + 20, text[i].indexOf("</h3>"));
+		description = text[i].substring(text[i].indexOf("tag-segment-synopsis") + 22, text[i].indexOf("</span>", text[i].indexOf("tag-segment-synopsis")));
+		keywords = text[i].substring(text[i].indexOf("tag-keywords") + 14, text[i].indexOf("</span>", text[i].indexOf("tag-keywords")));
+		subjects = text[i].substring(text[i].indexOf("tag-subjects") + 14, text[i].indexOf("</span>", text[i].indexOf("tag-subjects")));
+		partialTranscript = text[i].substring(text[i].indexOf("tag-partial-transcript") + 24, text[i].indexOf("</span>", text[i].indexOf("tag-partial-transcript")));
+
+		content += currTime + ' --> ' + nextTime + '\n\r{\n\r';
+		content += '  "title": "' + title.replace(/"/g, '\\"') + '",\n\r';
+		content += '  "partial_transcript": "' + partialTranscript.replace(/"/g, '\\"') + '",\n\r';
+		content += '  "description": "' + description.replace(/"/g, '\\"') + '",\n\r';
+		content += '  "keywords": "' + keywords.replace(/"/g, '\\"') + '",\n\r';
+		content += '  "subjects": "' + subjects.replace(/"/g, '\\"') + '"\n\r';
+		content += '}\n\r\n\r\n\r';
+	}
+
+	return content;
+}
+
+// Here we use VTT-prepared data to preview the end result
+// TODO: create the modal and player for this
+// TODO: change youtube player to ableplayer youtube
+function previewWork() {
+	var type = $("ul#list-tabs li.ui-tabs-active > a")[0].innerHTML;
+	var youTube = document.getElementById("ytplayer").innerHTML;
+
+	if ($('#media-upload').visible) errorHandler(new Error("You must first upload media in order to preview."));
+	else if (youTube !== '') errorHandler(new Error("Preview does not currently work with YouTube videos."));
+	else if (type.toLowerCase() == "transcript" && document.getElementById('transcript').innerHTML != '') {
+		var content = transcriptVTT();
+
+		// This will create a temporary link DOM element that we will use as a temp file
+		var element = document.createElement('div');
+		element.id = 'preview-transcript';
+	  element.innerText = encodeURIComponent(content);
+	  document.body.appendChild(element);
+		// Assign the document to the A/V player
+		var videoSrc = document.getElementById('video-player').src;
+
+		var videoPre = document.createElement('video');
+		videoPre.src = videoSrc;
+		video.autoplay = true;
+
+
+		var video = document.getElementById('video-player');
+		var att = document.createElement(tagName)
+		video.appendChild('data-transcript-div', 'preview-transcript');
+
+	  // document.body.removeChild(element);
+	}
+	else if (type.toLowerCase() == "index" && $('#indexAccordion') != '') {
+		var content = indexVTT();
+
+		// This will create a temporary link DOM element that we will use as a temp file
+		var element = document.createElement('div');
+	  element.innerText = encodeURIComponent(content);
+	  element.style.display = 'none';
+	  document.body.appendChild(element);
+		// Assign the document to the A/V player
+		var source = document.createElement('source');
+		source.src = src;
+		source.kind = 'metadata';
+		element.appendChild(source); // video player
+
+	  document.body.removeChild(element);
+	}
+	else {
+		errorHandler(new Error("The selected transcript or index document is empty."));
+	}
+}
+
+// Here we use prepared data for export to a downloadable file
 function exportFile(sender) {
-	var file = null;
+	var type = $("ul#list-tabs li.ui-tabs-active > a")[0].innerHTML;
 
-	switch(sender) {
-		case "xml":
-			errorHandler(new Error('I do not yet function'));
-			// var content = $('#index').value + $('#transcript').value;
-			// var data = new Blob(file, {type: 'text/xml'});
-      //
-	    // file = window.URL.createObjectURL(data);
-      //
-	    // return file;
-			break;
+	if (type.toLowerCase() == "transcript" && document.getElementById('transcript').innerHTML != '') {
+		switch (sender) {
+			case "vtt":
+				var content = transcriptVTT();
 
-		case "vtt":
-			errorHandler(new Error('I do not yet function'));
-			break;
+				// This will create a temporary link DOM element that we will click for the user to download the generated file
+				var element = document.createElement('a');
+			  element.setAttribute('href', 'data:text/vtt;charset=utf-8,' + encodeURIComponent(content));
+			  element.setAttribute('download', 'transcript.vtt');
+			  element.style.display = 'none';
+			  document.body.appendChild(element);
+			  element.click();
+			  document.body.removeChild(element);
 
-		case "anno":
-			errorHandler(new Error('I do not yet function'));
-		  break;
+				break;
 
-		default:
-			errorHandler(new Error('I do not yet function'));
-			break;
+			default:
+				errorHandler(new Error("This function is still under development."));
+				break;
+		}
+	}
+	else if (type.toLowerCase() == "index" && $('#indexAccordion') != '') {
+		switch (sender) {
+			case "vtt":
+				var content = indexVTT();
+
+				// This will create a temporary link DOM element that we will click for the user to download the generated file
+				var element = document.createElement('a');
+			  element.setAttribute('href', 'data:text/vtt;charset=utf-8,' + encodeURIComponent(content));
+			  element.setAttribute('download', 'index.vtt');
+			  element.style.display = 'none';
+			  document.body.appendChild(element);
+			  element.click();
+			  document.body.removeChild(element);
+				break;
+
+			default:
+				errorHandler(new Error("This function is still under development."));
+				break;
+		}
+	}
+	else {
+		errorHandler(new Error("The selected transcript or index document is empty."));
 	}
 }
 
@@ -850,15 +1041,10 @@ function errorHandler(e) {
 	closeButtons();
 }
 
-// Here we empty the text areas
-// Not currently in use
+// Here we reload the page
 function clearBoxes() {
-	if (confirm("This will clear the URL, index, and transcript areas.") == true) {
-		$("#index").val("");
-  	$("#transcript").val("");
-		$("#media-url-upload").val("");
-		$("#url-upload").val("");
-		$("#errorBar").hide();
+	if (confirm("This will clear the work in all areas.") == true) {
+		location.reload(true);
 	}
 }
 
@@ -889,6 +1075,7 @@ function closeButtons() {
 	$("#tag-controls-ap").hide();
 	$("#tag-controls-yt").hide();
 	$("#sync-controls").hide();
+	$("#finish-area").hide();
 
 	// Initialize close buttons, tabs, and accordion
 	closeButtons();
@@ -901,6 +1088,7 @@ function closeButtons() {
     header: "> div > h3",
     autoHeight: false,
     collapsible: true,
+		clearStyle: true,
     active: false
   });
 
@@ -934,6 +1122,12 @@ function closeButtons() {
 			updateTimestampYT();
 		}
 	});
+
+	// If the dropdown list is changed, change the active tab to the selected dropdown item
+	$("#file-type").click(function() {
+		var selected = "#tabs-" + $("#file-type").val();
+    $('#text-tabs a[href="' + selected + '"]').trigger('click');
+  });
 
 	// Load YouTube API
 	var tag = document.createElement('script');
