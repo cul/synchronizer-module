@@ -3,16 +3,20 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 03/08/2018
-	 Version: 0.4.2
+   Date: 03/15/2018
+	 Version: 0.4.3
 */
 
-/** Import Functions **/
-
+/** Global variables **/
 // Here we embed the empty YouTube video player
 // This must be presented before any function that can utilize it
 var ytplayer;
 function onYouTubeIframeAPIReady() {}
+
+// Looping is used to notify various functions if Transcript looping is currently active
+var looping = -1;
+
+/** Import Functions **/
 
 // Here we accept locally uploaded files
 function uploadFile(sender) {
@@ -195,6 +199,8 @@ function loadYouTube(id) {
 		}
 	});
 
+	transcriptYTTimestamp();
+
 	// We need to make a second call in order to get video information.
 	// CUL's Google API Key will need to go here
 	// var apiKey = 'culAPIkey';
@@ -213,36 +219,6 @@ function loadYouTube(id) {
 	// 		console.log(textStatus, + ' | ' + errorThrown);
   //   }
   // });
-
-	// This will monitor the YouTube video time and keep the transcript timestamp updated
-	// And we play chimes at the #:50 and #:60 second marks
-	window.setInterval(tween_time, 500);
-	    function tween_time() {
-	        time_update = (ytplayer.getCurrentTime() * 1000)
-	        playing = ytplayer.getPlayerState();
-	            if (playing == 1) {
-	                if (last_time_update == time_update) current_time_msec += 50;
-	                if (last_time_update != time_update) current_time_msec = time_update;
-	            }
-
-					var chime1 = document.getElementById("audio-chime1");
-					var chime2 = document.getElementById("audio-chime2");
-					var time = ytplayer.getCurrentTime();
-					var minutes = Math.floor(time / 60);
-					var hours = Math.floor(minutes / 60);
-
-					// We only play chimes if on the transcript tab
-					if (Math.floor(time) % 60 == 50 && $("#transcript").is(':visible')) { chime1.play(); }
-					if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible')) { chime2.play(); }
-
-					time = time - minutes * 60;
-					var seconds = time.toFixed(0);
-					if (seconds % 60 == 0) seconds = 0;
-					document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
-					// If the user is working on an index segment, we need to watch the playhead
-					$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
-	        last_time_update = time_update;
-	    }
 }
 
 // Here we play audio files in the audio control player
@@ -575,7 +551,7 @@ function removeSyncMarker() {
 	}
 }
 
-// Here we capture sync control clicks
+// Here we capture Transcript sync control clicks
 function syncControl(type) {
 	var youTube = document.getElementById("ytplayer").innerHTML;
 	var minute = parseInt(document.getElementById("sync-minute").innerHTML);
@@ -600,39 +576,9 @@ function syncControl(type) {
 			else playerControls("seek");
 			break;
 
-		// Hitting play always resets back to the current minute marker and is offset by the roll interval
-		// Begin or pause the looping [[Looping not yet implemented]]
-		case "play":
-			if (youTube !== "") {
-				if (ytplayer.getPlayerState() == 1) {
-					ytplayer.pauseVideo();
-					$('#sync-play').addClass('btn-outline-info');
-					$('#sync-play').removeClass('btn-info');
-				}
-				else {
-					ytplayer.seekTo(minute * 60 - offset);
-					ytplayer.playVideo();
-					$('#sync-play').removeClass('btn-outline-info');
-					$('#sync-play').addClass('btn-info');
-				}
-			}
-			else {
-			  var player = "";
-				if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
-				else if ($("#video").is(':visible')) player = document.getElementById("video-player");
-
-				if(player.paused)	{
-					player.currentTime = minute * 60 - offset;
-					player.play();
-					$('#sync-play').removeClass('btn-outline-info');
-					$('#sync-play').addClass('btn-info');
-				}
-				else {
-					player.pause();
-					$('#sync-play').addClass('btn-outline-info');
-					$('#sync-play').removeClass('btn-info');
-				}
-			}
+		case "loop":
+			if (youTube !== "") transcriptLoop(true);
+			else transcriptLoop(false);
 			break;
 
 		default:
@@ -640,8 +586,54 @@ function syncControl(type) {
 	}
 }
 
+// Here we handling looping controls for Transcript syncing
+function transcriptLoop(youTube = false) {
+	var minute = parseInt(document.getElementById("sync-minute").innerHTML);
+	var offset = $('#sync-roll').val();
+
+	// YouTube uses its own player
+	if (youTube) {
+		// If looping is active we stop it
+		if (looping !== -1) {
+			ytplayer.pauseVideo();
+			$('#sync-play').addClass('btn-outline-info');
+			$('#sync-play').removeClass('btn-info');
+			looping = -1;
+		}
+		// If looping is not active we start it
+		else {
+			ytplayer.seekTo(minute * 60 - offset);
+			ytplayer.playVideo();
+			$('#sync-play').removeClass('btn-outline-info');
+			$('#sync-play').addClass('btn-info');
+			looping = minute;
+		}
+	}
+	// This is handling for the AblePlayer
+	else {
+		var player = "";
+		if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
+		else if ($("#video").is(':visible')) player = document.getElementById("video-player");
+
+		// If looping is active
+		if (looping !== -1) {
+			player.pause();
+			$('#sync-play').addClass('btn-outline-info');
+			$('#sync-play').removeClass('btn-info');
+			looping = -1;
+		}
+		// If looping is not active
+		else {
+			player.currentTime = minute * 60 - offset;
+			player.play();
+			$('#sync-play').removeClass('btn-outline-info');
+			$('#sync-play').addClass('btn-info');
+			looping = minute;
+		}
+	}
+}
+
 // Here we continually update the timestamp on the sync controls
-// And we play chimes at the #:50 and #:60 second marks
 // Only for AblePlayer
 function transcriptTimestamp() {
 	var player = "";
@@ -655,9 +647,9 @@ function transcriptTimestamp() {
 	var minutes = Math.floor(time / 60);
 	var hours = Math.floor(minutes / 60);
 
-	// We only play chimes if we're on the transcript tab
-	if (Math.floor(time) % 60 == 50 && $("#transcript").is(':visible')) { chime1.play(); }
-	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible')) { chime2.play(); }
+	// We only play chimes if we're on the transcript tab, and looping is active
+	if (Math.floor(time) % 60 == 50 && $("#transcript").is(':visible') && looping !== -1) { chime1.play(); }
+	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible') && looping !== -1) { chime2.play(); }
 
 	time = time - minutes * 60;
 	var seconds = time.toFixed(0);
@@ -665,6 +657,36 @@ function transcriptTimestamp() {
 	document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
 	// If the user is working on an index segment, we need to watch the playhead
 	$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
+}
+
+// Here we will monitor the YouTube video time and keep the transcript timestamp updated
+window.setInterval(transcriptYTTimestamp, 500);
+function transcriptYTTimestamp() {
+	// last_time_update = '';
+	time_update = (ytplayer.getCurrentTime() * 1000);
+	playing = ytplayer.getPlayerState();
+		if (playing == 1) {
+			if (last_time_update == time_update) current_time_msec += 50;
+			if (last_time_update != time_update) current_time_msec = time_update;
+		}
+
+	var chime1 = document.getElementById("audio-chime1");
+	var chime2 = document.getElementById("audio-chime2");
+	var time = ytplayer.getCurrentTime();
+	var minutes = Math.floor(time / 60);
+	var hours = Math.floor(minutes / 60);
+
+	// We only play chimes if on the transcript tab, and looping is active
+	if (Math.floor(time) % 60 == 50 && $("#transcript").is(':visible') && looping !== -1) { chime1.play(); }
+	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible') && looping !== -1) { chime2.play(); }
+
+	time = time - minutes * 60;
+	var seconds = time.toFixed(0);
+	if (seconds % 60 == 0) seconds = 0;
+	document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
+	// If the user is working on an index segment, we need to watch the playhead
+	$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
+	last_time_update = time_update;
 }
 
 /** Index Segment Functions **/
@@ -1078,6 +1100,11 @@ function closeButtons() {
 
   $("#text-tabs").tabs({
 		active: 0
+	});
+
+	// If the Index tab is clicked, ensure transcript looping is deactivated
+	$('a[href$="tabs-index"]').click(function () {
+		looping = -1;
 	});
 
 	$("#indexAccordion").accordion({
