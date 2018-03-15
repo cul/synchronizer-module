@@ -16,9 +16,6 @@ function onYouTubeIframeAPIReady() {}
 
 // Here we accept locally uploaded files
 function uploadFile(sender) {
-	// Clear error
-	$("#errorBar").fadeOut();
-
 	// Grab the files from the user's selection
 	var input = document.getElementById(sender);
 	for (var i = 0; i < input.files.length; i++) {
@@ -36,9 +33,6 @@ function uploadFile(sender) {
 // Here we accept URL-based files
 // This function is no longer utilized for non-AV files
 function uploadURLFile(sender) {
-	// Clear error
-	$("#errorBar").fadeOut();
-
 	// Continue onward, grab the URL value
 	var input = document.getElementById(sender);
 	var url = input.value;
@@ -143,7 +137,7 @@ function checkExt(ext) {
 function uploadSuccess(file) {
 	var success = "";
 	success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />File Name: ' + file.name + "<br />File Size: " + parseInt(file.size / 1024, 10) + "<br />File Type: " + file.type + "<br />Last Modified Date: " + new Date(file.lastModified) + "</div>";
-	$("#successBar").append(success);
+	$("#messagesBar").append(success);
 	closeButtons();
 }
 
@@ -222,12 +216,12 @@ function loadYouTube(id) {
 
 	// This will monitor the YouTube video time and keep the transcript timestamp updated
 	// And we play chimes at the #:50 and #:60 second marks
-	window.setInterval(tween_time, 250);
+	window.setInterval(tween_time, 500);
 	    function tween_time() {
 	        time_update = (ytplayer.getCurrentTime() * 1000)
 	        playing = ytplayer.getPlayerState();
 	            if (playing == 1) {
-	                if (last_time_update == time_update) current_time_msec += 25;
+	                if (last_time_update == time_update) current_time_msec += 50;
 	                if (last_time_update != time_update) current_time_msec = time_update;
 	            }
 
@@ -243,6 +237,7 @@ function loadYouTube(id) {
 
 					time = time - minutes * 60;
 					var seconds = time.toFixed(0);
+					if (seconds % 60 == 0) seconds = 0;
 					document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
 					// If the user is working on an index segment, we need to watch the playhead
 					$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
@@ -666,6 +661,7 @@ function transcriptTimestamp() {
 
 	time = time - minutes * 60;
 	var seconds = time.toFixed(0);
+	if (minutes === 60) minutes = 0;
 	document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
 	// If the user is working on an index segment, we need to watch the playhead
 	$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
@@ -1034,8 +1030,9 @@ function exportFile(sender) {
 
 // Here is our error handling
 function errorHandler(e) {
-	$("#errorBar").show();
-  $('#errorBar').html('<i id="close" class="fa fa-times-circle-o close"></i><p class="error-bar"><i class="fa fa-exclamation-circle"></i> ' + e + '</p>');
+	var error = '';
+  error += '<div class="col-md-6"><i id="close" class="fa fa-times-circle-o close"></i><p class="error-bar"><i class="fa fa-exclamation-circle"></i> ' + e + '</p></div>';
+	$('#messagesBar').append(error);
 	$('html, body').animate({ scrollTop: 0 }, 'fast');
 
 	closeButtons();
@@ -1070,7 +1067,6 @@ function closeButtons() {
 	// Don't show the A/V controls, errorBar, or Tag button
 	$("#video").hide();
 	$("#audio").hide();
-	$("#errorBar").hide();
 	$("#tag-segment-btn").hide();
 	$("#tag-controls-ap").hide();
 	$("#tag-controls-yt").hide();

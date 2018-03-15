@@ -137,8 +137,12 @@ label i {
 /*  */
 
 /* Error and Success Bars */
-#successBar {
+#messagesBar {
   margin-top: 10px;
+}
+
+#messagesBar i {
+	padding: 10px;
 }
 
 .success-bar {
@@ -147,19 +151,13 @@ label i {
   border-radius: 6px;
 }
 
-#successBar i {
-	padding: 10px;
-}
-
-#errorBar {
+.error-bar {
   padding: 15px;
   background-color: #efefef;
-}
-
-.error-bar {
   color: #f00;
   font-size: 1.5em;
   font-weight: bold;
+  border-radius: 6px;
 }
 /*  */
 
