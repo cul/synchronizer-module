@@ -850,8 +850,8 @@ function transcriptVTT() {
 	minute = (parseInt(minute) < 10) ? '0' + minute : minute;
 
 	// Replace our temporary content with the real data for the export
-	content = 'WEBVTT\n\r\n\r' + metadata + '\n\r';
-	content += '\n\r00:00:00.000 --> 00:' + minute + ':00.000\n\r';
+	content = 'WEBVTT\n\n' + metadata + '\n';
+	content += '\n00:00:00.000 --> 00:' + minute + ':00.000\n';
 	content += document.getElementById('transcript').innerHTML.replace(/<\/span>/g, '').replace(/<span class="transcript-word">/g, '').replace(/&nbsp;/g, ' ').replace(/<span class="transcript-word transcript-clicked">/g, '');
 
 	// This will help us find the rest of the minutes, as they are marked appropriately
@@ -866,7 +866,7 @@ function transcriptVTT() {
 		newMin = (parseInt(newMin) < 10) ? '0' + newMin : newMin;
 
 		if (parseInt(currMin) < 60) {
-			content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} ', '\n\r\n\r00:' + currMin + ':00.000 --> 00:' + newMin + ':00.000\n\r');
+			content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} ', '\n\n00:' + currMin + ':00.000 --> 00:' + newMin + ':00.000\n');
 		}
 		else {
 			var hour = '';
@@ -875,7 +875,7 @@ function transcriptVTT() {
 			newMin = (parseInt(currMin) + 1);
 
 			hour = (parseInt(hour) < 10) ? '0' + hour : hour;
-			content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} <span class="transcript-word transcript-clicked">', '\n\r\n\r' + hour + ':' + currMin + ':00.000 --> ' + hour + ':' + newMin + ':00.000\n\r');
+			content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} <span class="transcript-word transcript-clicked">', '\n\n' + hour + ':' + currMin + ':00.000 --> ' + hour + ':' + newMin + ':00.000\n');
 		}
 	}
 
@@ -885,7 +885,7 @@ function transcriptVTT() {
 // Here we prepare index data for VTT files
 function indexVTT() {
 	var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
-	var content = 'WEBVTT\n\r\n\r' + metadata + '\n\r\n\r';
+	var content = 'WEBVTT\n\n' + metadata + '\n';
 
 	// We'll break up the text by segments
 	var text = $('#indexAccordion')[0].innerHTML.split(/<\/div><\/div>/);
@@ -916,13 +916,13 @@ function indexVTT() {
 		subjects = text[i].substring(text[i].indexOf("tag-subjects") + 14, text[i].indexOf("</span>", text[i].indexOf("tag-subjects")));
 		partialTranscript = text[i].substring(text[i].indexOf("tag-partial-transcript") + 24, text[i].indexOf("</span>", text[i].indexOf("tag-partial-transcript")));
 
-		content += currTime + ' --> ' + nextTime + '\n\r{\n\r';
-		content += '  "title": "' + title.replace(/"/g, '\\"') + '",\n\r';
-		content += '  "partial_transcript": "' + partialTranscript.replace(/"/g, '\\"') + '",\n\r';
-		content += '  "description": "' + description.replace(/"/g, '\\"') + '",\n\r';
-		content += '  "keywords": "' + keywords.replace(/"/g, '\\"') + '",\n\r';
-		content += '  "subjects": "' + subjects.replace(/"/g, '\\"') + '"\n\r';
-		content += '}\n\r\n\r\n\r';
+		content += currTime + ' --> ' + nextTime + '\n{\n';
+		content += '  "title": "' + title.replace(/"/g, '\\"') + '",\n';
+		content += '  "partial_transcript": "' + partialTranscript.replace(/"/g, '\\"') + '",\n';
+		content += '  "description": "' + description.replace(/"/g, '\\"') + '",\n';
+		content += '  "keywords": "' + keywords.replace(/"/g, '\\"') + '",\n';
+		content += '  "subjects": "' + subjects.replace(/"/g, '\\"') + '"\n';
+		content += '}\n\n\n';
 	}
 
 	return content;
