@@ -867,43 +867,49 @@ function transcriptVTT() {
 	minute = minute.substring(0, minute.indexOf(':'));
 	minute = (parseInt(minute) < 10) ? '0' + minute : minute;
 
-	// Replace our temporary content with the real data for the export
-	content = 'WEBVTT\n\n' + metadata + '\n';
-	content += '\n00:00:00.000 --> 00:' + minute + ':00.000\n';
-	content += document.getElementById('transcript').innerHTML.replace(/<\/span>/g, '').replace(/<span class="transcript-word">/g, '').replace(/&nbsp;/g, ' ').replace(/<span class="transcript-word transcript-clicked">/g, '');
+	if (minute == '') {
+		new errorHandler("You must add at least one sync marker in order to export a transcript.");
+		return false;
+	}
+	else {
+		// Replace our temporary content with the real data for the export
+		content = (metadata != '') ? 'WEBVTT\n\nNOTE\n' + metadata + '\n' : 'WEBVTT\n';
+		content += '\n00:00:00.000 --> 00:' + minute + ':00.000\n';
+		content += document.getElementById('transcript').innerHTML.replace(/<\/span>/g, '').replace(/<span class="transcript-word">/g, '').replace(/&nbsp;/g, ' ').replace(/<span class="transcript-word transcript-clicked">/g, '');
 
-	// This will help us find the rest of the minutes, as they are marked appropriately
-	while (/([0-9]:00})+/.test(content)) {
-		var newMin = '';
-		var currMin = '';
+		// This will help us find the rest of the minutes, as they are marked appropriately
+		while (/([0-9]:00})+/.test(content)) {
+			var newMin = '';
+			var currMin = '';
 
-		minute = content.substring(content.indexOf("{") + 1, content.indexOf("}"));
-		minute = minute.substring(0, minute.indexOf(':'));
-		currMin = (parseInt(minute) < 10) ? '0' + minute : minute;
-		newMin = (parseInt(currMin) + 1);
-		newMin = (parseInt(newMin) < 10) ? '0' + newMin : newMin;
-
-		if (parseInt(currMin) < 60) {
-			content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} ', '\n\n00:' + currMin + ':00.000 --> 00:' + newMin + ':00.000\n');
-		}
-		else {
-			var hour = '';
-			hour = (parseInt(newMin) % 60);
-			currMin -= (parseInt(hour) * 60);
+			minute = content.substring(content.indexOf("{") + 1, content.indexOf("}"));
+			minute = minute.substring(0, minute.indexOf(':'));
+			currMin = (parseInt(minute) < 10) ? '0' + minute : minute;
 			newMin = (parseInt(currMin) + 1);
+			newMin = (parseInt(newMin) < 10) ? '0' + newMin : newMin;
 
-			hour = (parseInt(hour) < 10) ? '0' + hour : hour;
-			content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} <span class="transcript-word transcript-clicked">', '\n\n' + hour + ':' + currMin + ':00.000 --> ' + hour + ':' + newMin + ':00.000\n');
+			if (parseInt(currMin) < 60) {
+				content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} ', '\n\n00:' + currMin + ':00.000 --> 00:' + newMin + ':00.000\n');
+			}
+			else {
+				var hour = '';
+				hour = (parseInt(newMin) % 60);
+				currMin -= (parseInt(hour) * 60);
+				newMin = (parseInt(currMin) + 1);
+
+				hour = (parseInt(hour) < 10) ? '0' + hour : hour;
+				content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} <span class="transcript-word transcript-clicked">', '\n\n' + hour + ':' + currMin + ':00.000 --> ' + hour + ':' + newMin + ':00.000\n');
+			}
+
+			return content;
 		}
 	}
-
-	return content;
 }
 
 // Here we prepare index data for VTT files
 function indexVTT() {
 	var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
-	var content = 'WEBVTT\n\n' + metadata + '\n';
+	var content = 'WEBVTT\n\nNOTE\n' + metadata + '\n';
 
 	// We'll break up the text by segments
 	var text = $('#indexAccordion')[0].innerHTML.split(/<\/div><\/div>/);
@@ -1006,6 +1012,7 @@ function exportFile(sender) {
 		switch (sender) {
 			case "vtt":
 				var content = transcriptVTT();
+				if (!content) break;
 
 				// This will create a temporary link DOM element that we will click for the user to download the generated file
 				var element = document.createElement('a');
