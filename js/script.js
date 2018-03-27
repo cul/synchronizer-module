@@ -458,6 +458,7 @@ function initializeYTControls(event) {
 // Here we handle the player controls, only for AblePlayer
 function playerControls(button) {
   var player = "";
+	var offset = $('#sync-roll').val();
 
 	if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
 	else if ($("#video").is(':visible')) player = document.getElementById("video-player");
@@ -489,7 +490,7 @@ function playerControls(button) {
 
 		case "seek":
 			var minute = parseInt(document.getElementById("sync-minute").innerHTML);
-			player.currentTime = minute * 60;
+			player.currentTime = minute * 60 - offset;
 			break;
 
 		default:
@@ -525,6 +526,12 @@ function addSyncMarker() {
 
 			updateCurrentMark();
 			removeSyncMarker();
+
+			// If we are looping, we automatically jump forward
+			if (looping !== -1) {
+				document.getElementById("sync-minute").innerHTML = minute;
+				syncControl("forward");
+			}
 		}, false);
 	}
 }
@@ -577,8 +584,7 @@ function syncControl(type) {
 			break;
 
 		case "loop":
-			if (youTube !== "") transcriptLoop(true);
-			else transcriptLoop(false);
+			transcriptLoop();
 			break;
 
 		default:
@@ -587,12 +593,15 @@ function syncControl(type) {
 }
 
 // Here we handling looping controls for Transcript syncing
-function transcriptLoop(youTube = false) {
+function transcriptLoop() {
+	var youTube = document.getElementById("ytplayer").innerHTML;
 	var minute = parseInt(document.getElementById("sync-minute").innerHTML);
 	var offset = $('#sync-roll').val();
 
+	// We don't loop at the beginning of the A/V
+	if (minute === 0) {  }
 	// YouTube uses its own player
-	if (youTube) {
+	else if (youTube) {
 		// If looping is active we stop it
 		if (looping !== -1) {
 			ytplayer.pauseVideo();
@@ -646,10 +655,18 @@ function transcriptTimestamp() {
 	var time = player.currentTime;
 	var minutes = Math.floor(time / 60);
 	var hours = Math.floor(minutes / 60);
+	var offset = $('#sync-roll').val();
 
 	// We only play chimes if we're on the transcript tab, and looping is active
-	if (Math.floor(time) % 60 == 50 && $("#transcript").is(':visible') && looping !== -1) { chime1.play(); }
+	if (Math.floor(time) % 60 == (60 - offset) && $("#transcript").is(':visible') && looping !== -1) { chime1.play(); }
 	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible') && looping !== -1) { chime2.play(); }
+
+	// If looping is active, we will jump back to a specific time should the the time be at the minute + offset
+	if ((Math.floor(time) % 60 == offset || time === player.duration ) && $("#transcript").is(':visible') && looping !== -1) {
+		document.getElementById("sync-minute").innerHTML = parseInt(document.getElementById("sync-minute").innerHTML) + 1;
+		syncControl("back");
+		player.play();
+	}
 
 	time = time - minutes * 60;
 	var seconds = time.toFixed(0);
@@ -675,10 +692,19 @@ function transcriptYTTimestamp() {
 	var time = ytplayer.getCurrentTime();
 	var minutes = Math.floor(time / 60);
 	var hours = Math.floor(minutes / 60);
+	var offset = $('#sync-roll').val();
 
 	// We only play chimes if on the transcript tab, and looping is active
-	if (Math.floor(time) % 60 == 50 && $("#transcript").is(':visible') && looping !== -1) { chime1.play(); }
-	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible') && looping !== -1) { chime2.play(); }
+	if (Math.floor(time) % 60 == (60 - offset) && $("#transcript").is(':visible') && looping !== -1 && playing == 1) { chime1.play(); }
+	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible') && looping !== -1 && playing == 1) { chime2.play(); }
+
+console.log(ytplayer.getDuration());
+	// If looping is active, we will jump back to a specific time should the the time be at the minute + offset
+	if ((Math.floor(time) % 60 == offset || time == ytplayer.getDuration()) && $("#transcript").is(':visible') && looping !== -1) {
+		document.getElementById("sync-minute").innerHTML = parseInt(document.getElementById("sync-minute").innerHTML) + 1;
+		syncControl("back");
+		ytplayer.playVideo();
+	}
 
 	time = time - minutes * 60;
 	var seconds = time.toFixed(0);
