@@ -3,8 +3,8 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 03/15/2018
-	 Version: 0.4.3
+   Date: 04/11/2018
+	 Version: 0.5.1
 */
 
 /** Global variables **/
@@ -62,15 +62,17 @@ function uploadURLFile(sender) {
 		id = urlArr2[urlArr2.length - 1];
 	}
 
-	// HTTP will throw errors
+	// HTTP will throw a warning, but no longer stops uploading
 	if (!https) {
-		var error = new Error("This field only accepts HTTPS URLs.");
+		var error = new Error("It is recommended to use an HTTPS URL.");
 		errorHandler(error);
 	}
-	else if (id !== '') loadYouTube(id);
+	if (id !== '') loadYouTube(id);
+	else if (ext == "m3u8") renderWowza(url);
 	else {
 		// We only allow URL uploads of media files, not any text files
 		if (ext == "mp3" || ext == "ogg" || ext == "mp4" || ext == "webm") {
+			console.log("i made it to uploading");
 			fetch(url)
 				.then(res => res.blob())
 				.then(blob => {
@@ -131,6 +133,7 @@ function checkExt(ext) {
 								 "srt",
 								 "mp4",
 								 "webm",
+								 "m3u8",
 								 "ogg",
 								 "mp3"];
 
@@ -146,6 +149,27 @@ function uploadSuccess(file) {
 }
 
 /** Rendering Functions **/
+
+// Here we load Wowza server playlists
+function renderWowza(url) {
+  var player = document.querySelector('video');
+  var hls = new Hls();
+  hls.loadSource(url);
+  hls.attachMedia(player);
+  hls.on(Hls.Events.MANIFEST_PARSED,function() {
+    video.play();
+  });
+	$("#media-upload").hide();
+	$("#video").show();
+	$("#audio").hide();
+	$("#tag-segment-btn").show();
+	$("#finish-area").show();
+	if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
+	var success = "";
+	success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />The Wowza URL ' + url + " was successfully ingested.</div>";
+	$("#messagesBar").append(success);
+	closeButtons();
+}
 
 // Here we play audio files in the video control player
 function renderVideo(file) {
@@ -679,39 +703,41 @@ function transcriptTimestamp() {
 // Here we will monitor the YouTube video time and keep the transcript timestamp updated
 window.setInterval(transcriptYTTimestamp, 500);
 function transcriptYTTimestamp() {
-	// last_time_update = '';
-	time_update = (ytplayer.getCurrentTime() * 1000);
-	playing = ytplayer.getPlayerState();
-		if (playing == 1) {
-			if (last_time_update == time_update) current_time_msec += 50;
-			if (last_time_update != time_update) current_time_msec = time_update;
+	if (ytplayer) {
+		// last_time_update = '';
+		time_update = (ytplayer.getCurrentTime() * 1000);
+		playing = ytplayer.getPlayerState();
+			if (playing == 1) {
+				if (last_time_update == time_update) current_time_msec += 50;
+				if (last_time_update != time_update) current_time_msec = time_update;
+			}
+
+		var chime1 = document.getElementById("audio-chime1");
+		var chime2 = document.getElementById("audio-chime2");
+		var time = ytplayer.getCurrentTime();
+		var minutes = Math.floor(time / 60);
+		var hours = Math.floor(minutes / 60);
+		var offset = $('#sync-roll').val();
+
+		// We only play chimes if on the transcript tab, and looping is active
+		if (Math.floor(time) % 60 == (60 - offset) && $("#transcript").is(':visible') && looping !== -1 && playing == 1) { chime1.play(); }
+		if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible') && looping !== -1 && playing == 1) { chime2.play(); }
+
+		// If looping is active, we will jump back to a specific time should the the time be at the minute + offset
+		if ((Math.floor(time) % 60 == offset || time == ytplayer.getDuration()) && $("#transcript").is(':visible') && looping !== -1) {
+			document.getElementById("sync-minute").innerHTML = parseInt(document.getElementById("sync-minute").innerHTML) + 1;
+			syncControl("back");
+			ytplayer.playVideo();
 		}
 
-	var chime1 = document.getElementById("audio-chime1");
-	var chime2 = document.getElementById("audio-chime2");
-	var time = ytplayer.getCurrentTime();
-	var minutes = Math.floor(time / 60);
-	var hours = Math.floor(minutes / 60);
-	var offset = $('#sync-roll').val();
-
-	// We only play chimes if on the transcript tab, and looping is active
-	if (Math.floor(time) % 60 == (60 - offset) && $("#transcript").is(':visible') && looping !== -1 && playing == 1) { chime1.play(); }
-	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible') && looping !== -1 && playing == 1) { chime2.play(); }
-
-	// If looping is active, we will jump back to a specific time should the the time be at the minute + offset
-	if ((Math.floor(time) % 60 == offset || time == ytplayer.getDuration()) && $("#transcript").is(':visible') && looping !== -1) {
-		document.getElementById("sync-minute").innerHTML = parseInt(document.getElementById("sync-minute").innerHTML) + 1;
-		syncControl("back");
-		ytplayer.playVideo();
+		time = time - minutes * 60;
+		var seconds = time.toFixed(0);
+		if (seconds % 60 == 0) seconds = 0;
+		document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
+		// If the user is working on an index segment, we need to watch the playhead
+		$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
+		last_time_update = time_update;
 	}
-
-	time = time - minutes * 60;
-	var seconds = time.toFixed(0);
-	if (seconds % 60 == 0) seconds = 0;
-	document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
-	// If the user is working on an index segment, we need to watch the playhead
-	$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
-	last_time_update = time_update;
 }
 
 /** Index Segment Functions **/
