@@ -3,7 +3,7 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 04/11/2018
+   Date: 04/12/2018
 	 Version: 0.5.1
 */
 
@@ -199,6 +199,17 @@ function renderVideo(file) {
 	}
 
 	reader.readAsDataURL(file);
+	var player = document.getElementById('video-player');
+	player.addEventListener('durationchange', function() {
+		var time = player.duration;
+		var minutes = Math.floor(time / 60);
+		var hours = Math.floor(minutes / 60);
+		time = time - minutes * 60;
+		var seconds = time;
+		if (seconds % 60 == 0) seconds = 0.000;
+		if (minutes === 60) minutes = 0;
+		document.getElementById('endTime').innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
+	});
 }
 
 function loadYouTube(id) {
@@ -273,6 +284,17 @@ function renderAudio(file) {
 	}
 
 	reader.readAsDataURL(file);
+	var player = document.getElementById('audio-player');
+	player.addEventListener('durationchange', function() {
+		var time = player.duration;
+		var minutes = Math.floor(time / 60);
+		var hours = Math.floor(minutes / 60);
+		time = time - minutes * 60;
+		var seconds = time;
+		if (seconds >= 60 && seconds % 60 == 0) seconds = 0.000;
+		if (minutes === 60) minutes = 0;
+		document.getElementById('endTime').innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
+	});
 }
 
 // Here we display index or transcript file data
@@ -333,7 +355,7 @@ function renderText(file, ext) {
 								// We are only concerned with timestamped segments at this point of the parsing
 								if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[i])) {
 									timestamp = text[i].substring(0, 12);
-									document.getElementById('endTime').innerHTML = text[i].substring(17);
+									// document.getElementById('endTime').innerHTML = text[i].substring(17);
 
 									while (text[i] !== "}" && i < text.length) {
 										if (/("title":)+/.test(text[i])) {
@@ -450,6 +472,16 @@ function renderText(file, ext) {
 
 // Here we set up segment controls for the YouTube playback
 function initializeYTControls(event) {
+	// Capture the end timestamp of the YouTube video
+	var time = ytplayer.getDuration();
+	var minutes = Math.floor(time / 60);
+	var hours = Math.floor(minutes / 60);
+	time = time - minutes * 60;
+	var seconds = time;
+	if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
+	if (minutes === 60) minutes = 0;
+	document.getElementById('endTime').innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ".000";
+
   var playButton = document.getElementById("control-beginning-yt");
   playButton.addEventListener("click", function() {
     ytplayer.seekTo(0);
@@ -698,6 +730,7 @@ function transcriptTimestamp() {
 
 	time = time - minutes * 60;
 	var seconds = time.toFixed(0);
+	if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
 	if (minutes === 60) minutes = 0;
 	document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
 	// If the user is working on an index segment, we need to watch the playhead
@@ -736,7 +769,8 @@ function transcriptYTTimestamp() {
 
 		time = time - minutes * 60;
 		var seconds = time.toFixed(0);
-		if (seconds % 60 == 0) seconds = 0;
+		if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
+		if (minutes === 60) minutes = 0;
 		document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
 		// If the user is working on an index segment, we need to watch the playhead
 		$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
@@ -928,7 +962,7 @@ function transcriptVTT() {
 	}
 	else {
 		// Replace our temporary content with the real data for the export
-		content = (metadata != '') ? 'WEBVTT\n\nNOTE\n' + metadata + '\n' : 'WEBVTT\n';
+		content = (metadata != '') ? 'WEBVTT\n\nNOTE\n' + metadata + '\n\n' : 'WEBVTT\n\n';
 		content += '\n00:00:00.000 --> 00:' + minute + ':00.000\n';
 		content += document.getElementById('transcript').innerHTML.replace(/<\/span>/g, '').replace(/<span class="transcript-word">/g, '').replace(/&nbsp;/g, ' ').replace(/<span class="transcript-word transcript-clicked">/g, '');
 
@@ -964,7 +998,7 @@ function transcriptVTT() {
 // Here we prepare index data for VTT files
 function indexVTT() {
 	var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
-	var content = 'WEBVTT\n\nNOTE\n' + metadata + '\n';
+	var content = (metadata != '') ? 'WEBVTT\n\nNOTE\n' + metadata + '\n\n' : 'WEBVTT\n\n';
 
 	// We'll break up the text by segments
 	var text = $('#indexAccordion')[0].innerHTML.split(/<\/div><\/div>/);
