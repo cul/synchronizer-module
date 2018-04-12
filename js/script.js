@@ -303,6 +303,10 @@ function renderText(file, ext) {
 
 								// First we pull out the interview-level metadata
 								if (/(Title:)+/.test(text[k])) {
+									// Save the interview title
+									$('#tag-interview-title').val(text[k].slice(7));
+
+									// Then add the rest of the information to the metadata section
 									while (text[k] !== '' && k < text.length) {
 										document.getElementById('interview-metadata').innerHTML += text[k] + '<br />';
 										k++;
