@@ -1242,7 +1242,7 @@ function closeButtons() {
 	});
 
 	// If the dropdown list is changed, change the active tab to the selected dropdown item
-	$("#file-type").click(function() {
+	$("#file-type, #input-text").click(function() {
 		var selected = "#tabs-" + $("#file-type").val();
     $('#text-tabs a[href="' + selected + '"]').trigger('click');
   });
