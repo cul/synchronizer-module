@@ -1252,4 +1252,8 @@ function closeButtons() {
 	tag.src = "https://www.youtube.com/iframe_api";
 	var firstScriptTag = document.getElementsByTagName('script')[0];
 	firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+	$('#working-area').scroll(function() { 
+    $('#media-playback').css('top', $(this).scrollTop());
+	});
 }(jQuery));
