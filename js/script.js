@@ -781,6 +781,7 @@ function updateTimestampYT() {
 
 // Here we save the contents of the Tag Segment modal
 function tagSave() {
+	var edit = document.getElementById("editVar").innerHTML;
 	var timestamp = $("#tag-timestamp").val();
 	var title = $("#tag-segment-title").val();
 	var transcript = $("#tag-partial-transcript").val();
@@ -792,14 +793,13 @@ function tagSave() {
 	var accordion = $("#indexAccordion");
   var panelIDs = $.map(accordion.children("div").get(), function(panel) {
 		var id = $(panel).attr('id');
-    return id;
+    if (id !== edit) return id;
   });
 
 	if (title === "" || title === null) alert("You must enter a title.");
 	else if ($.inArray(timestamp, panelIDs) > -1) alert("A segment for this timestamp already exists.");
 	else {
 		// If we're editing a panel, we need to remove the existing panel from the accordion
-		var edit = document.getElementById("editVar").innerHTML;
 		if (edit !== "-1") {
 			var editPanel = document.getElementById(edit);
 			editPanel.remove();
