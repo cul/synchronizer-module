@@ -978,7 +978,7 @@ function transcriptVTT() {
 			newMin = (parseInt(newMin) < 10) ? '0' + newMin : newMin;
 
 			if (parseInt(currMin) < 60) {
-				content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} ', '\n00:' + currMin + ':00.000 --> 00:' + newMin + ':00.000\n');
+				content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} ', '\n\n00:' + currMin + ':00.000 --> 00:' + newMin + ':00.000\n');
 			}
 			else {
 				var hour = '';
@@ -987,7 +987,7 @@ function transcriptVTT() {
 				newMin = (parseInt(currMin) + 1);
 
 				hour = (parseInt(hour) < 10) ? '0' + hour : hour;
-				content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} <span class="transcript-word transcript-clicked">', '\n' + hour + ':' + currMin + ':00.000 --> ' + hour + ':' + newMin + ':00.000\n');
+				content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} <span class="transcript-word transcript-clicked">', '\n\n' + hour + ':' + currMin + ':00.000 --> ' + hour + ':' + newMin + ':00.000\n');
 			}
 		}
 
