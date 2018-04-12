@@ -740,7 +740,7 @@ function transcriptTimestamp() {
 // Here we will monitor the YouTube video time and keep the transcript timestamp updated
 window.setInterval(transcriptYTTimestamp, 500);
 function transcriptYTTimestamp() {
-	if (ytplayer && typeof ytplayer != 'undefined') {
+	if (ytplayer || typeof ytplayer !== 'undefined') {
 		// last_time_update = '';
 		time_update = (ytplayer.getCurrentTime() * 1000);
 		playing = ytplayer.getPlayerState();
