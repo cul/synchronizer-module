@@ -3,8 +3,8 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 03/15/2018
-	 Version: 0.4.3
+   Date: 04/13/2018
+	 Version: 0.5.1
 */
 
 /** Global variables **/
@@ -62,8 +62,9 @@ function uploadURLFile(sender) {
 		id = urlArr2[urlArr2.length - 1];
 	}
 
-	// HTTP will throw errors
-	if (!https) {
+	if (ext == "m3u8") renderWowza(url);
+	// HTTP is only allowed for Wowza URLs
+	else if (!https) {
 		var error = new Error("This field only accepts HTTPS URLs.");
 		errorHandler(error);
 	}
@@ -131,6 +132,7 @@ function checkExt(ext) {
 								 "srt",
 								 "mp4",
 								 "webm",
+								 "m3u8",
 								 "ogg",
 								 "mp3"];
 
@@ -146,6 +148,27 @@ function uploadSuccess(file) {
 }
 
 /** Rendering Functions **/
+
+// Here we load Wowza server playlists
+function renderWowza(url) {
+  var player = document.querySelector('video');
+  var hls = new Hls();
+  hls.loadSource(url);
+  hls.attachMedia(player);
+  hls.on(Hls.Events.MANIFEST_PARSED,function() {
+    video.play();
+  });
+	$("#media-upload").hide();
+	$("#video").show();
+	$("#audio").hide();
+	$("#tag-segment-btn").show();
+	$("#finish-area").show();
+	if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
+	var success = "";
+	success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />The Wowza URL ' + url + " was successfully ingested.</div>";
+	$("#messagesBar").append(success);
+	closeButtons();
+}
 
 // Here we play audio files in the video control player
 function renderVideo(file) {
@@ -175,6 +198,17 @@ function renderVideo(file) {
 	}
 
 	reader.readAsDataURL(file);
+	var player = document.getElementById('video-player');
+	player.addEventListener('durationchange', function() {
+		var time = player.duration;
+		var minutes = Math.floor(time / 60);
+		var hours = Math.floor(minutes / 60);
+		time = time - minutes * 60;
+		var seconds = time;
+		if (seconds % 60 == 0) seconds = 0.000;
+		if (minutes === 60) minutes = 0;
+		document.getElementById('endTime').innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
+	});
 }
 
 function loadYouTube(id) {
@@ -249,6 +283,17 @@ function renderAudio(file) {
 	}
 
 	reader.readAsDataURL(file);
+	var player = document.getElementById('audio-player');
+	player.addEventListener('durationchange', function() {
+		var time = player.duration;
+		var minutes = Math.floor(time / 60);
+		var hours = Math.floor(minutes / 60);
+		time = time - minutes * 60;
+		var seconds = time;
+		if (seconds >= 60 && seconds % 60 == 0) seconds = 0.000;
+		if (minutes === 60) minutes = 0;
+		document.getElementById('endTime').innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
+	});
 }
 
 // Here we display index or transcript file data
@@ -279,6 +324,10 @@ function renderText(file, ext) {
 
 								// First we pull out the interview-level metadata
 								if (/(Title:)+/.test(text[k])) {
+									// Save the interview title
+									$('#tag-interview-title').val(text[k].slice(7));
+
+									// Then add the rest of the information to the metadata section
 									while (text[k] !== '' && k < text.length) {
 										document.getElementById('interview-metadata').innerHTML += text[k] + '<br />';
 										k++;
@@ -305,7 +354,7 @@ function renderText(file, ext) {
 								// We are only concerned with timestamped segments at this point of the parsing
 								if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[i])) {
 									timestamp = text[i].substring(0, 12);
-									document.getElementById('endTime').innerHTML = text[i].substring(17);
+									// document.getElementById('endTime').innerHTML = text[i].substring(17);
 
 									while (text[i] !== "}" && i < text.length) {
 										if (/("title":)+/.test(text[i])) {
@@ -422,6 +471,16 @@ function renderText(file, ext) {
 
 // Here we set up segment controls for the YouTube playback
 function initializeYTControls(event) {
+	// Capture the end timestamp of the YouTube video
+	var time = ytplayer.getDuration();
+	var minutes = Math.floor(time / 60);
+	var hours = Math.floor(minutes / 60);
+	time = time - minutes * 60;
+	var seconds = time;
+	if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
+	if (minutes === 60) minutes = 0;
+	document.getElementById('endTime').innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ".000";
+
   var playButton = document.getElementById("control-beginning-yt");
   playButton.addEventListener("click", function() {
     ytplayer.seekTo(0);
@@ -670,6 +729,7 @@ function transcriptTimestamp() {
 
 	time = time - minutes * 60;
 	var seconds = time.toFixed(0);
+	if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
 	if (minutes === 60) minutes = 0;
 	document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
 	// If the user is working on an index segment, we need to watch the playhead
@@ -679,39 +739,42 @@ function transcriptTimestamp() {
 // Here we will monitor the YouTube video time and keep the transcript timestamp updated
 window.setInterval(transcriptYTTimestamp, 500);
 function transcriptYTTimestamp() {
-	// last_time_update = '';
-	time_update = (ytplayer.getCurrentTime() * 1000);
-	playing = ytplayer.getPlayerState();
-		if (playing == 1) {
-			if (last_time_update == time_update) current_time_msec += 50;
-			if (last_time_update != time_update) current_time_msec = time_update;
+	if (typeof ytplayer !== 'undefined') {
+		// last_time_update = '';
+		time_update = (ytplayer.getCurrentTime() * 1000);
+		playing = ytplayer.getPlayerState();
+			if (playing == 1) {
+				if (last_time_update == time_update) current_time_msec += 50;
+				if (last_time_update != time_update) current_time_msec = time_update;
+			}
+
+		var chime1 = document.getElementById("audio-chime1");
+		var chime2 = document.getElementById("audio-chime2");
+		var time = ytplayer.getCurrentTime();
+		var minutes = Math.floor(time / 60);
+		var hours = Math.floor(minutes / 60);
+		var offset = $('#sync-roll').val();
+
+		// We only play chimes if on the transcript tab, and looping is active
+		if (Math.floor(time) % 60 == (60 - offset) && $("#transcript").is(':visible') && looping !== -1 && playing == 1) { chime1.play(); }
+		if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible') && looping !== -1 && playing == 1) { chime2.play(); }
+
+		// If looping is active, we will jump back to a specific time should the the time be at the minute + offset
+		if ((Math.floor(time) % 60 == offset || time == ytplayer.getDuration()) && $("#transcript").is(':visible') && looping !== -1) {
+			document.getElementById("sync-minute").innerHTML = parseInt(document.getElementById("sync-minute").innerHTML) + 1;
+			syncControl("back");
+			ytplayer.playVideo();
 		}
 
-	var chime1 = document.getElementById("audio-chime1");
-	var chime2 = document.getElementById("audio-chime2");
-	var time = ytplayer.getCurrentTime();
-	var minutes = Math.floor(time / 60);
-	var hours = Math.floor(minutes / 60);
-	var offset = $('#sync-roll').val();
-
-	// We only play chimes if on the transcript tab, and looping is active
-	if (Math.floor(time) % 60 == (60 - offset) && $("#transcript").is(':visible') && looping !== -1 && playing == 1) { chime1.play(); }
-	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible') && looping !== -1 && playing == 1) { chime2.play(); }
-
-	// If looping is active, we will jump back to a specific time should the the time be at the minute + offset
-	if ((Math.floor(time) % 60 == offset || time == ytplayer.getDuration()) && $("#transcript").is(':visible') && looping !== -1) {
-		document.getElementById("sync-minute").innerHTML = parseInt(document.getElementById("sync-minute").innerHTML) + 1;
-		syncControl("back");
-		ytplayer.playVideo();
+		time = time - minutes * 60;
+		var seconds = time.toFixed(0);
+		if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
+		if (minutes === 60) minutes = 0;
+		document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
+		// If the user is working on an index segment, we need to watch the playhead
+		$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
+		last_time_update = time_update;
 	}
-
-	time = time - minutes * 60;
-	var seconds = time.toFixed(0);
-	if (seconds % 60 == 0) seconds = 0;
-	document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
-	// If the user is working on an index segment, we need to watch the playhead
-	$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
-	last_time_update = time_update;
 }
 
 /** Index Segment Functions **/
@@ -755,6 +818,7 @@ function updateTimestampYT() {
 
 // Here we save the contents of the Tag Segment modal
 function tagSave() {
+	var edit = document.getElementById("editVar").innerHTML;
 	var timestamp = $("#tag-timestamp").val();
 	var title = $("#tag-segment-title").val();
 	var transcript = $("#tag-partial-transcript").val();
@@ -766,14 +830,13 @@ function tagSave() {
 	var accordion = $("#indexAccordion");
   var panelIDs = $.map(accordion.children("div").get(), function(panel) {
 		var id = $(panel).attr('id');
-    return id;
+    if (id !== edit) return id;
   });
 
 	if (title === "" || title === null) alert("You must enter a title.");
 	else if ($.inArray(timestamp, panelIDs) > -1) alert("A segment for this timestamp already exists.");
 	else {
 		// If we're editing a panel, we need to remove the existing panel from the accordion
-		var edit = document.getElementById("editVar").innerHTML;
 		if (edit !== "-1") {
 			var editPanel = document.getElementById(edit);
 			editPanel.remove();
@@ -898,7 +961,7 @@ function transcriptVTT() {
 	}
 	else {
 		// Replace our temporary content with the real data for the export
-		content = (metadata != '') ? 'WEBVTT\n\nNOTE\n' + metadata + '\n' : 'WEBVTT\n';
+		content = (metadata != '') ? 'WEBVTT\n\nNOTE\n' + metadata + '\n\n' : 'WEBVTT\n\n';
 		content += '\n00:00:00.000 --> 00:' + minute + ':00.000\n';
 		content += document.getElementById('transcript').innerHTML.replace(/<\/span>/g, '').replace(/<span class="transcript-word">/g, '').replace(/&nbsp;/g, ' ').replace(/<span class="transcript-word transcript-clicked">/g, '');
 
@@ -925,16 +988,16 @@ function transcriptVTT() {
 				hour = (parseInt(hour) < 10) ? '0' + hour : hour;
 				content = content.replace('<span class="transcript-timestamp">{' + minute + ':00} <span class="transcript-word transcript-clicked">', '\n\n' + hour + ':' + currMin + ':00.000 --> ' + hour + ':' + newMin + ':00.000\n');
 			}
-
-			return content;
 		}
+
+		return content;
 	}
 }
 
 // Here we prepare index data for VTT files
 function indexVTT() {
 	var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
-	var content = 'WEBVTT\n\nNOTE\n' + metadata + '\n';
+	var content = (metadata != '') ? 'WEBVTT\n\nNOTE\n' + metadata + '\n\n' : 'WEBVTT\n\n';
 
 	// We'll break up the text by segments
 	var text = $('#indexAccordion')[0].innerHTML.split(/<\/div><\/div>/);
@@ -978,8 +1041,7 @@ function indexVTT() {
 }
 
 // Here we use VTT-prepared data to preview the end result
-// TODO: create the modal and player for this
-// TODO: change youtube player to ableplayer youtube
+// This function will NOT work, Preview requires the workflow manager to host files
 function previewWork() {
 	var type = $("ul#list-tabs li.ui-tabs-active > a")[0].innerHTML;
 	var youTube = document.getElementById("ytplayer").innerHTML;
@@ -1179,7 +1241,7 @@ function closeButtons() {
 	});
 
 	// If the dropdown list is changed, change the active tab to the selected dropdown item
-	$("#file-type").click(function() {
+	$("#file-type, #input-text").click(function() {
 		var selected = "#tabs-" + $("#file-type").val();
     $('#text-tabs a[href="' + selected + '"]').trigger('click');
   });
@@ -1189,4 +1251,8 @@ function closeButtons() {
 	tag.src = "https://www.youtube.com/iframe_api";
 	var firstScriptTag = document.getElementsByTagName('script')[0];
 	firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+	$('#working-area').scroll(function() {
+    $('#media-playback').css('top', $(this).scrollTop());
+	});
 }(jQuery));
