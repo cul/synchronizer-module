@@ -3,7 +3,7 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 04/12/2018
+   Date: 04/13/2018
 	 Version: 0.5.1
 */
 
@@ -62,17 +62,16 @@ function uploadURLFile(sender) {
 		id = urlArr2[urlArr2.length - 1];
 	}
 
-	// HTTP will throw a warning, but no longer stops uploading
-	if (!https) {
-		var error = new Error("It is recommended to use an HTTPS URL.");
+	if (ext == "m3u8") renderWowza(url);
+	// HTTP is only allowed for Wowza URLs
+	else if (!https) {
+		var error = new Error("This field only accepts HTTPS URLs.");
 		errorHandler(error);
 	}
-	if (id !== '') loadYouTube(id);
-	else if (ext == "m3u8") renderWowza(url);
+	else if (id !== '') loadYouTube(id);
 	else {
 		// We only allow URL uploads of media files, not any text files
 		if (ext == "mp3" || ext == "ogg" || ext == "mp4" || ext == "webm") {
-			console.log("i made it to uploading");
 			fetch(url)
 				.then(res => res.blob())
 				.then(blob => {
@@ -1253,7 +1252,7 @@ function closeButtons() {
 	var firstScriptTag = document.getElementsByTagName('script')[0];
 	firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-	$('#working-area').scroll(function() { 
+	$('#working-area').scroll(function() {
     $('#media-playback').css('top', $(this).scrollTop());
 	});
 }(jQuery));
