@@ -38,7 +38,7 @@ body {
 
 #media-playback {
   position: -webkit-sticky;
-  position: sticky;
+  /* position: sticky; */
   top: 0;
 }
 
