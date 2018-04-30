@@ -956,7 +956,7 @@ function transcriptVTT() {
 	minute = (parseInt(minute) < 10) ? '0' + minute : minute;
 
 	if (minute == '') {
-		new errorHandler("You must add at least one sync marker in order to export a transcript.");
+		new errorHandler("You must add at least one sync marker in order to prepare a transcript.");
 		return false;
 	}
 	else {
@@ -1045,6 +1045,17 @@ function previewWork() {
 	var type = $("ul#list-tabs li.ui-tabs-active > a")[0].innerHTML;
 	var youTube = document.getElementById("ytplayer").innerHTML;
 
+	// Make sure looping isn't running, we'll stop the A/V media and return the playhead to the beginning
+	looping = -1;
+	if (youTube !== '') {
+		ytplayer.seekTo(0);
+		ytplayer.pauseVideo();
+	}
+	else {
+		playerControls("beginning");
+		playerControls("stop");
+	}
+
 	if ($('#media-upload').visible) errorHandler(new Error("You must first upload media in order to preview."));
 	else if (type.toLowerCase() == "transcript" && document.getElementById('transcript').innerHTML != '') {
 		// The current open work needs to be hidden to prevent editing while previewing
@@ -1055,9 +1066,28 @@ function previewWork() {
 		$("#preview").addClass('hidden');
 		$("#preview-close").removeClass('hidden');
 
-		// var content = transcriptVTT();
-		console.log("preview transcript triggered!");
+		var content = transcriptVTT();
+		$("#transcript-preview").innerHTML = "<p>";
 
+		// We need to parse the VTT-ified transcript data so that it is "previewable"
+		var text = content.split(/\r?\n|\r/);
+		var first = false;
+
+	  for (var i = 0; i < text.length; i++) {
+			if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[i])) {
+	      if (!first) first = true;
+	      var timestamp = text[i][3] !== "0" ? (text[i][3] + v[i][4]) : text[i][4];
+	      if (timestamp !== "0") { document.getElementById('transcript-preview').innerHTML += '<span class="preview-minute">[' + timestamp + ':00]&nbsp;</span>'; }
+	      continue;
+			}
+	    else if (first) {
+				document.getElementById('transcript-preview').innerHTML += text[i];
+			}
+		}
+
+		document.getElementById('transcript-preview').innerHTML += "</p>";
+
+		addPreviewMinutes();
 	}
 	else if (type.toLowerCase() == "index" && $('#indexAccordion') != '') {
 		// The current open work needs to be hidden to prevent editing while previewing
@@ -1068,8 +1098,8 @@ function previewWork() {
 		$("#preview").addClass('hidden');
 		$("#preview-close").removeClass('hidden');
 
-		// var content = indexVTT();
-		console.log("preview index triggered!");
+		var content = indexVTT();
+		$("#index-preview").innerHTML = content;
 
 	}
 	else {
@@ -1077,16 +1107,48 @@ function previewWork() {
 	}
 }
 
+// Here we activate the minute sync markers created for previewing transcript
+function addPreviewMinutes() {
+	for (var minute of document.getElementsByClassName('preview-minute')) {
+		minute.addEventListener('click', function(){
+			var timestamp = $(this)[0].innerText.split('[');
+			console.log(timestamp);
+			var minute = timestamp[1].split(':');
+			console.log(minute);
+			var youTube = document.getElementById("ytplayer").innerHTML;
+			if (youTube !== '') ytplayer.seekTo(minute[0] * 60);
+			else {
+				var player = '';
+				if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
+				else if ($("#video").is(':visible')) player = document.getElementById("video-player");
+
+				player.currentTime = minute[0] * 60;
+			}
+		});
+	}
+}
+
 // Here we return to editing work once we are finished with previewing the end result
 function previewClose() {
+	// We'll stop the A/V media and return the playhead to the beginning
+	var youTube = document.getElementById("ytplayer").innerHTML;
+	if (youTube !== '') {
+		ytplayer.seekTo(0);
+		ytplayer.pauseVideo();
+	}
+	else {
+		playerControls("beginning");
+		playerControls("stop");
+	}
+
 	$("#transcript").show();
 	$("#sync-controls").show();
+	document.getElementById("transcript-preview").innerHTML = '';
 	$("#transcript-preview").hide();
-	$("#transcript-preview").innerHTML = '';
 	$("#tag-segment-btn").show();
 	$("#indexAccordion").show();
+	document.getElementById("index-preview").innerHTML = '';
 	$("#index-preview").hide();
-	$("#index-preview").innerHTML = '';
 	$("#export").removeClass('hidden');
 	$("#preview").removeClass('hidden');
 	$("#preview-close").addClass('hidden');

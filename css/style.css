@@ -3,8 +3,8 @@
    File: style.css
 	 Description: Stylesheet with specific styling outside of Bootstrap
    Author: Ashley Pressley
-   Date: 02/15/2018
-   Version: 0.4.0
+   Date: 04/30/2018
+   Version: 0.5.0
 */
 
 html,
@@ -135,6 +135,17 @@ label i {
 #text-tabs {
 	border-bottom: none;
 }
+/*  */
+
+/* Preview */
+.preview-minute {
+  font-weight: bold;
+}
+
+.preview-minute:hover {
+  color: #00f;
+}
+
 /*  */
 
 /* Error and Success Bars */
