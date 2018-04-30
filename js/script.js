@@ -1076,7 +1076,7 @@ function previewWork() {
 	  for (var i = 0; i < text.length; i++) {
 			if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[i])) {
 	      if (!first) first = true;
-	      var timestamp = text[i][3] !== "0" ? (text[i][3] + v[i][4]) : text[i][4];
+	      var timestamp = text[i][3] !== "0" ? (text[i][3] + text[i][4]) : text[i][4];
 	      if (timestamp !== "0") { document.getElementById('transcript-preview').innerHTML += '<span class="preview-minute">[' + timestamp + ':00]&nbsp;</span>'; }
 	      continue;
 			}
@@ -1092,15 +1092,33 @@ function previewWork() {
 	else if (type.toLowerCase() == "index" && $('#indexAccordion') != '') {
 		// The current open work needs to be hidden to prevent editing while previewing
 		$("#tag-segment-btn").hide();
-		$("#indexAccordion").hide();
-		$("#index-preview").show();
+		$("#previewAccordion").show();
 		$("#export").addClass('hidden');
 		$("#preview").addClass('hidden');
 		$("#preview-close").removeClass('hidden');
 
-		var content = indexVTT();
-		$("#index-preview").innerHTML = content;
+		$("#indexAccordion").clone().prop({ id: "previewAccordion", name: "indexClone"}).appendTo($('#input-index'));
+		$("#indexAccordion").hide();
 
+		// Initialize the new accordion
+		$("#previewAccordion").accordion({
+	    header: "> div > h3",
+	    autoHeight: false,
+	    collapsible: true,
+			clearStyle: true,
+	    active: false
+	  });
+
+		$(".tag-edit").each(function() { if ($(this).parents('#previewAccordion').length) { $(this).remove(); } });
+		$(".tag-delete").each(function() {
+			if ($(this).parents('#previewAccordion').length) {
+				$('<button class="btn btn-xs btn-primary preview-segment">Play Segment</button>').insertAfter($(this));
+				$(this).remove();
+			}
+		});
+
+		$("#previewAccordion").accordion("refresh");
+		addPreviewSegments();
 	}
 	else {
 		errorHandler(new Error("The selected transcript or index document is empty."));
@@ -1112,17 +1130,40 @@ function addPreviewMinutes() {
 	for (var minute of document.getElementsByClassName('preview-minute')) {
 		minute.addEventListener('click', function(){
 			var timestamp = $(this)[0].innerText.split('[');
-			console.log(timestamp);
 			var minute = timestamp[1].split(':');
-			console.log(minute);
 			var youTube = document.getElementById("ytplayer").innerHTML;
+
 			if (youTube !== '') ytplayer.seekTo(minute[0] * 60);
 			else {
 				var player = '';
 				if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
 				else if ($("#video").is(':visible')) player = document.getElementById("video-player");
 
-				player.currentTime = minute[0] * 60;
+				player.currentTime = parseInt(minute[0]) * 60;
+			}
+		});
+	}
+}
+
+// Here we activate the index segment buttons to for playing index segments during preview
+function addPreviewSegments() {
+	for (var segment of document.getElementsByClassName('preview-segment')) {
+		segment.addEventListener('click', function(){
+			var timestamp = $(this).parent().parent().parent().attr("id");
+			var hours = timestamp[0] + timestamp[1];
+			var minutes = timestamp[3] + timestamp[4];
+			var seconds = timestamp[6] + timestamp[7];
+			var playhead = (parseInt(hours) * 60 * 60) + (parseInt(minutes) * 60) + parseInt(seconds);
+
+			var youTube = document.getElementById("ytplayer").innerHTML;
+
+			if (youTube !== '') ytplayer.seekTo(playhead);
+			else {
+				var player = '';
+				if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
+				else if ($("#video").is(':visible')) player = document.getElementById("video-player");
+
+				player.currentTime = playhead;
 			}
 		});
 	}
@@ -1147,8 +1188,7 @@ function previewClose() {
 	$("#transcript-preview").hide();
 	$("#tag-segment-btn").show();
 	$("#indexAccordion").show();
-	document.getElementById("index-preview").innerHTML = '';
-	$("#index-preview").hide();
+	if (document.getElementById("previewAccordion") != null) document.getElementById("previewAccordion").remove();
 	$("#export").removeClass('hidden');
 	$("#preview").removeClass('hidden');
 	$("#preview-close").addClass('hidden');
@@ -1252,7 +1292,6 @@ function closeButtons() {
 	$("#sync-controls").hide();
 	$("#finish-area").hide();
 	$("#transcript-preview").hide();
-	$("#index-preview").hide();
 
 	// Initialize close buttons, tabs, and accordion
 	closeButtons();
@@ -1266,6 +1305,7 @@ function closeButtons() {
 		looping = -1;
 	});
 
+	// Activate our index and preview index accordions
 	$("#indexAccordion").accordion({
     header: "> div > h3",
     autoHeight: false,
