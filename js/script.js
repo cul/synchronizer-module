@@ -3,8 +3,8 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 04/13/2018
-	 Version: 0.5.1
+   Date: 04/30/2018
+	 Version: 0.6.0
 */
 
 /** Global variables **/
@@ -1040,55 +1040,56 @@ function indexVTT() {
 	return content;
 }
 
-// Here we use VTT-prepared data to preview the end result
-// This function will NOT work, Preview requires the workflow manager to host files
+// Here we use VTT-esque data to preview the end result
 function previewWork() {
 	var type = $("ul#list-tabs li.ui-tabs-active > a")[0].innerHTML;
 	var youTube = document.getElementById("ytplayer").innerHTML;
 
 	if ($('#media-upload').visible) errorHandler(new Error("You must first upload media in order to preview."));
-	else if (youTube !== '') errorHandler(new Error("Preview does not currently work with YouTube videos."));
 	else if (type.toLowerCase() == "transcript" && document.getElementById('transcript').innerHTML != '') {
-		var content = transcriptVTT();
+		// The current open work needs to be hidden to prevent editing while previewing
+		$("#transcript").hide();
+		$("#sync-controls").hide();
+		$("#transcript-preview").show();
+		$("#export").addClass('hidden');
+		$("#preview").addClass('hidden');
+		$("#preview-close").removeClass('hidden');
 
-		// This will create a temporary link DOM element that we will use as a temp file
-		var element = document.createElement('div');
-		element.id = 'preview-transcript';
-	  element.innerText = encodeURIComponent(content);
-	  document.body.appendChild(element);
-		// Assign the document to the A/V player
-		var videoSrc = document.getElementById('video-player').src;
+		// var content = transcriptVTT();
+		console.log("preview transcript triggered!");
 
-		var videoPre = document.createElement('video');
-		videoPre.src = videoSrc;
-		video.autoplay = true;
-
-
-		var video = document.getElementById('video-player');
-		var att = document.createElement(tagName)
-		video.appendChild('data-transcript-div', 'preview-transcript');
-
-	  // document.body.removeChild(element);
 	}
 	else if (type.toLowerCase() == "index" && $('#indexAccordion') != '') {
-		var content = indexVTT();
+		// The current open work needs to be hidden to prevent editing while previewing
+		$("#tag-segment-btn").hide();
+		$("#indexAccordion").hide();
+		$("#index-preview").show();
+		$("#export").addClass('hidden');
+		$("#preview").addClass('hidden');
+		$("#preview-close").removeClass('hidden');
 
-		// This will create a temporary link DOM element that we will use as a temp file
-		var element = document.createElement('div');
-	  element.innerText = encodeURIComponent(content);
-	  element.style.display = 'none';
-	  document.body.appendChild(element);
-		// Assign the document to the A/V player
-		var source = document.createElement('source');
-		source.src = src;
-		source.kind = 'metadata';
-		element.appendChild(source); // video player
+		// var content = indexVTT();
+		console.log("preview index triggered!");
 
-	  document.body.removeChild(element);
 	}
 	else {
 		errorHandler(new Error("The selected transcript or index document is empty."));
 	}
+}
+
+// Here we return to editing work once we are finished with previewing the end result
+function previewClose() {
+	$("#transcript").show();
+	$("#sync-controls").show();
+	$("#transcript-preview").hide();
+	$("#transcript-preview").innerHTML = '';
+	$("#tag-segment-btn").show();
+	$("#indexAccordion").show();
+	$("#index-preview").hide();
+	$("#index-preview").innerHTML = '';
+	$("#export").removeClass('hidden');
+	$("#preview").removeClass('hidden');
+	$("#preview-close").addClass('hidden');
 }
 
 // Here we use prepared data for export to a downloadable file
@@ -1188,6 +1189,8 @@ function closeButtons() {
 	$("#tag-controls-yt").hide();
 	$("#sync-controls").hide();
 	$("#finish-area").hide();
+	$("#transcript-preview").hide();
+	$("#index-preview").hide();
 
 	// Initialize close buttons, tabs, and accordion
 	closeButtons();
@@ -1252,6 +1255,7 @@ function closeButtons() {
 	var firstScriptTag = document.getElementsByTagName('script')[0];
 	firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
+	// Scroll to top function
 	$('#working-area').scroll(function() {
     $('#media-playback').css('top', $(this).scrollTop());
 	});
