@@ -1157,13 +1157,17 @@ function addPreviewSegments() {
 
 			var youTube = document.getElementById("ytplayer").innerHTML;
 
-			if (youTube !== '') ytplayer.seekTo(playhead);
+			if (youTube !== '') {
+				ytplayer.seekTo(playhead);
+				ytplayer.playVideo();
+			}
 			else {
 				var player = '';
 				if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
 				else if ($("#video").is(':visible')) player = document.getElementById("video-player");
 
 				player.currentTime = playhead;
+				player.play();
 			}
 		});
 	}
