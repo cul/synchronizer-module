@@ -3,8 +3,8 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 04/13/2018
-	 Version: 0.5.1
+   Date: 04/30/2018
+	 Version: 0.6.0
 */
 
 /** Global variables **/
@@ -956,7 +956,7 @@ function transcriptVTT() {
 	minute = (parseInt(minute) < 10) ? '0' + minute : minute;
 
 	if (minute == '') {
-		new errorHandler("You must add at least one sync marker in order to export a transcript.");
+		new errorHandler("You must add at least one sync marker in order to prepare a transcript.");
 		return false;
 	}
 	else {
@@ -1040,55 +1040,162 @@ function indexVTT() {
 	return content;
 }
 
-// Here we use VTT-prepared data to preview the end result
-// This function will NOT work, Preview requires the workflow manager to host files
+// Here we use VTT-esque data to preview the end result
 function previewWork() {
 	var type = $("ul#list-tabs li.ui-tabs-active > a")[0].innerHTML;
 	var youTube = document.getElementById("ytplayer").innerHTML;
 
+	// Make sure looping isn't running, we'll stop the A/V media and return the playhead to the beginning
+	looping = -1;
+	if (youTube !== '') {
+		ytplayer.seekTo(0);
+		ytplayer.pauseVideo();
+	}
+	else {
+		playerControls("beginning");
+		playerControls("stop");
+	}
+
 	if ($('#media-upload').visible) errorHandler(new Error("You must first upload media in order to preview."));
-	else if (youTube !== '') errorHandler(new Error("Preview does not currently work with YouTube videos."));
 	else if (type.toLowerCase() == "transcript" && document.getElementById('transcript').innerHTML != '') {
+		// The current open work needs to be hidden to prevent editing while previewing
+		$("#transcript").hide();
+		$("#sync-controls").hide();
+		$("#transcript-preview").show();
+		$("#export").addClass('hidden');
+		$("#preview").addClass('hidden');
+		$("#preview-close").removeClass('hidden');
+
 		var content = transcriptVTT();
+		$("#transcript-preview").innerHTML = "<p>";
 
-		// This will create a temporary link DOM element that we will use as a temp file
-		var element = document.createElement('div');
-		element.id = 'preview-transcript';
-	  element.innerText = encodeURIComponent(content);
-	  document.body.appendChild(element);
-		// Assign the document to the A/V player
-		var videoSrc = document.getElementById('video-player').src;
+		// We need to parse the VTT-ified transcript data so that it is "previewable"
+		var text = content.split(/\r?\n|\r/);
+		var first = false;
 
-		var videoPre = document.createElement('video');
-		videoPre.src = videoSrc;
-		video.autoplay = true;
+	  for (var i = 0; i < text.length; i++) {
+			if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[i])) {
+	      if (!first) first = true;
+	      var timestamp = text[i][3] !== "0" ? (text[i][3] + text[i][4]) : text[i][4];
+	      if (timestamp !== "0") { document.getElementById('transcript-preview').innerHTML += '<span class="preview-minute">[' + timestamp + ':00]&nbsp;</span>'; }
+	      continue;
+			}
+	    else if (first) {
+				document.getElementById('transcript-preview').innerHTML += text[i];
+			}
+		}
 
+		document.getElementById('transcript-preview').innerHTML += "</p>";
 
-		var video = document.getElementById('video-player');
-		var att = document.createElement(tagName)
-		video.appendChild('data-transcript-div', 'preview-transcript');
-
-	  // document.body.removeChild(element);
+		addPreviewMinutes();
 	}
 	else if (type.toLowerCase() == "index" && $('#indexAccordion') != '') {
-		var content = indexVTT();
+		// The current open work needs to be hidden to prevent editing while previewing
+		$("#tag-segment-btn").hide();
+		$("#previewAccordion").show();
+		$("#export").addClass('hidden');
+		$("#preview").addClass('hidden');
+		$("#preview-close").removeClass('hidden');
 
-		// This will create a temporary link DOM element that we will use as a temp file
-		var element = document.createElement('div');
-	  element.innerText = encodeURIComponent(content);
-	  element.style.display = 'none';
-	  document.body.appendChild(element);
-		// Assign the document to the A/V player
-		var source = document.createElement('source');
-		source.src = src;
-		source.kind = 'metadata';
-		element.appendChild(source); // video player
+		$("#indexAccordion").clone().prop({ id: "previewAccordion", name: "indexClone"}).appendTo($('#input-index'));
+		$("#indexAccordion").hide();
 
-	  document.body.removeChild(element);
+		// Initialize the new accordion
+		$("#previewAccordion").accordion({
+	    header: "> div > h3",
+	    autoHeight: false,
+	    collapsible: true,
+			clearStyle: true,
+	    active: false
+	  });
+
+		$(".tag-edit").each(function() { if ($(this).parents('#previewAccordion').length) { $(this).remove(); } });
+		$(".tag-delete").each(function() {
+			if ($(this).parents('#previewAccordion').length) {
+				$('<button class="btn btn-xs btn-primary preview-segment">Play Segment</button>').insertAfter($(this));
+				$(this).remove();
+			}
+		});
+
+		$("#previewAccordion").accordion("refresh");
+		addPreviewSegments();
 	}
 	else {
 		errorHandler(new Error("The selected transcript or index document is empty."));
 	}
+}
+
+// Here we activate the minute sync markers created for previewing transcript
+function addPreviewMinutes() {
+	for (var minute of document.getElementsByClassName('preview-minute')) {
+		minute.addEventListener('click', function(){
+			var timestamp = $(this)[0].innerText.split('[');
+			var minute = timestamp[1].split(':');
+			var youTube = document.getElementById("ytplayer").innerHTML;
+
+			if (youTube !== '') ytplayer.seekTo(minute[0] * 60);
+			else {
+				var player = '';
+				if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
+				else if ($("#video").is(':visible')) player = document.getElementById("video-player");
+
+				player.currentTime = parseInt(minute[0]) * 60;
+			}
+		});
+	}
+}
+
+// Here we activate the index segment buttons to for playing index segments during preview
+function addPreviewSegments() {
+	for (var segment of document.getElementsByClassName('preview-segment')) {
+		segment.addEventListener('click', function(){
+			var timestamp = $(this).parent().parent().parent().attr("id");
+			var hours = timestamp[0] + timestamp[1];
+			var minutes = timestamp[3] + timestamp[4];
+			var seconds = timestamp[6] + timestamp[7];
+			var playhead = (parseInt(hours) * 60 * 60) + (parseInt(minutes) * 60) + parseInt(seconds);
+
+			var youTube = document.getElementById("ytplayer").innerHTML;
+
+			if (youTube !== '') {
+				ytplayer.seekTo(playhead);
+				ytplayer.playVideo();
+			}
+			else {
+				var player = '';
+				if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
+				else if ($("#video").is(':visible')) player = document.getElementById("video-player");
+
+				player.currentTime = playhead;
+				player.play();
+			}
+		});
+	}
+}
+
+// Here we return to editing work once we are finished with previewing the end result
+function previewClose() {
+	// We'll stop the A/V media and return the playhead to the beginning
+	var youTube = document.getElementById("ytplayer").innerHTML;
+	if (youTube !== '') {
+		ytplayer.seekTo(0);
+		ytplayer.pauseVideo();
+	}
+	else {
+		playerControls("beginning");
+		playerControls("stop");
+	}
+
+	$("#transcript").show();
+	$("#sync-controls").show();
+	document.getElementById("transcript-preview").innerHTML = '';
+	$("#transcript-preview").hide();
+	$("#tag-segment-btn").show();
+	$("#indexAccordion").show();
+	if (document.getElementById("previewAccordion") != null) document.getElementById("previewAccordion").remove();
+	$("#export").removeClass('hidden');
+	$("#preview").removeClass('hidden');
+	$("#preview-close").addClass('hidden');
 }
 
 // Here we use prepared data for export to a downloadable file
@@ -1188,6 +1295,7 @@ function closeButtons() {
 	$("#tag-controls-yt").hide();
 	$("#sync-controls").hide();
 	$("#finish-area").hide();
+	$("#transcript-preview").hide();
 
 	// Initialize close buttons, tabs, and accordion
 	closeButtons();
@@ -1201,6 +1309,7 @@ function closeButtons() {
 		looping = -1;
 	});
 
+	// Activate our index and preview index accordions
 	$("#indexAccordion").accordion({
     header: "> div > h3",
     autoHeight: false,
@@ -1252,6 +1361,7 @@ function closeButtons() {
 	var firstScriptTag = document.getElementsByTagName('script')[0];
 	firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
+	// Scroll to top function
 	$('#working-area').scroll(function() {
     $('#media-playback').css('top', $(this).scrollTop());
 	});
