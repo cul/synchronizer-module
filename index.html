@@ -79,7 +79,8 @@
 						<!-- Whether you're previewing or exporting a transcript or an index is determined by which tab is active. -->
 						<div class="btn-group" role="group">
 							<button id="clear" type="button" class="btn btn-secondary" onclick="clearBoxes()">Cancel Session</button>
-							<!-- <button id="preview" type="button" class="btn btn-secondary" onclick="previewWork()">Preview</button> -->
+							<button id="preview" type="button" class="btn btn-secondary" onclick="previewWork()">Preview</button>
+							<button id="preview-close" type="button" class="btn btn-secondary hidden" onclick="previewClose()">Close Preview</button>
 							<div class="btn-group" role="group">
 						    <button id="export" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 						      Export
@@ -118,7 +119,6 @@
 						<ul id="list-tabs">
 							<li><a href="#tabs-transcript">Transcript</a></li>
 							<li><a href="#tabs-index">Index</a></li>
-							<!-- <li><a href="#tabs-preview">Preview</a></li> -->
 						</ul>
 
 						<div id="tabs-transcript">
@@ -134,12 +134,13 @@
 									<div id="sync-time" class="btn btn-secondary" type="button">00:00:00</div>
 								</div>
 								<div id="transcript" class="col-md-12" ></div>
+								<div id="transcript-preview" class="col-md-12" ></div>
 							</div>
 						</div><!-- /#tabs-transcript -->
 
 						<div id="tabs-index">
 							<div id="input-index">
-								<h2 class="col-md-5">Index Document</h2>
+								<h2>Index Document</h2>
 								<button id="tag-segment-btn" type="button" class="btn btn-primary pull-right" data-toggle="modal" data-target=".index-tag" data-backdrop="static" data-keyboard="false">Add Segment</button>
 
 								<div id="indexAccordion"></div>
