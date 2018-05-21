@@ -1070,7 +1070,7 @@ function previewWork() {
 	      continue;
 			}
 	    else if (first) {
-				document.getElementById('transcript-preview').innerHTML += text[i];
+				document.getElementById('transcript-preview').innerHTML += text[i] + '<br />';
 			}
 		}
 
