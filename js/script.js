@@ -3,8 +3,8 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 04/30/2018
-	 Version: 0.6.0
+   Date: 05/21/2018
+	 Version: 1.0
 */
 
 /** Global variables **/
@@ -234,25 +234,6 @@ function loadYouTube(id) {
 	});
 
 	transcriptYTTimestamp();
-
-	// We need to make a second call in order to get video information.
-	// CUL's Google API Key will need to go here
-	// var apiKey = 'culAPIkey';
-	// var url = 'https://www.googleapis.com/youtube/v3/videos?id=' + id + '&key=' + apiKey + '&part=snippet';
-	//
-	// $.ajax({
-  //   url: url,
-  //   dataType: "jsonp",
-  //   success: function(data){
-	// 		var success = "";
-	// 		success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />Title: ' + data.items[0].snippet.title + "<br />Publish Date: " + new Date(data.items[0].snippet.publishedAt) + "</div>";
-	// 		$("#successBar").append(success);
-	// 		closeButtons();
-  //   },
-  //   error: function(jqXHR, textStatus, errorThrown) {
-	// 		console.log(textStatus, + ' | ' + errorThrown);
-  //   }
-  // });
 }
 
 // Here we play audio files in the audio control player
@@ -568,28 +549,34 @@ function addSyncMarker() {
 			var marker = "{" + minute + ":00}";
 			var regEx = new RegExp(marker);
 
-			// If a marker already exists for this minute, remove it and remove the word highlighting
-			for (var sync of document.getElementsByClassName('transcript-timestamp')) {
-				var mark = sync.innerText;
-				if (regEx.test(mark)) {
-					$(sync).next(".transcript-clicked").removeClass('transcript-clicked');
-					sync.remove();
-				}
+			// If this word is already a sync marker, we don't make it another one
+			if ($(this).hasClass('transcript-clicked')) {
+				errorHandler(new Error("Word already associated with a transcript sync marker."));
 			}
+			else {
+				// If a marker already exists for this minute, remove it and remove the word highlighting
+				for (var sync of document.getElementsByClassName('transcript-timestamp')) {
+					var mark = sync.innerText;
+					if (regEx.test(mark)) {
+						$(sync).next(".transcript-clicked").removeClass('transcript-clicked');
+						sync.remove();
+					}
+				}
 
-			$(this).addClass('transcript-clicked');
-			$('<span class="transcript-timestamp">{' + minute + ':00}&nbsp;</span>').insertBefore($(this));
+				$(this).addClass('transcript-clicked');
+				$('<span class="transcript-timestamp">{' + minute + ':00}&nbsp;</span>').insertBefore($(this));
 
-			// Increase the Sync Current Mark
-			document.getElementById("sync-minute").innerHTML = minute + 1;
+				// Increase the Sync Current Mark
+				document.getElementById("sync-minute").innerHTML = minute + 1;
 
-			updateCurrentMark();
-			removeSyncMarker();
+				updateCurrentMark();
+				removeSyncMarker();
 
-			// If we are looping, we automatically jump forward
-			if (looping !== -1) {
-				document.getElementById("sync-minute").innerHTML = minute;
-				syncControl("forward");
+				// If we are looping, we automatically jump forward
+				if (looping !== -1) {
+					document.getElementById("sync-minute").innerHTML = minute;
+					syncControl("forward");
+				}
 			}
 		}, false);
 	}
@@ -731,6 +718,7 @@ function transcriptTimestamp() {
 	var seconds = time.toFixed(0);
 	if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
 	if (minutes === 60) minutes = 0;
+
 	document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
 	// If the user is working on an index segment, we need to watch the playhead
 	$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
@@ -770,6 +758,7 @@ function transcriptYTTimestamp() {
 		var seconds = time.toFixed(0);
 		if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
 		if (minutes === 60) minutes = 0;
+
 		document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
 		// If the user is working on an index segment, we need to watch the playhead
 		$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
@@ -794,9 +783,9 @@ function updateTimestamp() {
 
 	if (hours < 10) hours = '0' + hours;
 	if (minutes < 10) minutes = '0' + minutes;
-	if (seconds < 10) seconds = '0' + seconds;
+	if (seconds < 10) seconds = '0' + seconds.toString();
 
-	$("#tag-timestamp").val(hours + ":" + minutes + ":" + seconds);
+	$("#tag-timestamp").val(hours + ':' + minutes + ':' + seconds);
 };
 
 // Here we update the timestamp for the Tag Segment function for YouTube
@@ -811,9 +800,9 @@ function updateTimestampYT() {
 
 	if (hours < 10) hours = '0' + hours;
 	if (minutes < 10) minutes = '0' + minutes;
-	if (seconds < 10) seconds = '0' + seconds;
+	if (seconds < 10) seconds = '0' + seconds.toString();
 
-	$("#tag-timestamp").val(hours + ":" + minutes + ":" + seconds);
+	$("#tag-timestamp").val(hours + ':' + minutes + ':' + seconds);
 };
 
 // Here we save the contents of the Tag Segment modal
@@ -1081,7 +1070,7 @@ function previewWork() {
 	      continue;
 			}
 	    else if (first) {
-				document.getElementById('transcript-preview').innerHTML += text[i];
+				document.getElementById('transcript-preview').innerHTML += text[i] + '<br />';
 			}
 		}
 
@@ -1355,7 +1344,7 @@ function closeButtons() {
     $('#text-tabs a[href="' + selected + '"]').trigger('click');
   });
 
-	// Load YouTube API
+	// Load YouTube Frame API
 	var tag = document.createElement('script');
 	tag.src = "https://www.youtube.com/iframe_api";
 	var firstScriptTag = document.getElementsByTagName('script')[0];
