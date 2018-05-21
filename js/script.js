@@ -170,7 +170,7 @@ function renderWowza(url) {
 	closeButtons();
 }
 
-// Here we play audio files in the video control player
+// Here we play video files in the video control player
 function renderVideo(file) {
 	var reader = new FileReader();
   try {
@@ -211,6 +211,7 @@ function renderVideo(file) {
 	});
 }
 
+// Here we load the YouTube video into the iFrame via its ID
 function loadYouTube(id) {
 	if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
 	$("#finish-area").show();
