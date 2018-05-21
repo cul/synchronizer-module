@@ -234,25 +234,6 @@ function loadYouTube(id) {
 	});
 
 	transcriptYTTimestamp();
-
-	// We need to make a second call in order to get video information.
-	// CUL's Google API Key will need to go here
-	// var apiKey = 'culAPIkey';
-	// var url = 'https://www.googleapis.com/youtube/v3/videos?id=' + id + '&key=' + apiKey + '&part=snippet';
-	//
-	// $.ajax({
-  //   url: url,
-  //   dataType: "jsonp",
-  //   success: function(data){
-	// 		var success = "";
-	// 		success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />Title: ' + data.items[0].snippet.title + "<br />Publish Date: " + new Date(data.items[0].snippet.publishedAt) + "</div>";
-	// 		$("#successBar").append(success);
-	// 		closeButtons();
-  //   },
-  //   error: function(jqXHR, textStatus, errorThrown) {
-	// 		console.log(textStatus, + ' | ' + errorThrown);
-  //   }
-  // });
 }
 
 // Here we play audio files in the audio control player
@@ -731,6 +712,7 @@ function transcriptTimestamp() {
 	var seconds = time.toFixed(0);
 	if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
 	if (minutes === 60) minutes = 0;
+
 	document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
 	// If the user is working on an index segment, we need to watch the playhead
 	$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
@@ -770,6 +752,7 @@ function transcriptYTTimestamp() {
 		var seconds = time.toFixed(0);
 		if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
 		if (minutes === 60) minutes = 0;
+
 		document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
 		// If the user is working on an index segment, we need to watch the playhead
 		$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
@@ -794,9 +777,9 @@ function updateTimestamp() {
 
 	if (hours < 10) hours = '0' + hours;
 	if (minutes < 10) minutes = '0' + minutes;
-	if (seconds < 10) seconds = '0' + seconds;
+	if (seconds < 10) seconds = '0' + seconds.toString();
 
-	$("#tag-timestamp").val(hours + ":" + minutes + ":" + seconds);
+	$("#tag-timestamp").val(hours + ':' + minutes + ':' + seconds);
 };
 
 // Here we update the timestamp for the Tag Segment function for YouTube
@@ -811,9 +794,9 @@ function updateTimestampYT() {
 
 	if (hours < 10) hours = '0' + hours;
 	if (minutes < 10) minutes = '0' + minutes;
-	if (seconds < 10) seconds = '0' + seconds;
+	if (seconds < 10) seconds = '0' + seconds.toString();
 
-	$("#tag-timestamp").val(hours + ":" + minutes + ":" + seconds);
+	$("#tag-timestamp").val(hours + ':' + minutes + ':' + seconds);
 };
 
 // Here we save the contents of the Tag Segment modal
