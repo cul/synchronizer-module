@@ -3,8 +3,8 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 04/30/2018
-	 Version: 0.6.0
+   Date: 05/21/2018
+	 Version: 1.0
 */
 
 /** Global variables **/
@@ -549,28 +549,34 @@ function addSyncMarker() {
 			var marker = "{" + minute + ":00}";
 			var regEx = new RegExp(marker);
 
-			// If a marker already exists for this minute, remove it and remove the word highlighting
-			for (var sync of document.getElementsByClassName('transcript-timestamp')) {
-				var mark = sync.innerText;
-				if (regEx.test(mark)) {
-					$(sync).next(".transcript-clicked").removeClass('transcript-clicked');
-					sync.remove();
-				}
+			// If this word is already a sync marker, we don't make it another one
+			if ($(this).hasClass('transcript-clicked')) {
+				errorHandler(new Error("Word already associated with a transcript sync marker."));
 			}
+			else {
+				// If a marker already exists for this minute, remove it and remove the word highlighting
+				for (var sync of document.getElementsByClassName('transcript-timestamp')) {
+					var mark = sync.innerText;
+					if (regEx.test(mark)) {
+						$(sync).next(".transcript-clicked").removeClass('transcript-clicked');
+						sync.remove();
+					}
+				}
 
-			$(this).addClass('transcript-clicked');
-			$('<span class="transcript-timestamp">{' + minute + ':00}&nbsp;</span>').insertBefore($(this));
+				$(this).addClass('transcript-clicked');
+				$('<span class="transcript-timestamp">{' + minute + ':00}&nbsp;</span>').insertBefore($(this));
 
-			// Increase the Sync Current Mark
-			document.getElementById("sync-minute").innerHTML = minute + 1;
+				// Increase the Sync Current Mark
+				document.getElementById("sync-minute").innerHTML = minute + 1;
 
-			updateCurrentMark();
-			removeSyncMarker();
+				updateCurrentMark();
+				removeSyncMarker();
 
-			// If we are looping, we automatically jump forward
-			if (looping !== -1) {
-				document.getElementById("sync-minute").innerHTML = minute;
-				syncControl("forward");
+				// If we are looping, we automatically jump forward
+				if (looping !== -1) {
+					document.getElementById("sync-minute").innerHTML = minute;
+					syncControl("forward");
+				}
 			}
 		}, false);
 	}
@@ -1338,7 +1344,7 @@ function closeButtons() {
     $('#text-tabs a[href="' + selected + '"]').trigger('click');
   });
 
-	// Load YouTube API
+	// Load YouTube Frame API
 	var tag = document.createElement('script');
 	tag.src = "https://www.youtube.com/iframe_api";
 	var firstScriptTag = document.getElementsByTagName('script')[0];
