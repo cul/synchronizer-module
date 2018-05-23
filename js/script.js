@@ -3,7 +3,7 @@
    File: script.js
 	 Description: Javascript functions providing file upload and display
    Author: Ashley Pressley
-   Date: 05/21/2018
+   Date: 05/23/2018
 	 Version: 1.0
 */
 
@@ -204,10 +204,12 @@ function renderVideo(file) {
 		var minutes = Math.floor(time / 60);
 		var hours = Math.floor(minutes / 60);
 		time = time - minutes * 60;
-		var seconds = time;
-		if (seconds % 60 == 0) seconds = 0.000;
-		if (minutes === 60) minutes = 0;
-		document.getElementById('endTime').innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
+		var seconds = time.toFixed(3);
+
+		if (hours < 10) hours = '0' + hours;
+		if (minutes < 10) minutes = '0' + minutes;
+		if (seconds < 10) seconds = '0' + seconds.toString();
+		document.getElementById('endTime').innerHTML = (hours + ':' + minutes + ':' + seconds);
 	});
 }
 
@@ -271,10 +273,12 @@ function renderAudio(file) {
 		var minutes = Math.floor(time / 60);
 		var hours = Math.floor(minutes / 60);
 		time = time - minutes * 60;
-		var seconds = time;
-		if (seconds >= 60 && seconds % 60 == 0) seconds = 0.000;
-		if (minutes === 60) minutes = 0;
-		document.getElementById('endTime').innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
+		var seconds = time.toFixed(3);
+
+		if (hours < 10) hours = '0' + hours;
+		if (minutes < 10) minutes = '0' + minutes;
+		if (seconds < 10) seconds = '0' + seconds.toString();
+		document.getElementById('endTime').innerHTML = (hours + ':' + minutes + ':' + seconds);
 	});
 }
 
@@ -458,10 +462,12 @@ function initializeYTControls(event) {
 	var minutes = Math.floor(time / 60);
 	var hours = Math.floor(minutes / 60);
 	time = time - minutes * 60;
-	var seconds = time;
-	if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
-	if (minutes === 60) minutes = 0;
-	document.getElementById('endTime').innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ".000";
+	var seconds = time.toFixed(3);
+
+	if (hours < 10) hours = '0' + hours;
+	if (minutes < 10) minutes = '0' + minutes;
+	if (seconds < 10) seconds = '0' + seconds.toString();
+	document.getElementById('endTime').innerHTML = (hours + ':' + minutes + ':' + seconds);
 
   var playButton = document.getElementById("control-beginning-yt");
   playButton.addEventListener("click", function() {
