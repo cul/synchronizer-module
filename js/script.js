@@ -13,13 +13,16 @@
 var ytplayer;
 function onYouTubeIframeAPIReady() {}
 
+var OHSynchronizer = function() {};
+
 // Looping is used to notify various functions if Transcript looping is currently active
-var looping = -1;
+OHSynchronizer.looping = -1;
 
 /** Import Functions **/
 
+OHSynchronizer.Import = function() {};
 // Here we accept locally uploaded files
-function uploadFile(sender) {
+OHSynchronizer.Import.uploadFile = function (sender) {
 	// Grab the files from the user's selection
 	var input = document.getElementById(sender);
 	for (var i = 0; i < input.files.length; i++) {
@@ -36,7 +39,7 @@ function uploadFile(sender) {
 
 // Here we accept URL-based files
 // This function is no longer utilized for non-AV files
-function uploadURLFile(sender) {
+OHSynchronizer.Import.uploadURLFile = function(sender) {
 	// Continue onward, grab the URL value
 	var input = document.getElementById(sender);
 	var url = input.value;
@@ -62,7 +65,7 @@ function uploadURLFile(sender) {
 		id = urlArr2[urlArr2.length - 1];
 	}
 
-	if (ext == "m3u8") renderWowza(url);
+	if (ext == "m3u8") renderHLS(url);
 	// HTTP is only allowed for Wowza URLs
 	else if (!https) {
 		var error = new Error("This field only accepts HTTPS URLs.");
@@ -88,7 +91,7 @@ function uploadURLFile(sender) {
 }
 
 // Here we determine what kind of file was uploaded
-function determineFile(file, ext, sender) {
+OHSynchronizer.Import.determineFile = function(file, ext, sender) {
 	// List the information from the files
 	// console.group("File Name: " + file.name);
 	// console.log("File Size: " + parseInt(file.size / 1024, 10));
@@ -125,7 +128,7 @@ function determineFile(file, ext, sender) {
 }
 
 // Here we ensure the extension is usable by the system
-function checkExt(ext) {
+OHSynchronizer.Import.checkExt = function(ext) {
 	var allowed = ["txt",
 								 "vtt",
 								 "xml",
@@ -140,7 +143,7 @@ function checkExt(ext) {
 }
 
 // Here we post success messages for uploaded files
-function uploadSuccess(file) {
+OHSynchronizer.Import.uploadSuccess = function(file) {
 	var success = "";
 	success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />File Name: ' + file.name + "<br />File Size: " + parseInt(file.size / 1024, 10) + "<br />File Type: " + file.type + "<br />Last Modified Date: " + new Date(file.lastModified) + "</div>";
 	$("#messagesBar").append(success);
@@ -149,8 +152,8 @@ function uploadSuccess(file) {
 
 /** Rendering Functions **/
 
-// Here we load Wowza server playlists
-function renderWowza(url) {
+// Here we load HLS playlists
+OHSynchronizer.Import.renderHLS = function(url) {
   var player = document.querySelector('video');
   var hls = new Hls();
   hls.loadSource(url);
@@ -171,7 +174,7 @@ function renderWowza(url) {
 }
 
 // Here we play video files in the video control player
-function renderVideo(file) {
+OHSynchronizer.Import.renderVideo = function(file) {
 	var reader = new FileReader();
   try {
   	reader.onload = function(event) {
@@ -214,7 +217,7 @@ function renderVideo(file) {
 }
 
 // Here we load the YouTube video into the iFrame via its ID
-function loadYouTube(id) {
+OHSynchronizer.Import.loadYouTube = function(id) {
 	if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
 	$("#finish-area").show();
 	$("#tag-segment-btn").show();
@@ -232,7 +235,7 @@ function loadYouTube(id) {
 	$('#ytplayer').html(iframe);
 	ytplayer = new YT.Player('ytvideo', {
 		events: {
-			'onReady': initializeYTControls
+			'onReady': OHSynchronizer.Player.YouTube.initializeControls
 		}
 	});
 
@@ -240,7 +243,7 @@ function loadYouTube(id) {
 }
 
 // Here we play audio files in the audio control player
-function renderAudio(file) {
+OHSynchronizer.Import.renderAudio = function(file) {
 	var reader = new FileReader();
   try {
   	reader.onload = function(event) {
@@ -283,7 +286,7 @@ function renderAudio(file) {
 }
 
 // Here we display index or transcript file data
-function renderText(file, ext) {
+OHSynchronizer.Import.renderText = function(file, ext) {
 	var reader = new FileReader();
 	try {
 		reader.onload = function(event) {
@@ -454,9 +457,11 @@ function renderText(file, ext) {
 }
 
 /** Player Functions **/
-
+OHSynchronizer.Player = function(){};
+OHSynchronizer.YouTube = function(){};
 // Here we set up segment controls for the YouTube playback
-function initializeYTControls(event) {
+//function initializeYTControls(event) {
+OHSynchronizer.YouTube.initializeControls = function(event) {
 	// Capture the end timestamp of the YouTube video
 	var time = ytplayer.getDuration();
 	var minutes = Math.floor(time / 60);
@@ -501,166 +506,24 @@ function initializeYTControls(event) {
     updateTimestampYT();
   });
 }
-
-// Here we handle the player controls, only for AblePlayer
-function playerControls(button) {
-  var player = "";
+OHSynchronizer.YouTube.seekTo = function(minute) {
 	var offset = $('#sync-roll').val();
-
-	if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
-	else if ($("#video").is(':visible')) player = document.getElementById("video-player");
-
-	switch(button) {
-		case "beginning":
-			player.currentTime = 0;
-			break;
-
-		case "backward":
-			player.currentTime -= 15;
-			break;
-
-		case "play":
-			player.play();
-			break;
-
-		case "stop":
-			player.pause();
-			break;
-
-		case "forward":
-			player.currentTime += 15;
-			break;
-
-		case "update":
-			updateTimestamp();
-			break;
-
-		case "seek":
-			var minute = parseInt(document.getElementById("sync-minute").innerHTML);
-			player.currentTime = minute * 60 - offset;
-			break;
-
-		default:
-			break;
-	}
+	ytplayer.seekTo(minute * 60 - offset);
 }
-
-/** Transcript Sync Functions **/
-
-// Here we add a Sync Marker
-function addSyncMarker() {
-	for (var word of document.getElementsByClassName('transcript-word')) {
-		word.addEventListener('click', function(){
-			var minute = parseInt(document.getElementById("sync-minute").innerHTML);
-			if (minute == 0) minute++;
-			var marker = "{" + minute + ":00}";
-			var regEx = new RegExp(marker);
-
-			// If this word is already a sync marker, we don't make it another one
-			if ($(this).hasClass('transcript-clicked')) {
-				errorHandler(new Error("Word already associated with a transcript sync marker."));
-			}
-			else {
-				// If a marker already exists for this minute, remove it and remove the word highlighting
-				for (var sync of document.getElementsByClassName('transcript-timestamp')) {
-					var mark = sync.innerText;
-					if (regEx.test(mark)) {
-						$(sync).next(".transcript-clicked").removeClass('transcript-clicked');
-						sync.remove();
-					}
-				}
-
-				$(this).addClass('transcript-clicked');
-				$('<span class="transcript-timestamp">{' + minute + ':00}&nbsp;</span>').insertBefore($(this));
-
-				// Increase the Sync Current Mark
-				document.getElementById("sync-minute").innerHTML = minute + 1;
-
-				updateCurrentMark();
-				removeSyncMarker();
-
-				// If we are looping, we automatically jump forward
-				if (looping !== -1) {
-					document.getElementById("sync-minute").innerHTML = minute;
-					syncControl("forward");
-				}
-			}
-		}, false);
-	}
-}
-
-// Here we update Transcript Sync Current Mark
-function updateCurrentMark() {
-	for (var sync of document.getElementsByClassName('transcript-timestamp')) {
-		sync.addEventListener('click', function(){
-			var mark = $(this)[0].innerHTML;
-			mark = mark.replace("{", '');
-			var num = mark.split(":");
-			document.getElementById("sync-minute").innerHTML = num[0];
-		}, false);
-	}
-}
-
-// Here we remove a Transcript Sync Marker
-function removeSyncMarker() {
-	for (var sync of document.getElementsByClassName('transcript-timestamp')) {
-		sync.addEventListener('dblclick', function(){
-			$(this).next(".transcript-clicked").removeClass('transcript-clicked');
-			$(this).remove();
-		}, false);
-	}
-}
-
-// Here we capture Transcript sync control clicks
-function syncControl(type) {
-	var youTube = document.getElementById("ytplayer").innerHTML;
-	var minute = parseInt(document.getElementById("sync-minute").innerHTML);
-	var offset = $('#sync-roll').val();
-
-	switch(type) {
-		// Hitting back/forward are offset by the roll interval
-		case "back":
-			minute -= 1;
-			if (minute <= 0) document.getElementById("sync-minute").innerHTML = 0;
-			else document.getElementById("sync-minute").innerHTML = minute;
-
-			if (youTube !== "") ytplayer.seekTo(minute * 60 - offset);
-			else playerControls("seek");
-			break;
-
-		case "forward":
-			minute += 1;
-			document.getElementById("sync-minute").innerHTML = minute;
-
-			if (youTube !== "") ytplayer.seekTo(minute * 60 - offset);
-			else playerControls("seek");
-			break;
-
-		case "loop":
-			transcriptLoop();
-			break;
-
-		default:
-			break;
-	}
-}
-
 // Here we handling looping controls for Transcript syncing
-function transcriptLoop() {
-	var youTube = document.getElementById("ytplayer").innerHTML;
+OHSynchronizer.YouTube.transcriptLoop = function() {
 	var minute = parseInt(document.getElementById("sync-minute").innerHTML);
 	var offset = $('#sync-roll').val();
 
 	// We don't loop at the beginning of the A/V
 	if (minute === 0) {  }
-	// YouTube uses its own player
-	else if (youTube) {
+	else {
 		// If looping is active we stop it
-		if (looping !== -1) {
+		if (OHSynchronizer.looping !== -1) {
 			ytplayer.pauseVideo();
 			$('#sync-play').addClass('btn-outline-info');
 			$('#sync-play').removeClass('btn-info');
-			looping = -1;
+			OHSynchronizer.looping = -1;
 		}
 		// If looping is not active we start it
 		else {
@@ -668,72 +531,12 @@ function transcriptLoop() {
 			ytplayer.playVideo();
 			$('#sync-play').removeClass('btn-outline-info');
 			$('#sync-play').addClass('btn-info');
-			looping = minute;
-		}
-	}
-	// This is handling for the AblePlayer
-	else {
-		var player = "";
-		if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
-		else if ($("#video").is(':visible')) player = document.getElementById("video-player");
-
-		// If looping is active
-		if (looping !== -1) {
-			player.pause();
-			$('#sync-play').addClass('btn-outline-info');
-			$('#sync-play').removeClass('btn-info');
-			looping = -1;
-		}
-		// If looping is not active
-		else {
-			player.currentTime = minute * 60 - offset;
-			player.play();
-			$('#sync-play').removeClass('btn-outline-info');
-			$('#sync-play').addClass('btn-info');
-			looping = minute;
+			OHSynchronizer.looping = minute;
 		}
 	}
 }
-
-// Here we continually update the timestamp on the sync controls
-// Only for AblePlayer
-function transcriptTimestamp() {
-	var player = "";
-	var chime1 = document.getElementById("audio-chime1");
-	var chime2 = document.getElementById("audio-chime2");
-
-	if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
-	else if ($("#video").is(':visible')) player = document.getElementById("video-player");
-
-	var time = player.currentTime;
-	var minutes = Math.floor(time / 60);
-	var hours = Math.floor(minutes / 60);
-	var offset = $('#sync-roll').val();
-
-	// We only play chimes if we're on the transcript tab, and looping is active
-	if (Math.floor(time) % 60 == (60 - offset) && $("#transcript").is(':visible') && looping !== -1) { chime1.play(); }
-	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible') && looping !== -1) { chime2.play(); }
-
-	// If looping is active, we will jump back to a specific time should the the time be at the minute + offset
-	if ((Math.floor(time) % 60 == offset || time === player.duration ) && $("#transcript").is(':visible') && looping !== -1) {
-		document.getElementById("sync-minute").innerHTML = parseInt(document.getElementById("sync-minute").innerHTML) + 1;
-		syncControl("back");
-		player.play();
-	}
-
-	time = time - minutes * 60;
-	var seconds = time.toFixed(0);
-	if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
-	if (minutes === 60) minutes = 0;
-
-	document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
-	// If the user is working on an index segment, we need to watch the playhead
-	$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
-}
-
 // Here we will monitor the YouTube video time and keep the transcript timestamp updated
-window.setInterval(transcriptYTTimestamp, 500);
-function transcriptYTTimestamp() {
+OHSynchronizer.YouTube.transcriptTimestamp = function() {
 	if (typeof ytplayer !== 'undefined') {
 		// last_time_update = '';
 		time_update = (ytplayer.getCurrentTime() * 1000);
@@ -772,31 +575,12 @@ function transcriptYTTimestamp() {
 		last_time_update = time_update;
 	}
 }
+window.setInterval(OHSynchronizer.YouTube.transcriptYTTimestamp, 500);
 
 /** Index Segment Functions **/
 
-// Here we update the timestamp for the Tag Segment function for AblePlayer
-function updateTimestamp() {
-	var player = "";
-
-	if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
-	else if ($("#video").is(':visible')) player = document.getElementById("video-player");
-
-	var time = player.currentTime;
-	var minutes = Math.floor(time / 60);
-	var hours = Math.floor(minutes / 60);
-	time = time - minutes * 60;
-	var seconds = time.toFixed(3);
-
-	if (hours < 10) hours = '0' + hours;
-	if (minutes < 10) minutes = '0' + minutes;
-	if (seconds < 10) seconds = '0' + seconds.toString();
-
-	$("#tag-timestamp").val(hours + ':' + minutes + ':' + seconds);
-};
-
 // Here we update the timestamp for the Tag Segment function for YouTube
-function updateTimestampYT() {
+OHSynchronizer.YouTube.updateTimestamp = function() {
 	var player = "";
 
 	var time = ytplayer.getCurrentTime();
@@ -812,8 +596,234 @@ function updateTimestampYT() {
 	$("#tag-timestamp").val(hours + ':' + minutes + ':' + seconds);
 };
 
+OHSynchronizer.AblePlayer = function(){};
+OHSynchronizer.AblePlayer.player = function() {
+	if ($("#audio").is(':visible')) return document.getElementById("audio-player");
+	else if ($("#video").is(':visible')) return document.getElementById("video-player");
+}
+OHSynchronizer.AblePlayer.seekTo = function(minute) {
+	var offset = $('#sync-roll').val();
+	player().currentTime = minute * 60 - offset;
+}
+
+// Here we update the timestamp for the Tag Segment function for AblePlayer
+OHSynchronizer.AblePlayer.updateTimestamp = function() {
+
+	var time = player().currentTime;
+	var minutes = Math.floor(time / 60);
+	var hours = Math.floor(minutes / 60);
+	time = time - minutes * 60;
+	var seconds = time.toFixed(3);
+
+	if (hours < 10) hours = '0' + hours;
+	if (minutes < 10) minutes = '0' + minutes;
+	if (seconds < 10) seconds = '0' + seconds.toString();
+
+	$("#tag-timestamp").val(hours + ':' + minutes + ':' + seconds);
+};
+
+// Here we handle the player controls, only for AblePlayer
+OHSynchronizer.AblePlayer.playerControls = function(button) {
+	switch(button) {
+		case "beginning":
+			player().currentTime = 0;
+			break;
+
+		case "backward":
+			player().currentTime -= 15;
+			break;
+
+		case "play":
+			player().play();
+			break;
+
+		case "stop":
+			player().pause();
+			break;
+
+		case "forward":
+			player().currentTime += 15;
+			break;
+
+		case "update":
+			updateTimestamp();
+			break;
+
+		case "seek":
+			seekTo(parseInt(document.getElementById("sync-minute").innerHTML));
+			break;
+
+		default:
+			break;
+	}
+}
+
+// Here we continually update the timestamp on the sync controls
+// Only for AblePlayer
+OHSynchronizer.AblePlayer.transcriptTimestamp = function() {
+	var player = "";
+	var chime1 = document.getElementById("audio-chime1");
+	var chime2 = document.getElementById("audio-chime2");
+
+	if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
+	else if ($("#video").is(':visible')) player = document.getElementById("video-player");
+
+	var time = player.currentTime;
+	var minutes = Math.floor(time / 60);
+	var hours = Math.floor(minutes / 60);
+	var offset = $('#sync-roll').val();
+
+	// We only play chimes if we're on the transcript tab, and looping is active
+	if (Math.floor(time) % 60 == (60 - offset) && $("#transcript").is(':visible') && looping !== -1) { chime1.play(); }
+	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible') && looping !== -1) { chime2.play(); }
+
+	// If looping is active, we will jump back to a specific time should the the time be at the minute + offset
+	if ((Math.floor(time) % 60 == offset || time === player.duration ) && $("#transcript").is(':visible') && looping !== -1) {
+		document.getElementById("sync-minute").innerHTML = parseInt(document.getElementById("sync-minute").innerHTML) + 1;
+		syncControl("back");
+		player.play();
+	}
+
+	time = time - minutes * 60;
+	var seconds = time.toFixed(0);
+	if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
+	if (minutes === 60) minutes = 0;
+
+	document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
+	// If the user is working on an index segment, we need to watch the playhead
+	$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
+}
+
+OHSynchronizer.AblePlayer.transcriptLoop = function() {
+	var minute = parseInt(document.getElementById("sync-minute").innerHTML);
+	var offset = $('#sync-roll').val();
+
+	// We don't loop at the beginning of the A/V
+	if (minute === 0) {  }
+	// This is handling for the AblePlayer
+	else {
+		var player = "";
+		if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
+		else if ($("#video").is(':visible')) player = document.getElementById("video-player");
+
+		// If looping is active
+		if (looping !== -1) {
+			player.pause();
+			$('#sync-play').addClass('btn-outline-info');
+			$('#sync-play').removeClass('btn-info');
+			OHSynchronizer.looping = -1;
+		}
+		// If looping is not active
+		else {
+			player.currentTime = minute * 60 - offset;
+			player.play();
+			$('#sync-play').removeClass('btn-outline-info');
+			$('#sync-play').addClass('btn-info');
+			OHSynchronizer.looping = minute;
+		}
+	}
+}
+
+/** Transcript Sync Functions **/
+OHSynchronizer.Transcript = function(){};
+// Here we add a Sync Marker
+OHSynchronizer.Transcript.addSyncMarker = function(playerControls) {
+	for (var word of document.getElementsByClassName('transcript-word')) {
+		word.addEventListener('click', function(){
+			var minute = parseInt(document.getElementById("sync-minute").innerHTML);
+			if (minute == 0) minute++;
+			var marker = "{" + minute + ":00}";
+			var regEx = new RegExp(marker);
+
+			// If this word is already a sync marker, we don't make it another one
+			if ($(this).hasClass('transcript-clicked')) {
+				errorHandler(new Error("Word already associated with a transcript sync marker."));
+			}
+			else {
+				// If a marker already exists for this minute, remove it and remove the word highlighting
+				for (var sync of document.getElementsByClassName('transcript-timestamp')) {
+					var mark = sync.innerText;
+					if (regEx.test(mark)) {
+						$(sync).next(".transcript-clicked").removeClass('transcript-clicked');
+						sync.remove();
+					}
+				}
+
+				$(this).addClass('transcript-clicked');
+				$('<span class="transcript-timestamp">{' + minute + ':00}&nbsp;</span>').insertBefore($(this));
+
+				// Increase the Sync Current Mark
+				document.getElementById("sync-minute").innerHTML = minute + 1;
+
+				updateCurrentMark();
+				removeSyncMarker();
+
+				// If we are looping, we automatically jump forward
+				if (looping !== -1) {
+					document.getElementById("sync-minute").innerHTML = minute;
+					syncControl("forward", playerControls);
+				}
+			}
+		}, false);
+	}
+}
+
+// Here we update Transcript Sync Current Mark
+OHSynchronizer.Transcript.updateCurrentMark = function() {
+	for (var sync of document.getElementsByClassName('transcript-timestamp')) {
+		sync.addEventListener('click', function(){
+			var mark = $(this)[0].innerHTML;
+			mark = mark.replace("{", '');
+			var num = mark.split(":");
+			document.getElementById("sync-minute").innerHTML = num[0];
+		}, false);
+	}
+}
+
+// Here we remove a Transcript Sync Marker
+OHSynchronizer.Transcript.removeSyncMarker = function() {
+	for (var sync of document.getElementsByClassName('transcript-timestamp')) {
+		sync.addEventListener('dblclick', function(){
+			$(this).next(".transcript-clicked").removeClass('transcript-clicked');
+			$(this).remove();
+		}, false);
+	}
+}
+
+// Here we capture Transcript sync control clicks
+OHSynchronizer.Transcript.syncControl = function(type, playerControls) {
+	var minute = parseInt(document.getElementById("sync-minute").innerHTML);
+	var offset = $('#sync-roll').val();
+
+	switch(type) {
+		// Hitting back/forward are offset by the roll interval
+		case "back":
+			minute -= 1;
+			if (minute <= 0) document.getElementById("sync-minute").innerHTML = 0;
+			else document.getElementById("sync-minute").innerHTML = minute;
+
+			playerControls.seekTo(minute);
+			break;
+
+		case "forward":
+			minute += 1;
+			document.getElementById("sync-minute").innerHTML = minute;
+
+			playerControls.seekTo(minute);
+			break;
+
+		case "loop":
+			playerControls.transcriptLoop();
+			break;
+
+		default:
+			break;
+	}
+}
+
+OHSynchronizer.Index = function() {};
 // Here we save the contents of the Tag Segment modal
-function tagSave() {
+OHSynchronizer.Index.tagSave = function() {
 	var edit = document.getElementById("editVar").innerHTML;
 	var timestamp = $("#tag-timestamp").val();
 	var title = $("#tag-segment-title").val();
@@ -859,7 +869,7 @@ function tagSave() {
 }
 
 // Here we enable the edit buttons for segments
-function tagEdit() {
+OHSynchronizer.Index.tagEdit = function() {
 	for (var edit of document.querySelectorAll('.tag-edit')) {
 		edit.addEventListener('click', function(){
 			// Pop up the modal
@@ -905,7 +915,7 @@ function tagEdit() {
 }
 
 // Here we clear and back out of the Tag Segment modal
-function tagCancel() {
+OHSynchronizer.Index.tagCancel = function() {
 	$("#tag-segment-title").val("");
 	$("#tag-partial-transcript").val("");
 	$("#tag-keywords").val("");
@@ -916,7 +926,7 @@ function tagCancel() {
 }
 
 // Here we sort the accordion according to the timestamp to keep the parts in proper time order
-function sortAccordion() {
+OHSynchronizer.Index.sortAccordion = function() {
 	var accordion = $("#indexAccordion");
 
   // Get an array of jQuery objects for each accordion panel
@@ -939,9 +949,10 @@ function sortAccordion() {
 }
 
 /** Export Functions **/
+OHSynchronizer.Export = function() {};
 
 // Here we prepare transcript data for VTT files
-function transcriptVTT() {
+OHSynchronizer.Export.transcriptVTT = function() {
 	var minute = '';
 	var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
 	var content = document.getElementById('transcript').innerHTML;
@@ -991,7 +1002,7 @@ function transcriptVTT() {
 }
 
 // Here we prepare index data for VTT files
-function indexVTT() {
+OHSynchronizer.Export.indexVTT = function() {
 	var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
 	var content = (metadata != '') ? 'WEBVTT\n\nNOTE\n' + metadata + '\n\n' : 'WEBVTT\n\n';
 
@@ -1037,7 +1048,7 @@ function indexVTT() {
 }
 
 // Here we use VTT-esque data to preview the end result
-function previewWork() {
+OHSynchronizer.Export.previewWork = function() {
 	var type = $("ul#list-tabs li.ui-tabs-active > a")[0].innerHTML;
 	var youTube = document.getElementById("ytplayer").innerHTML;
 
@@ -1122,7 +1133,7 @@ function previewWork() {
 }
 
 // Here we activate the minute sync markers created for previewing transcript
-function addPreviewMinutes() {
+OHSynchronizer.Export.addPreviewMinutes = function() {
 	for (var minute of document.getElementsByClassName('preview-minute')) {
 		minute.addEventListener('click', function(){
 			var timestamp = $(this)[0].innerText.split('[');
@@ -1142,7 +1153,7 @@ function addPreviewMinutes() {
 }
 
 // Here we activate the index segment buttons to for playing index segments during preview
-function addPreviewSegments() {
+OHSynchronizer.Export.addPreviewSegments = function() {
 	for (var segment of document.getElementsByClassName('preview-segment')) {
 		segment.addEventListener('click', function(){
 			var timestamp = $(this).parent().parent().parent().attr("id");
@@ -1170,7 +1181,7 @@ function addPreviewSegments() {
 }
 
 // Here we return to editing work once we are finished with previewing the end result
-function previewClose() {
+OHSynchronizer.Export.previewClose = function() {
 	// We'll stop the A/V media and return the playhead to the beginning
 	var youTube = document.getElementById("ytplayer").innerHTML;
 	if (youTube !== '') {
@@ -1195,7 +1206,7 @@ function previewClose() {
 }
 
 // Here we use prepared data for export to a downloadable file
-function exportFile(sender) {
+OHSynchronizer.Export.exportFile = function(sender) {
 	var type = $("ul#list-tabs li.ui-tabs-active > a")[0].innerHTML;
 
 	if (type.toLowerCase() == "transcript" && document.getElementById('transcript').innerHTML != '') {
@@ -1315,8 +1326,8 @@ function closeButtons() {
   });
 
 	// Watch the AblePlayer time status for Transcript Syncing
-	document.getElementById("video-player").ontimeupdate = function() { transcriptTimestamp() };
-	document.getElementById("audio-player").ontimeupdate = function() { transcriptTimestamp() };
+	document.getElementById("video-player").ontimeupdate = function() { OHSynchronizer.AblePlayer.transcriptTimestamp() };
+	document.getElementById("audio-player").ontimeupdate = function() { OHSynchronizer.AblePlayer.transcriptTimestamp() };
 
 	// Disallow non-numerical values in transcript controls
 	// Only allow 0-9, backspace, and delete
