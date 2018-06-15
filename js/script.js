@@ -19,7 +19,7 @@
 
 	// If the Index tab is clicked, ensure transcript looping is deactivated
 	$('a[href$="tabs-index"]').click(function () {
-		looping = -1;
+		OHSynchronizer.looping = -1;
 	});
 
 	// Activate our index and preview index accordions
@@ -53,12 +53,12 @@
 		if (($("#audio").is(':visible')) || ($("#video").is(':visible')))	{
 			$("#tag-controls-yt").hide();
 			$("#tag-controls-ap").show();
-			updateTimestamp();
+			OHSynchronizer.playerControls.updateTimestamp();
 		}
 		else {
 			$("#tag-controls-ap").hide();
 			$("#tag-controls-yt").show();
-			updateTimestampYT();
+			OHSynchronizer.playerControls.updateTimestamp();
 		}
 	});
 
