@@ -163,13 +163,13 @@ OHSynchronizer.Import.uploadSuccess = function(file) {
 
 // Here we load HLS playlists
 OHSynchronizer.Import.renderHLS = function(url) {
-  var player = document.querySelector('video');
-  var hls = new Hls();
-  hls.loadSource(url);
-  hls.attachMedia(player);
-  hls.on(Hls.Events.MANIFEST_PARSED,function() {
-    video.play();
-  });
+	var player = document.querySelector('video');
+	var hls = new Hls();
+	hls.loadSource(url);
+	hls.attachMedia(player);
+	hls.on(Hls.Events.MANIFEST_PARSED,function() {
+		video.play();
+	});
 	$("#media-upload").hide();
 	$("#video").show();
 	$("#audio").hide();
@@ -185,22 +185,24 @@ OHSynchronizer.Import.renderHLS = function(url) {
 // Here we play video files in the video control player
 OHSynchronizer.Import.renderVideo = function(file) {
 	var reader = new FileReader();
-  try {
-  	reader.onload = function(event) {
-  		var target = event.target.result;
-  		var videoNode = document.querySelector('video');
+	try {
+		reader.onload = function(event) {
+			var target = event.target.result;
+			var videoNode = document.querySelector('video');
 
-  		videoNode.src = target;
+			videoNode.src = target;
 			$("#media-upload").hide();
 			$("#video").show();
 			$("#audio").hide();
 			$("#tag-segment-btn").show();
 			$("#finish-area").show();
-			if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
+			if (document.getElementById('transcript').innerHTML != '') {
+				$("#sync-controls").show();
+			}
 			OHSynchronizer.Index.uploadSuccess(file);
-  	}
-  }
-  catch (e) {
+		}
+	}
+	catch (e) {
 		OHSynchronizer.errorHandler(e);
 		$("#media-upload").show();
 		$("#video").hide();
@@ -255,12 +257,12 @@ OHSynchronizer.Import.loadYouTube = function(id) {
 // Here we play audio files in the audio control player
 OHSynchronizer.Import.renderAudio = function(file) {
 	var reader = new FileReader();
-  try {
-  	reader.onload = function(event) {
-  		var target = event.target.result;
-  		var audioNode = document.querySelector('audio');
+	try {
+		reader.onload = function(event) {
+			var target = event.target.result;
+			var audioNode = document.querySelector('audio');
 
-  		audioNode.src = target;
+			audioNode.src = target;
 			$("#media-upload").hide();
 			$("#audio").show();
 			$("#video").hide();
@@ -268,9 +270,9 @@ OHSynchronizer.Import.renderAudio = function(file) {
 			$("#finish-area").show();
 			if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
 			uploadSuccess(file);
-  	}
-  }
-  catch (e) {
+		}
+	}
+	catch (e) {
 		OHSynchronizer.errorHandler(e);
 		$("#media-upload").show();
 		$("#video").hide();
@@ -1111,14 +1113,14 @@ OHSynchronizer.Export.previewWork = function() {
 		var text = content.split(/\r?\n|\r/);
 		var first = false;
 
-	  for (var i = 0; i < text.length; i++) {
+		for (var i = 0; i < text.length; i++) {
 			if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[i])) {
-	      if (!first) first = true;
-	      var timestamp = text[i][3] !== "0" ? (text[i][3] + text[i][4]) : text[i][4];
-	      if (timestamp !== "0") { document.getElementById('transcript-preview').innerHTML += '<span class="preview-minute">[' + timestamp + ':00]&nbsp;</span>'; }
-	      continue;
+			if (!first) first = true;
+			var timestamp = text[i][3] !== "0" ? (text[i][3] + text[i][4]) : text[i][4];
+			if (timestamp !== "0") { document.getElementById('transcript-preview').innerHTML += '<span class="preview-minute">[' + timestamp + ':00]&nbsp;</span>'; }
+				continue;
 			}
-	    else if (first) {
+			else if (first) {
 				document.getElementById('transcript-preview').innerHTML += text[i] + '<br />';
 			}
 		}
@@ -1140,12 +1142,12 @@ OHSynchronizer.Export.previewWork = function() {
 
 		// Initialize the new accordion
 		$("#previewAccordion").accordion({
-	    header: "> div > h3",
-	    autoHeight: false,
-	    collapsible: true,
+			header: "> div > h3",
+			autoHeight: false,
+			collapsible: true,
 			clearStyle: true,
-	    active: false
-	  });
+			active: false
+		});
 
 		$(".tag-edit").each(function() { if ($(this).parents('#previewAccordion').length) { $(this).remove(); } });
 		$(".tag-delete").each(function() {
@@ -1292,7 +1294,7 @@ OHSynchronizer.Export.exportFile = function(sender) {
 // Here is our error handling
 OHSynchronizer.errorHandler = function(e) {
 	var error = '';
-  error += '<div class="col-md-6"><i id="close" class="fa fa-times-circle-o close"></i><p class="error-bar"><i class="fa fa-exclamation-circle"></i> ' + e + '</p></div>';
+	error += '<div class="col-md-6"><i id="close" class="fa fa-times-circle-o close"></i><p class="error-bar"><i class="fa fa-exclamation-circle"></i> ' + e + '</p></div>';
 	$('#messagesBar').append(error);
 	$('html, body').animate({ scrollTop: 0 }, 'fast');
 
