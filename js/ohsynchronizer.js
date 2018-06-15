@@ -1271,12 +1271,12 @@ OHSynchronizer.Export.exportFile = function(sender) {
 
 				// This will create a temporary link DOM element that we will click for the user to download the generated file
 				var element = document.createElement('a');
-			  element.setAttribute('href', 'data:text/vtt;charset=utf-8,' + encodeURIComponent(content));
-			  element.setAttribute('download', 'index.vtt');
-			  element.style.display = 'none';
-			  document.body.appendChild(element);
-			  element.click();
-			  document.body.removeChild(element);
+				element.setAttribute('href', 'data:text/vtt;charset=utf-8,' + encodeURIComponent(content));
+				element.setAttribute('download', 'index.vtt');
+				element.style.display = 'none';
+				document.body.appendChild(element);
+				element.click();
+				document.body.removeChild(element);
 				break;
 
 			default:
