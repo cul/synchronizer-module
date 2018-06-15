@@ -116,12 +116,12 @@ OHSynchronizer.Import.determineFile = function(file, ext, sender) {
 		switch(ext) {
 			case "mp4":
 			case "webm":
-				renderVideo(file);
+				OHSynchronizer.Import.renderVideo(file);
 				break;
 
 			case "ogg":
 			case "mp3":
-				renderAudio(file);
+				OHSynchronizer.Import.renderAudio(file);
 				break;
 
 			default:
@@ -156,7 +156,7 @@ OHSynchronizer.Import.uploadSuccess = function(file) {
 	var success = "";
 	success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />File Name: ' + file.name + "<br />File Size: " + parseInt(file.size / 1024, 10) + "<br />File Type: " + file.type + "<br />Last Modified Date: " + new Date(file.lastModified) + "</div>";
 	$("#messagesBar").append(success);
-	closeButtons();
+	OHSynchronizer.Index.closeButtons();
 }
 
 /** Rendering Functions **/
@@ -179,7 +179,7 @@ OHSynchronizer.Import.renderHLS = function(url) {
 	var success = "";
 	success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />The Wowza URL ' + url + " was successfully ingested.</div>";
 	$("#messagesBar").append(success);
-	closeButtons();
+	OHSynchronizer.Index.closeButtons();
 }
 
 // Here we play video files in the video control player
@@ -197,7 +197,7 @@ OHSynchronizer.Import.renderVideo = function(file) {
 			$("#tag-segment-btn").show();
 			$("#finish-area").show();
 			if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
-			uploadSuccess(file);
+			OHSynchronizer.Index.uploadSuccess(file);
   	}
   }
   catch (e) {
@@ -312,7 +312,7 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 					else {
 						// Having interview-level metadata is required
 						if (/(Title:)+/.test(target) && /(Date:)+/.test(target) && /(Identifier:)+/.test(target)) {
-							uploadSuccess(file);
+							OHSynchronizer.Import.uploadSuccess(file);
 
 							// We'll break up the file line by line
 							var text = target.split(/\r?\n|\r/);
@@ -415,11 +415,11 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 								panel = '';
 							}
 
-							sortAccordion();
+							OHSynchronizer.Index.sortAccordion();
 							accordion.accordion("refresh");
-							tagEdit();
-							tagCancel();
-							closeButtons();
+							OHSynchronizer.Index.tagEdit();
+							OHSynchronizer.Index.tagCancel();
+							OHSynchronizer.Index.closeButtons();
 						}
 						else OHSynchronizer.errorHandler(new Error("Not a valid index file - missing interview-level metadata."));
 					}
@@ -623,7 +623,7 @@ OHSynchronizer.AblePlayer.seekTo = function(minute) {
 // Here we update the timestamp for the Tag Segment function for AblePlayer
 OHSynchronizer.AblePlayer.updateTimestamp = function() {
 
-	var time = player().currentTime;
+	var time = OHSynchronizer.AblePlayer.player().currentTime;
 	var minutes = Math.floor(time / 60);
 	var hours = Math.floor(minutes / 60);
 	time = time - minutes * 60;
@@ -874,11 +874,11 @@ OHSynchronizer.Index.tagSave = function() {
 		panel += '</div></div>';
 
 		$("#indexAccordion").append(panel);
-		sortAccordion();
+		OHSynchronizer.Index.sortAccordion();
 		$("#indexAccordion").accordion("refresh");
-		tagEdit();
-		tagCancel();
-		closeButtons();
+		OHSynchronizer.Index.tagEdit();
+		OHSynchronizer.Index.tagCancel();
+		OHSynchronizer.Index.closeButtons();
 	}
 }
 
@@ -960,6 +960,23 @@ OHSynchronizer.Index.sortAccordion = function() {
   $.each(entries, function() {
     this.detach().appendTo(accordion);
   });
+}
+
+// Here we remove items the user no longer wishes to see
+// Includes deleting Segment Tags
+OHSynchronizer.Index.closeButtons = function() {
+	for (var close of document.querySelectorAll('.close')) {
+	  close.addEventListener('click', function(){
+			$(this).parent('div').fadeOut();
+		}, false);
+	}
+
+	for (var close of document.querySelectorAll('.tag-delete')) {
+	  close.addEventListener('click', function(){
+			var panel = $(this).parents('div').get(2);
+			panel.remove();
+		}, false);
+	}
 }
 
 /** Export Functions **/
@@ -1073,8 +1090,8 @@ OHSynchronizer.Export.previewWork = function() {
 		ytplayer.pauseVideo();
 	}
 	else {
-		playerControls("beginning");
-		playerControls("stop");
+		OHSynchronizer.playerControls("beginning");
+		OHSynchronizer.playerControls("stop");
 	}
 
 	if ($('#media-upload').visible) OHSynchronizer.errorHandler(new Error("You must first upload media in order to preview."));
@@ -1087,7 +1104,7 @@ OHSynchronizer.Export.previewWork = function() {
 		$("#preview").addClass('hidden');
 		$("#preview-close").removeClass('hidden');
 
-		var content = transcriptVTT();
+		var content = OHSynchronizer.Export.transcriptVTT();
 		$("#transcript-preview").innerHTML = "<p>";
 
 		// We need to parse the VTT-ified transcript data so that it is "previewable"
@@ -1108,7 +1125,7 @@ OHSynchronizer.Export.previewWork = function() {
 
 		document.getElementById('transcript-preview').innerHTML += "</p>";
 
-		addPreviewMinutes();
+		OHSynchronizer.Export.addPreviewMinutes();
 	}
 	else if (type.toLowerCase() == "index" && $('#indexAccordion') != '') {
 		// The current open work needs to be hidden to prevent editing while previewing
@@ -1139,7 +1156,7 @@ OHSynchronizer.Export.previewWork = function() {
 		});
 
 		$("#previewAccordion").accordion("refresh");
-		addPreviewSegments();
+		OHSynchronizer.Export.addPreviewSegments();
 	}
 	else {
 		OHSynchronizer.errorHandler(new Error("The selected transcript or index document is empty."));
@@ -1203,8 +1220,8 @@ OHSynchronizer.Export.previewClose = function() {
 		ytplayer.pauseVideo();
 	}
 	else {
-		playerControls("beginning");
-		playerControls("stop");
+		OHSynchronizer.playerControls("beginning");
+		OHSynchronizer.playerControls("stop");
 	}
 
 	$("#transcript").show();
@@ -1226,7 +1243,7 @@ OHSynchronizer.Export.exportFile = function(sender) {
 	if (type.toLowerCase() == "transcript" && document.getElementById('transcript').innerHTML != '') {
 		switch (sender) {
 			case "vtt":
-				var content = transcriptVTT();
+				var content = OHSynchronizer.Export.transcriptVTT();
 				if (!content) break;
 
 				// This will create a temporary link DOM element that we will click for the user to download the generated file
@@ -1248,7 +1265,7 @@ OHSynchronizer.Export.exportFile = function(sender) {
 	else if (type.toLowerCase() == "index" && $('#indexAccordion') != '') {
 		switch (sender) {
 			case "vtt":
-				var content = indexVTT();
+				var content = OHSynchronizer.Export.indexVTT();
 
 				// This will create a temporary link DOM element that we will click for the user to download the generated file
 				var element = document.createElement('a');
@@ -1279,30 +1296,13 @@ OHSynchronizer.errorHandler = function(e) {
 	$('#messagesBar').append(error);
 	$('html, body').animate({ scrollTop: 0 }, 'fast');
 
-	closeButtons();
+	OHSynchronizer.Index.closeButtons();
 }
 
 // Here we reload the page
-function clearBoxes() {
+OHSynchronizer.clearBoxes = function() {
 	if (confirm("This will clear the work in all areas.") == true) {
 		location.reload(true);
-	}
-}
-
-// Here we remove items the user no longer wishes to see
-// Includes deleting Segment Tags
-function closeButtons() {
-	for (var close of document.querySelectorAll('.close')) {
-	  close.addEventListener('click', function(){
-			$(this).parent('div').fadeOut();
-		}, false);
-	}
-
-	for (var close of document.querySelectorAll('.tag-delete')) {
-	  close.addEventListener('click', function(){
-			var panel = $(this).parents('div').get(2);
-			panel.remove();
-		}, false);
 	}
 }
 

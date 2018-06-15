@@ -11,7 +11,7 @@
 	$("#transcript-preview").hide();
 
 	// Initialize close buttons, tabs, and accordion
-	closeButtons();
+	OHSynchronizer.Index.closeButtons();
 
   $("#text-tabs").tabs({
 		active: 0

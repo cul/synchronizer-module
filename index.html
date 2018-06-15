@@ -78,15 +78,15 @@
 					<div id="finish-area" class="">
 						<!-- Whether you're previewing or exporting a transcript or an index is determined by which tab is active. -->
 						<div class="btn-group" role="group">
-							<button id="clear" type="button" class="btn btn-secondary" onclick="clearBoxes()">Cancel Session</button>
-							<button id="preview" type="button" class="btn btn-secondary" onclick="previewWork()">Preview</button>
-							<button id="preview-close" type="button" class="btn btn-secondary hidden" onclick="previewClose()">Close Preview</button>
+							<button id="clear" type="button" class="btn btn-secondary" onclick="OHSynchronizer.clearBoxes()">Cancel Session</button>
+							<button id="preview" type="button" class="btn btn-secondary" onclick="OHSynchronizer.Export.previewWork()">Preview</button>
+							<button id="preview-close" type="button" class="btn btn-secondary hidden" onclick="OHSynchronizer.Export.previewClose()">Close Preview</button>
 							<div class="btn-group" role="group">
 						    <button id="export" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 						      Export
 						    </button>
 						    <div class="dropdown-menu" aria-labelledby="btnGroupExport">
-						      <a id="downloadVTT" class="dropdown-item" onclick="exportFile('vtt')">Download VTT</a>
+						      <a id="downloadVTT" class="dropdown-item" onclick="OHSynchronizer.Export.exportFile('vtt')">Download VTT</a>
 						      <!-- <a id="downloadAnno" class="dropdown-item" onclick="exportFile('anno')">Download WebAnno</a>
 						      <a id="downloadXML" class="dropdown-item" onclick="exportFile('xml')">Download XML</a> -->
 						    </div>
@@ -231,8 +231,8 @@
 						</div>
 						<div class="form-group row">
 							<div class="col-md-1">&nbsp;</div>
-							<button type="button" class="btn btn-primary" onclick="tagSave()">Accept</button>
-							<button type="button" class="btn btn-secondary" onclick="tagCancel()">Cancel</button>
+							<button type="button" class="btn btn-primary" onclick="OHSynchronizer.Index.tagSave()">Accept</button>
+							<button type="button" class="btn btn-secondary" onclick="OHSynchronizer.Index.tagCancel()">Cancel</button>
 						</div>
 					</form>
 				</div>
