@@ -526,6 +526,9 @@ OHSynchronizer.YouTube.seekMinute = function(minute) {
 	var offset = $('#sync-roll').val();
 	ytplayer.seekTo(minute * 60 - offset);
 }
+OHSynchronizer.YouTube.seekTo = function(time) {
+	ytplayer.seekTo(time);
+}
 // Here we handling looping controls for Transcript syncing
 OHSynchronizer.YouTube.transcriptLoop = function() {
 	var minute = parseInt(document.getElementById("sync-minute").innerHTML);
@@ -555,7 +558,6 @@ OHSynchronizer.YouTube.transcriptLoop = function() {
 OHSynchronizer.YouTube.transcriptTimestamp = function() {
 	if (typeof window.ytplayer !== 'undefined') {
 		// last_time_update = '';
-		console.log(window.ytplayer);
 		var time = window.ytplayer.getCurrentTime();
 		time_update = (time * 1000);
 		playing = window.ytplayer.getPlayerState();
@@ -656,6 +658,9 @@ OHSynchronizer.AblePlayer.player = function() {
 OHSynchronizer.AblePlayer.seekMinute = function(minute) {
 	var offset = $('#sync-roll').val();
 	OHSynchronizer.AblePlayer.player().currentTime = minute * 60 - offset;
+}
+OHSynchronizer.AblePlayer.seekTo = function(time) {
+	OHSynchronizer.AblePlayer.player().currentTime = time;
 }
 
 // Here we update the timestamp for the Tag Segment function for AblePlayer
@@ -951,17 +956,12 @@ OHSynchronizer.Index.tagEdit = function() {
 			if (($("#audio").is(':visible')) || ($("#video").is(':visible')))	{
 				$("#tag-controls-yt").hide();
 				$("#tag-controls-ap").show();
-			  var player = "";
-
-				if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
-				else if ($("#video").is(':visible')) player = document.getElementById("video-player");
-				player.currentTime = timestamp;
 			}
 			else if (document.getElementById("ytplayer").innerHTML != ''){
 				$("#tag-controls-ap").hide();
 				$("#tag-controls-yt").show();
-				ytplayer.seekTo(timestamp);
 			}
+			OHSynchronizer.playerControls.seekTo(timestamp);
 		}, false);
 	}
 }
@@ -1218,18 +1218,8 @@ OHSynchronizer.Export.addPreviewSegments = function() {
 
 			var youTube = document.getElementById("ytplayer").innerHTML;
 
-			if (youTube !== '') {
-				ytplayer.seekTo(playhead);
-				ytplayer.playVideo();
-			}
-			else {
-				var player = '';
-				if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
-				else if ($("#video").is(':visible')) player = document.getElementById("video-player");
-
-				player.currentTime = playhead;
-				player.play();
-			}
+			OHSynchronizer.playerControls.seekTo(playhead);
+			OHSynchronizer.playerControls.playerControls("play");
 		});
 	}
 }
@@ -1237,15 +1227,8 @@ OHSynchronizer.Export.addPreviewSegments = function() {
 // Here we return to editing work once we are finished with previewing the end result
 OHSynchronizer.Export.previewClose = function() {
 	// We'll stop the A/V media and return the playhead to the beginning
-	var youTube = document.getElementById("ytplayer").innerHTML;
-	if (youTube !== '') {
-		ytplayer.seekTo(0);
-		ytplayer.pauseVideo();
-	}
-	else {
-		OHSynchronizer.playerControls("beginning");
-		OHSynchronizer.playerControls("stop");
-	}
+	OHSynchronizer.playerControls.playerControls("beginning");
+	OHSynchronizer.playerControls.playerControls("stop");
 
 	$("#transcript").show();
 	$("#sync-controls").show();
