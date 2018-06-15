@@ -443,7 +443,7 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 
 							// We implement a Web Worker because larger transcript files will freeze the browser
 							if (window.Worker) {
-								var textWorker = new Worker("js/transcript.js");
+								var textWorker = new Worker("./ohsynchronizer/transcript.js");
 								textWorker.postMessage(text);
 								textWorker.onmessage = function(e) {
 									document.getElementById('transcript').innerHTML += e.data;
