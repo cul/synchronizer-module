@@ -10,17 +10,17 @@
 /** Global variables **/
 // Here we embed the empty YouTube video player
 // This must be presented before any function that can utilize it
-var ytplayer;
+window.ytplayer = null;
 function onYouTubeIframeAPIReady() {}
 
-var OHSynchronizer = function() {};
+var OHSynchronizer = function(){};
 
 // Looping is used to notify various functions if Transcript looping is currently active
 OHSynchronizer.looping = -1;
 
 /** Import Functions **/
 
-OHSynchronizer.Import = function() {};
+OHSynchronizer.Import = function(){};
 // Here we accept locally uploaded files
 OHSynchronizer.Import.uploadFile = function (sender) {
 	// Grab the files from the user's selection
@@ -32,8 +32,8 @@ OHSynchronizer.Import.uploadFile = function (sender) {
 		var name = file.name.split('.');
 		var ext = name[name.length - 1].toLowerCase();
 
-		if (checkExt(ext) > -1) determineFile(file, ext, sender);
-		else errorHandler(new Error("Bad File - cannot load data from " + file.name));
+		if (OHSynchronizer.Import.checkExt(ext) > -1) OHSynchronizer.Import.determineFile(file, ext, sender);
+		else OHSynchronizer.errorHandler(new Error("Bad File - cannot load data from " + file.name));
 	}
 }
 
@@ -65,27 +65,31 @@ OHSynchronizer.Import.uploadURLFile = function(sender) {
 		id = urlArr2[urlArr2.length - 1];
 	}
 
-	if (ext == "m3u8") renderHLS(url);
+	if (ext == "m3u8") {
+		OHSynchronizer.Import.renderHLS(url);
+		OHSynchronizer.playerControls = OHSynchronizer.AblePlayer;
+	}
 	// HTTP is only allowed for Wowza URLs
 	else if (!https) {
 		var error = new Error("This field only accepts HTTPS URLs.");
-		errorHandler(error);
+		OHSynchronizer.errorHandler(error);
 	}
-	else if (id !== '') loadYouTube(id);
+	else if (id !== '') OHSynchronizer.Import.loadYouTube(id);
 	else {
 		// We only allow URL uploads of media files, not any text files
 		if (ext == "mp3" || ext == "ogg" || ext == "mp4" || ext == "webm") {
 			fetch(url)
 				.then(res => res.blob())
 				.then(blob => {
-					if (checkExt(ext) > -1) determineFile(blob, ext, sender);
-					else errorHandler(new Error("Bad File - cannot load data from " + url));
+					if (OHSynchronizer.Import.checkExt(ext) > -1) OHSynchronizer.Import.determineFile(blob, ext, sender);
+					else OHSynchronizer.errorHandler(new Error("Bad File - cannot load data from " + url));
 				})
-				.catch(function(e) { errorHandler(e);	});
+				.catch(function(e) { OHSynchronizer.errorHandler(e);	});
+			  OHSynchronizer.playerControls = OHSynchronizer.AblePlayer;
 		}
 		else {
 			var error = new Error("This field only accepts audio and video file URLs.");
-			errorHandler(error);
+			OHSynchronizer.errorHandler(error);
 		}
 	}
 }
@@ -116,15 +120,15 @@ OHSynchronizer.Import.determineFile = function(file, ext, sender) {
 				break;
 
 			default:
-				errorHandler(new Error("Bad File - cannot display data."));
+				OHSynchronizer.errorHandler(new Error("Bad File - cannot display data."));
 				break;
 		}
 	}
 	else if (sender === "input-text") {
-		if ($("#file-type").val() == 'none') errorHandler(new Error("Please select the type of file you are uploading from the dropdown list provided."));
-		else renderText(file, ext);
+		if ($("#file-type").val() == 'none') OHSynchronizer.errorHandler(new Error("Please select the type of file you are uploading from the dropdown list provided."));
+		else OHSynchronizer.Import.renderText(file, ext);
 	}
-	else errorHandler(new Error("Bad File - cannot display data."));
+	else OHSynchronizer.errorHandler(new Error("Bad File - cannot display data."));
 }
 
 // Here we ensure the extension is usable by the system
@@ -192,7 +196,7 @@ OHSynchronizer.Import.renderVideo = function(file) {
   	}
   }
   catch (e) {
-		errorHandler(e);
+		OHSynchronizer.errorHandler(e);
 		$("#media-upload").show();
 		$("#video").hide();
 		$("#audio").hide();
@@ -233,13 +237,14 @@ OHSynchronizer.Import.loadYouTube = function(id) {
 	iframe.setAttribute("height", "400px");
 
 	$('#ytplayer').html(iframe);
-	ytplayer = new YT.Player('ytvideo', {
+	OHSynchronizer.ytplayer = new YT.Player('ytvideo', {
 		events: {
-			'onReady': OHSynchronizer.Player.YouTube.initializeControls
+			'onReady': OHSynchronizer.YouTube.initializeControls
 		}
 	});
-
-	transcriptYTTimestamp();
+  OHSynchronizer.playerControls = OHSynchronizer.YouTube;
+	OHSynchronizer.YouTube.transcriptTimestamp();
+	window.setInterval(OHSynchronizer.YouTube.transcriptTimestamp, 500);
 }
 
 // Here we play audio files in the audio control player
@@ -261,7 +266,7 @@ OHSynchronizer.Import.renderAudio = function(file) {
   	}
   }
   catch (e) {
-		errorHandler(e);
+		OHSynchronizer.errorHandler(e);
 		$("#media-upload").show();
 		$("#video").hide();
 		$("#audio").hide();
@@ -298,7 +303,7 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 				if (ext === 'vtt') {
 					$("#finish-area").show();
 
-					if (target.indexOf("WEBVTT") !== 0) errorHandler(new Error("Not a valid VTT index file."));
+					if (target.indexOf("WEBVTT") !== 0) OHSynchronizer.errorHandler(new Error("Not a valid VTT index file."));
 					else {
 						// Having interview-level metadata is required
 						if (/(Title:)+/.test(target) && /(Date:)+/.test(target) && /(Identifier:)+/.test(target)) {
@@ -411,23 +416,27 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 							tagCancel();
 							closeButtons();
 						}
-						else errorHandler(new Error("Not a valid index file - missing interview-level metadata."));
+						else OHSynchronizer.errorHandler(new Error("Not a valid index file - missing interview-level metadata."));
 					}
 				}
-				else errorHandler(new Error("Not a valid file extension."));
+				else OHSynchronizer.errorHandler(new Error("Not a valid file extension."));
 			}
 			else if (fileType == 'transcript') {
 				// If there's no A/V present, there is no transcript Syncing
-				if (!($("#audio").is(':visible')) && !($("#video").is(':visible')) && document.getElementById("ytplayer").innerHTML === '') errorHandler(new Error("You must first upload an A/V file in order to sync a transcript."));
+				if (!($("#audio").is(':visible')) && !($("#video").is(':visible')) && document.getElementById("ytplayer").innerHTML === '') {
+					OHSynchronizer.errorHandler(new Error("You must first upload an A/V file in order to sync a transcript."));
+				}
 				// VTT Parsing
 				else {
 					if (ext === 'vtt') {
 						$("#finish-area").show();
 
-						if (!(/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(target)) || target.indexOf("WEBVTT") !== 0) errorHandler(new Error("Not a valid VTT transcript file."));
+						if (!(/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(target)) || target.indexOf("WEBVTT") !== 0){
+							OHSynchronizer.errorHandler(new Error("Not a valid VTT transcript file."));
+						}
 						else {
 							if ($("#audio").is(':visible') || $("#video").is(':visible') || document.getElementById("ytplayer").innerHTML != '') $("#sync-controls").show();
-							uploadSuccess(file);
+							OHSynchronizer.Import.uploadSuccess(file);
 
 							// We'll break up the file line by line
 							var text = target.split(/\r?\n|\r/);
@@ -440,18 +449,18 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 									document.getElementById('transcript').innerHTML += e.data;
 
 								  // Enable click functions, addSyncMarker calls all three functions
-									addSyncMarker();
+									OHSynchronizer.Transcript.addSyncMarker();
 								}
 							}
 						}
 					}
-					else errorHandler(new Error("Not a valid file extension."));
+					else OHSynchronizer.errorHandler(new Error("Not a valid file extension."));
 				}
 			}
-			else { errorHandler(new Error("No example file for parsing index and transcript data together available.")); }
+			else { OHSynchronizer.errorHandler(new Error("No example file for parsing index and transcript data together available.")); }
 		}
 	}
-	catch (e) { errorHandler(e); }
+	catch (e) { OHSynchronizer.errorHandler(e); }
 
 	reader.readAsText(file);
 }
@@ -537,10 +546,12 @@ OHSynchronizer.YouTube.transcriptLoop = function() {
 }
 // Here we will monitor the YouTube video time and keep the transcript timestamp updated
 OHSynchronizer.YouTube.transcriptTimestamp = function() {
-	if (typeof ytplayer !== 'undefined') {
+	if (typeof window.ytplayer !== 'undefined') {
 		// last_time_update = '';
-		time_update = (ytplayer.getCurrentTime() * 1000);
-		playing = ytplayer.getPlayerState();
+		console.log(window.ytplayer);
+		var time = window.ytplayer.getCurrentTime();
+		time_update = (time * 1000);
+		playing = window.ytplayer.getPlayerState();
 			if (playing == 1) {
 				if (last_time_update == time_update) current_time_msec += 50;
 				if (last_time_update != time_update) current_time_msec = time_update;
@@ -548,7 +559,6 @@ OHSynchronizer.YouTube.transcriptTimestamp = function() {
 
 		var chime1 = document.getElementById("audio-chime1");
 		var chime2 = document.getElementById("audio-chime2");
-		var time = ytplayer.getCurrentTime();
 		var minutes = Math.floor(time / 60);
 		var hours = Math.floor(minutes / 60);
 		var offset = $('#sync-roll').val();
@@ -560,7 +570,7 @@ OHSynchronizer.YouTube.transcriptTimestamp = function() {
 		// If looping is active, we will jump back to a specific time should the the time be at the minute + offset
 		if ((Math.floor(time) % 60 == offset || time == ytplayer.getDuration()) && $("#transcript").is(':visible') && looping !== -1) {
 			document.getElementById("sync-minute").innerHTML = parseInt(document.getElementById("sync-minute").innerHTML) + 1;
-			syncControl("back");
+			OHSynchronizer.Transcript.syncControl("back");
 			ytplayer.playVideo();
 		}
 
@@ -575,7 +585,6 @@ OHSynchronizer.YouTube.transcriptTimestamp = function() {
 		last_time_update = time_update;
 	}
 }
-window.setInterval(OHSynchronizer.YouTube.transcriptYTTimestamp, 500);
 
 /** Index Segment Functions **/
 
@@ -603,7 +612,7 @@ OHSynchronizer.AblePlayer.player = function() {
 }
 OHSynchronizer.AblePlayer.seekTo = function(minute) {
 	var offset = $('#sync-roll').val();
-	player().currentTime = minute * 60 - offset;
+	OHSynchronizer.AblePlayer.player().currentTime = minute * 60 - offset;
 }
 
 // Here we update the timestamp for the Tag Segment function for AblePlayer
@@ -674,13 +683,13 @@ OHSynchronizer.AblePlayer.transcriptTimestamp = function() {
 	var offset = $('#sync-roll').val();
 
 	// We only play chimes if we're on the transcript tab, and looping is active
-	if (Math.floor(time) % 60 == (60 - offset) && $("#transcript").is(':visible') && looping !== -1) { chime1.play(); }
-	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible') && looping !== -1) { chime2.play(); }
+	if (Math.floor(time) % 60 == (60 - offset) && $("#transcript").is(':visible') && OHSynchronizer.looping !== -1) { chime1.play(); }
+	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible') && OHSynchronizer.looping !== -1) { chime2.play(); }
 
 	// If looping is active, we will jump back to a specific time should the the time be at the minute + offset
-	if ((Math.floor(time) % 60 == offset || time === player.duration ) && $("#transcript").is(':visible') && looping !== -1) {
+	if ((Math.floor(time) % 60 == offset || time === player.duration ) && $("#transcript").is(':visible') && OHSynchronizer.looping !== -1) {
 		document.getElementById("sync-minute").innerHTML = parseInt(document.getElementById("sync-minute").innerHTML) + 1;
-		syncControl("back");
+		OHSynchronizer.Transcript.syncControl("back");
 		player.play();
 	}
 
@@ -707,7 +716,7 @@ OHSynchronizer.AblePlayer.transcriptLoop = function() {
 		else if ($("#video").is(':visible')) player = document.getElementById("video-player");
 
 		// If looping is active
-		if (looping !== -1) {
+		if (OHSynchronizer.looping !== -1) {
 			player.pause();
 			$('#sync-play').addClass('btn-outline-info');
 			$('#sync-play').removeClass('btn-info');
@@ -727,7 +736,7 @@ OHSynchronizer.AblePlayer.transcriptLoop = function() {
 /** Transcript Sync Functions **/
 OHSynchronizer.Transcript = function(){};
 // Here we add a Sync Marker
-OHSynchronizer.Transcript.addSyncMarker = function(playerControls) {
+OHSynchronizer.Transcript.addSyncMarker = function() {
 	for (var word of document.getElementsByClassName('transcript-word')) {
 		word.addEventListener('click', function(){
 			var minute = parseInt(document.getElementById("sync-minute").innerHTML);
@@ -737,7 +746,7 @@ OHSynchronizer.Transcript.addSyncMarker = function(playerControls) {
 
 			// If this word is already a sync marker, we don't make it another one
 			if ($(this).hasClass('transcript-clicked')) {
-				errorHandler(new Error("Word already associated with a transcript sync marker."));
+				OHSynchronizer.errorHandler(new Error("Word already associated with a transcript sync marker."));
 			}
 			else {
 				// If a marker already exists for this minute, remove it and remove the word highlighting
@@ -755,13 +764,13 @@ OHSynchronizer.Transcript.addSyncMarker = function(playerControls) {
 				// Increase the Sync Current Mark
 				document.getElementById("sync-minute").innerHTML = minute + 1;
 
-				updateCurrentMark();
-				removeSyncMarker();
+				OHSynchronizer.Transcript.updateCurrentMark();
+				OHSynchronizer.Transcript.removeSyncMarker();
 
 				// If we are looping, we automatically jump forward
-				if (looping !== -1) {
+				if (OHSynchronizer.looping !== -1) {
 					document.getElementById("sync-minute").innerHTML = minute;
-					syncControl("forward", playerControls);
+					OHSynchronizer.Transcript.syncControl("forward", OHSynchronizer.playerControls);
 				}
 			}
 		}, false);
@@ -802,18 +811,18 @@ OHSynchronizer.Transcript.syncControl = function(type, playerControls) {
 			if (minute <= 0) document.getElementById("sync-minute").innerHTML = 0;
 			else document.getElementById("sync-minute").innerHTML = minute;
 
-			playerControls.seekTo(minute);
+			OHSynchronizer.playerControls.seekTo(minute);
 			break;
 
 		case "forward":
 			minute += 1;
 			document.getElementById("sync-minute").innerHTML = minute;
 
-			playerControls.seekTo(minute);
+			OHSynchronizer.playerControls.seekTo(minute);
 			break;
 
 		case "loop":
-			playerControls.transcriptLoop();
+			OHSynchronizer.playerControls.transcriptLoop();
 			break;
 
 		default:
@@ -963,7 +972,7 @@ OHSynchronizer.Export.transcriptVTT = function() {
 	minute = (parseInt(minute) < 10) ? '0' + minute : minute;
 
 	if (minute == '') {
-		new errorHandler("You must add at least one sync marker in order to prepare a transcript.");
+		OHSynchronizer.errorHandler(new Error("You must add at least one sync marker in order to prepare a transcript."));
 		return false;
 	}
 	else {
@@ -1063,7 +1072,7 @@ OHSynchronizer.Export.previewWork = function() {
 		playerControls("stop");
 	}
 
-	if ($('#media-upload').visible) errorHandler(new Error("You must first upload media in order to preview."));
+	if ($('#media-upload').visible) OHSynchronizer.errorHandler(new Error("You must first upload media in order to preview."));
 	else if (type.toLowerCase() == "transcript" && document.getElementById('transcript').innerHTML != '') {
 		// The current open work needs to be hidden to prevent editing while previewing
 		$("#transcript").hide();
@@ -1128,7 +1137,7 @@ OHSynchronizer.Export.previewWork = function() {
 		addPreviewSegments();
 	}
 	else {
-		errorHandler(new Error("The selected transcript or index document is empty."));
+		OHSynchronizer.errorHandler(new Error("The selected transcript or index document is empty."));
 	}
 }
 
@@ -1227,7 +1236,7 @@ OHSynchronizer.Export.exportFile = function(sender) {
 				break;
 
 			default:
-				errorHandler(new Error("This function is still under development."));
+				OHSynchronizer.errorHandler(new Error("This function is still under development."));
 				break;
 		}
 	}
@@ -1247,19 +1256,19 @@ OHSynchronizer.Export.exportFile = function(sender) {
 				break;
 
 			default:
-				errorHandler(new Error("This function is still under development."));
+				OHSynchronizer.errorHandler(new Error("This function is still under development."));
 				break;
 		}
 	}
 	else {
-		errorHandler(new Error("The selected transcript or index document is empty."));
+		OHSynchronizer.errorHandler(new Error("The selected transcript or index document is empty."));
 	}
 }
 
 /** General Functions **/
 
 // Here is our error handling
-function errorHandler(e) {
+OHSynchronizer.errorHandler = function(e) {
 	var error = '';
   error += '<div class="col-md-6"><i id="close" class="fa fa-times-circle-o close"></i><p class="error-bar"><i class="fa fa-exclamation-circle"></i> ' + e + '</p></div>';
 	$('#messagesBar').append(error);
