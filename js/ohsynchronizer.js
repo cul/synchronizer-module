@@ -247,7 +247,7 @@ OHSynchronizer.Import.loadYouTube = function(id) {
 			'onReady': OHSynchronizer.YouTube.initializeControls
 		}
 	});
-  OHSynchronizer.playerControls = OHSynchronizer.YouTube;
+	OHSynchronizer.playerControls = OHSynchronizer.YouTube;
 	OHSynchronizer.YouTube.transcriptTimestamp();
 	window.setInterval(OHSynchronizer.YouTube.transcriptTimestamp, 500);
 }
