@@ -522,7 +522,7 @@ OHSynchronizer.YouTube.initializeControls = function(event) {
     updateTimestampYT();
   });
 }
-OHSynchronizer.YouTube.seekTo = function(minute) {
+OHSynchronizer.YouTube.seekMinute = function(minute) {
 	var offset = $('#sync-roll').val();
 	ytplayer.seekTo(minute * 60 - offset);
 }
@@ -612,12 +612,48 @@ OHSynchronizer.YouTube.updateTimestamp = function() {
 	$("#tag-timestamp").val(hours + ':' + minutes + ':' + seconds);
 };
 
+// Here we handle the keyword player controls for YouTube
+OHSynchronizer.YouTube.playerControls = function(button) {
+	switch(button) {
+		case "beginning":
+			ytplayer.seekTo(0);
+			break;
+
+		case "backward":
+			ytplayer.seekTo(ytplayer.getCurrentTime() - 15);
+			break;
+
+		case "play":
+			ytplayer.playVideo();
+			break;
+
+		case "stop":
+			ytplayer.pauseVideo();
+			break;
+
+		case "forward":
+			ytplayer.seekTo(ytplayer.getCurrentTime() + 15);
+			break;
+
+		case "update":
+			OHSynchronizer.YouTube.updateTimestamp();
+			break;
+
+		case "seek":
+			OHSynchronizer.YouTube.seekMinute(parseInt(document.getElementById("sync-minute").innerHTML));
+			break;
+
+		default:
+			break;
+	}
+}
+
 OHSynchronizer.AblePlayer = function(){};
 OHSynchronizer.AblePlayer.player = function() {
 	if ($("#audio").is(':visible')) return document.getElementById("audio-player");
 	else if ($("#video").is(':visible')) return document.getElementById("video-player");
 }
-OHSynchronizer.AblePlayer.seekTo = function(minute) {
+OHSynchronizer.AblePlayer.seekMinute = function(minute) {
 	var offset = $('#sync-roll').val();
 	OHSynchronizer.AblePlayer.player().currentTime = minute * 60 - offset;
 }
@@ -638,7 +674,7 @@ OHSynchronizer.AblePlayer.updateTimestamp = function() {
 	$("#tag-timestamp").val(hours + ':' + minutes + ':' + seconds);
 };
 
-// Here we handle the player controls, only for AblePlayer
+// Here we handle the keyword player controls for AblePlayer
 OHSynchronizer.AblePlayer.playerControls = function(button) {
 	switch(button) {
 		case "beginning":
@@ -666,7 +702,7 @@ OHSynchronizer.AblePlayer.playerControls = function(button) {
 			break;
 
 		case "seek":
-			seekTo(parseInt(document.getElementById("sync-minute").innerHTML));
+			OHSynchronizer.AblePlayer.seekMinute(parseInt(document.getElementById("sync-minute").innerHTML));
 			break;
 
 		default:
@@ -818,14 +854,14 @@ OHSynchronizer.Transcript.syncControl = function(type, playerControls) {
 			if (minute <= 0) document.getElementById("sync-minute").innerHTML = 0;
 			else document.getElementById("sync-minute").innerHTML = minute;
 
-			OHSynchronizer.playerControls.seekTo(minute);
+			OHSynchronizer.playerControls.seekMinute(minute);
 			break;
 
 		case "forward":
 			minute += 1;
 			document.getElementById("sync-minute").innerHTML = minute;
 
-			OHSynchronizer.playerControls.seekTo(minute);
+			OHSynchronizer.playerControls.seekMinute(minute);
 			break;
 
 		case "loop":
@@ -1087,14 +1123,8 @@ OHSynchronizer.Export.previewWork = function() {
 
 	// Make sure looping isn't running, we'll stop the A/V media and return the playhead to the beginning
 	looping = -1;
-	if (youTube !== '') {
-		ytplayer.seekTo(0);
-		ytplayer.pauseVideo();
-	}
-	else {
-		OHSynchronizer.playerControls("beginning");
-		OHSynchronizer.playerControls("stop");
-	}
+	OHSynchronizer.playerControls.playerControls("beginning");
+	OHSynchronizer.playerControls.playerControls("stop");
 
 	if ($('#media-upload').visible) OHSynchronizer.errorHandler(new Error("You must first upload media in order to preview."));
 	else if (type.toLowerCase() == "transcript" && document.getElementById('transcript').innerHTML != '') {
@@ -1171,16 +1201,7 @@ OHSynchronizer.Export.addPreviewMinutes = function() {
 		minute.addEventListener('click', function(){
 			var timestamp = $(this)[0].innerText.split('[');
 			var minute = timestamp[1].split(':');
-			var youTube = document.getElementById("ytplayer").innerHTML;
-
-			if (youTube !== '') ytplayer.seekTo(minute[0] * 60);
-			else {
-				var player = '';
-				if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
-				else if ($("#video").is(':visible')) player = document.getElementById("video-player");
-
-				player.currentTime = parseInt(minute[0]) * 60;
-			}
+			OHSynchronizer.playerControls.seekMinute(parseInt(minute[0]));
 		});
 	}
 }
