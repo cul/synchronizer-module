@@ -4,8 +4,7 @@
 	$("#video").hide();
 	$("#audio").hide();
 	$("#tag-segment-btn").hide();
-	$("#tag-controls-ap").hide();
-	$("#tag-controls-yt").hide();
+	$("#tag-controls").hide();
 	$("#sync-controls").hide();
 	$("#finish-area").hide();
 	$("#transcript-preview").hide();
@@ -50,16 +49,8 @@
 
 	// Update the Tag Segment timestamp when the modal opens from Add Segment
 	$('#tag-segment-btn').click(function () {
-		if (($("#audio").is(':visible')) || ($("#video").is(':visible')))	{
-			$("#tag-controls-yt").hide();
-			$("#tag-controls-ap").show();
-			OHSynchronizer.playerControls.updateTimestamp();
-		}
-		else {
-			$("#tag-controls-ap").hide();
-			$("#tag-controls-yt").show();
-			OHSynchronizer.playerControls.updateTimestamp();
-		}
+		$("#tag-controls").show();
+		OHSynchronizer.playerControls.updateTimestamp();
 	});
 
 	// If the dropdown list is changed, change the active tab to the selected dropdown item
