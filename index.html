@@ -179,25 +179,15 @@
 								<input id="tag-playhead" class="form-control" type="text" readonly>
 							</div>
 						</div>
-						<!-- AblePlayer Controls -->
-						<div id="tag-controls-ap" class="form-group row btn-group" role="group">
+						<!-- player Controls -->
+						<div id="tag-controls" class="form-group row btn-group" role="group">
 							<div class="col-md-1">&nbsp;</div>
-							<button id="control-beginning-ap" type="button" class="btn btn-secondary" onclick="playerControls('beginning')"><i class="fa fa-fast-backward" title="Jump to Beginning of Segment"></i></button>
-							<button id="control-backward-ap" type="button" class="btn btn-secondary" onclick="playerControls('backward')"><i class="fa fa-arrow-left" title="Jump Back 15 Seconds"></i></button>
-							<button id="control-play-ap" type="button" class="btn btn-secondary" onclick="playerControls('play')"><i class="fa fa-play" title="Play"></i></button>
-							<button id="control-stop-ap" type="button" class="btn btn-secondary" onclick="playerControls('stop')"><i class="fa fa-stop" title="Stop"></i></button>
-							<button id="control-forward-ap" type="button" class="btn btn-secondary" onclick="playerControls('forward')"><i class="fa fa-arrow-right" title="Jump Forward 15 Seconds"></i></button>
-							<button id="control-update-time-ap" type="button" class="btn btn-secondary" onclick="playerControls('update')">Update Time</button>
-						</div>
-						<!-- YouTube Controls -->
-						<div id="tag-controls-yt" class="form-group row btn-group" role="group">
-							<div class="col-md-1">&nbsp;</div>
-							<button id="control-beginning-yt" type="button" class="btn btn-secondary"><i class="fa fa-fast-backward" title="Jump to Beginning of Segment"></i></button>
-							<button id="control-backward-yt" type="button" class="btn btn-secondary"><i class="fa fa-arrow-left" title="Jump Back 15 Seconds"></i></button>
-							<button id="control-play-yt" type="button" class="btn btn-secondary"><i class="fa fa-play" title="Play"></i></button>
-							<button id="control-stop-yt" type="button" class="btn btn-secondary"><i class="fa fa-stop" title="Stop"></i></button>
-							<button id="control-forward-yt" type="button" class="btn btn-secondary"><i class="fa fa-arrow-right" title="Jump Forward 15 Seconds"></i></button>
-							<button id="control-update-time-yt" type="button" class="btn btn-secondary">Update Time</button>
+							<button id="control-beginning" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('beginning')"><i class="fa fa-fast-backward" title="Jump to Beginning of Segment"></i></button>
+							<button id="control-backward" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('backward')"><i class="fa fa-arrow-left" title="Jump Back 15 Seconds"></i></button>
+							<button id="control-play" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('play')"><i class="fa fa-play" title="Play"></i></button>
+							<button id="control-stop" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('stop')"><i class="fa fa-stop" title="Stop"></i></button>
+							<button id="control-forward" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('forward')"><i class="fa fa-arrow-right" title="Jump Forward 15 Seconds"></i></button>
+							<button id="control-update-time" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('update')">Update Time</button>
 						</div>
 						<div class="form-group row">
 							<label for="tag-segment-title" class="col-md-3 col-form-label"><i class="fa fa-asterisk"></i>Segment Title</label>
