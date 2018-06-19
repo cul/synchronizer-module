@@ -30,10 +30,6 @@
     active: false
   });
 
-	// Watch the AblePlayer time status for Transcript Syncing
-	document.getElementById("video-player").ontimeupdate = function() { OHSynchronizer.AblePlayer.transcriptTimestamp() };
-	document.getElementById("audio-player").ontimeupdate = function() { OHSynchronizer.AblePlayer.transcriptTimestamp() };
-
 	// Disallow non-numerical values in transcript controls
 	// Only allow 0-9, backspace, and delete
 	$('#sync-roll').keypress(function (event) {

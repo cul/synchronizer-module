@@ -25,7 +25,6 @@ OHSynchronizer.timestampToDate = function(timestamp) {
 	result.setMinutes(parts[1]);
 	result.setSeconds(parts[2]);
 	result.setMilliseconds(parts[3]);
-	console.log(result);
 	return result;
 }
 
@@ -36,6 +35,14 @@ OHSynchronizer.timestampAsSeconds = function(timestamp) {
 	result += parseInt(parts[2]);
 	result += parseInt(parts[3])/1000;
 	return result;
+}
+
+OHSynchronizer.twoDigits = function(value) {
+	return Number(value).toLocaleString(undefined, {minimumIntegerDigits: 2})
+}
+
+OHSynchronizer.valuesAsTimestamp = function(hours, minutes, seconds) {
+	return OHSynchronizer.twoDigits(hours) + ":" + OHSynchronizer.twoDigits(minutes) + ":" + OHSynchronizer.twoDigits(seconds);
 }
 
 OHSynchronizer.ytplayer = null;
@@ -188,6 +195,11 @@ OHSynchronizer.Import.renderHLS = function(url) {
 	hls.loadSource(url);
 	hls.attachMedia(player);
 	hls.on(Hls.Events.MANIFEST_PARSED,function() {
+		OHSynchronizer.playerControls = new OHSynchronizer.AblePlayer();
+		// Watch the AblePlayer time status for Transcript Syncing
+		// Must set before video plays
+		document.getElementById("video-player").ontimeupdate = function() { OHSynchronizer.playerControls.transcriptTimestamp() };
+		document.getElementById("audio-player").ontimeupdate = function() { OHSynchronizer.playerControls.transcriptTimestamp() };
 		video.play();
 	});
 	$("#media-upload").hide();
@@ -264,12 +276,14 @@ OHSynchronizer.Import.loadYouTube = function(id) {
 	iframe.setAttribute("height", "400px");
 
 	$('#ytplayer').html(iframe);
+	OHSynchronizer.playerControls = new OHSynchronizer.YouTube();
 	new YT.Player('ytvideo', {
 		events: {
-			'onReady': OHSynchronizer.YouTube.initializeControls
+			'onReady': function(event) {
+				OHSynchronizer.playerControls.initializeControls(event);
+			}
 		}
 	});
-	OHSynchronizer.playerControls = OHSynchronizer.YouTube;
 }
 
 // Here we play audio files in the audio control player
@@ -492,15 +506,86 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 
 /** Player Functions **/
 OHSynchronizer.Player = function(){};
-OHSynchronizer.YouTube = function(){};
+// Here we handling looping controls for Transcript syncing
+OHSynchronizer.Player.prototype = {
+	transcriptTimestamp: function() {
+		var chime1 = document.getElementById("audio-chime1");
+		var chime2 = document.getElementById("audio-chime2");
+
+		if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
+		else if ($("#video").is(':visible')) player = document.getElementById("video-player");
+
+		var time = this.currentTime();
+		var minutes = Math.floor(time / 60);
+		var hours = Math.floor(minutes / 60);
+		var offset = $('#sync-roll').val();
+
+		// We only play chimes if we're on the transcript tab, and looping is active
+		if (Math.floor(time) % 60 == (60 - offset) && $("#transcript").is(':visible') && OHSynchronizer.looping !== -1) { chime1.play(); }
+		if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible') && OHSynchronizer.looping !== -1) { chime2.play(); }
+
+		// If looping is active, we will jump back to a specific time should the the time be at the minute + offset
+		if ((Math.floor(time) % 60 == offset || time === this.duration() ) && $("#transcript").is(':visible') && OHSynchronizer.looping !== -1) {
+			document.getElementById("sync-minute").innerHTML = parseInt(document.getElementById("sync-minute").innerHTML) + 1;
+			OHSynchronizer.Transcript.syncControl("back", this);
+			this.playerControls("play");
+		}
+
+		time = time - minutes * 60;
+		var seconds = time.toFixed(0);
+		if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
+		if (minutes === 60) minutes = 0;
+
+		var timestamp = OHSynchronizer.valuesAsTimestamp(hours, minutes, seconds);
+		document.getElementById("sync-time").innerHTML = timestamp;
+		// If the user is working on an index segment, we need to watch the playhead
+		$("#tag-playhead").val(timestamp);
+	},
+	transcriptLoop: function() {
+		var minute = parseInt(document.getElementById("sync-minute").innerHTML);
+		var offset = $('#sync-roll').val();
+
+		// We don't loop at the beginning of the A/V
+		if (minute === 0) {  }
+		else {
+			// If looping is active we stop it
+			if (OHSynchronizer.looping !== -1) {
+				this.playerControls("pause");
+				$('#sync-play').addClass('btn-outline-info');
+				$('#sync-play').removeClass('btn-info');
+				OHSynchronizer.looping = -1;
+			}
+			// If looping is not active we start it
+			else {
+				this.seekTo("00:" + (minute - 1) + ":" + (60 - offset) + ".000");
+				this.playerControls("play");
+				$('#sync-play').removeClass('btn-outline-info');
+				$('#sync-play').addClass('btn-info');
+				OHSynchronizer.looping = minute;
+			}
+		}
+	}
+};
+OHSynchronizer.YouTube = function(){
+	OHSynchronizer.Player.call(this);
+};
+OHSynchronizer.YouTube.prototype = Object.create(OHSynchronizer.Player.prototype);
+OHSynchronizer.YouTube.prototype.constructor = OHSynchronizer.YouTube;
+OHSynchronizer.YouTube.prototype.currentTime = function() {
+	return this.ytplayer.getCurrentTime();
+}
+OHSynchronizer.YouTube.prototype.duration = function() {
+	return this.ytplayer.getDuration();
+}
 // Here we set up segment controls for the YouTube playback
 //function initializeYTControls(event) {
-OHSynchronizer.YouTube.initializeControls = function(event) {
-	OHSynchronizer.ytplayer = event.target;
-	window.setInterval(OHSynchronizer.YouTube.transcriptTimestamp, 500);
+OHSynchronizer.YouTube.prototype.initializeControls = function(event) {
+	this.ytplayer = event.target;
+	var player = this;
+	window.setInterval(function() { player.transcriptTimestamp();}, 500);
 
 	// Capture the end timestamp of the YouTube video
-	var time = OHSynchronizer.ytplayer.getDuration();
+	var time = this.ytplayer.getDuration();
 	var minutes = Math.floor(time / 60);
 	var hours = Math.floor(minutes / 60);
 	time = time - minutes * 60;
@@ -511,120 +596,53 @@ OHSynchronizer.YouTube.initializeControls = function(event) {
 	if (seconds < 10) seconds = '0' + seconds.toString();
 	document.getElementById('endTime').innerHTML = (hours + ':' + minutes + ':' + seconds);
 
-  var playButton = document.getElementById("control-beginning");
-  playButton.addEventListener("click", function() {
-    OHSynchronizer.ytplayer.seekTo(0);
-  });
+	var playButton = document.getElementById("control-beginning");
+	playButton.addEventListener("click", function() {
+		player.ytplayer.seekTo(0);
+	});
 
-  var pauseButton = document.getElementById("control-backward");
-  pauseButton.addEventListener("click", function() {
-		var now = OHSynchronizer.ytplayer.getCurrentTime();
-		OHSynchronizer.ytplayer.seekTo(now - 15);
-  });
+	var pauseButton = document.getElementById("control-backward");
+	pauseButton.addEventListener("click", function() {
+		var now = player.ytplayer.getCurrentTime();
+		player.ytplayer.seekTo(now - 15);
+	});
 
-  var playButton = document.getElementById("control-play");
-  playButton.addEventListener("click", function() {
-    OHSynchronizer.ytplayer.playVideo();
-  });
+	var playButton = document.getElementById("control-play");
+	playButton.addEventListener("click", function() {
+		player.ytplayer.playVideo();
+	});
 
-  var pauseButton = document.getElementById("control-stop");
-  pauseButton.addEventListener("click", function() {
-    OHSynchronizer.ytplayer.pauseVideo();
-  });
+	var pauseButton = document.getElementById("control-stop");
+	pauseButton.addEventListener("click", function() {
+		player.ytplayer.pauseVideo();
+	});
 
-  var playButton = document.getElementById("control-forward");
-  playButton.addEventListener("click", function() {
-		var now = OHSynchronizer.ytplayer.getCurrentTime();
-		OHSynchronizer.ytplayer.seekTo(now + 15);
-  });
+	var playButton = document.getElementById("control-forward");
+	playButton.addEventListener("click", function() {
+		var now = player.getCurrentTime();
+		player.ytplayer.seekTo(now + 15);
+	});
 
-  var pauseButton = document.getElementById("control-update-time");
-  pauseButton.addEventListener("click", function() {
-    OHSynchronizer.YouTube.updateTimestamp();
-  });
-	OHSynchronizer.YouTube.transcriptTimestamp();
+	var pauseButton = document.getElementById("control-update-time");
+	pauseButton.addEventListener("click", function(){player.updateTimestamp});
+	this.transcriptTimestamp();
 
 }
-OHSynchronizer.YouTube.seekMinute = function(minute) {
+OHSynchronizer.YouTube.prototype.seekMinute = function(minute) {
 	var offset = $('#sync-roll').val();
-	OHSynchronizer.ytplayer.seekTo(minute * 60 - offset);
+	this.ytplayer.seekTo(minute * 60 - offset);
 }
-OHSynchronizer.YouTube.seekTo = function(time) {
-	OHSynchronizer.ytplayer.seekTo(OHSynchronizer.timestampAsSeconds(time));
-}
-// Here we handling looping controls for Transcript syncing
-OHSynchronizer.YouTube.transcriptLoop = function() {
-	var minute = parseInt(document.getElementById("sync-minute").innerHTML);
-	var offset = $('#sync-roll').val();
-
-	// We don't loop at the beginning of the A/V
-	if (minute === 0) {  }
-	else {
-		// If looping is active we stop it
-		if (OHSynchronizer.looping !== -1) {
-			OHSynchronizer.ytplayer.pauseVideo();
-			$('#sync-play').addClass('btn-outline-info');
-			$('#sync-play').removeClass('btn-info');
-			OHSynchronizer.looping = -1;
-		}
-		// If looping is not active we start it
-		else {
-			OHSynchronizer.ytplayer.seekTo(minute * 60 - offset);
-			OHSynchronizer.ytplayer.playVideo();
-			$('#sync-play').removeClass('btn-outline-info');
-			$('#sync-play').addClass('btn-info');
-			OHSynchronizer.looping = minute;
-		}
-	}
-}
-// Here we will monitor the YouTube video time and keep the transcript timestamp updated
-OHSynchronizer.YouTube.transcriptTimestamp = function() {
-	if (typeof OHSynchronizer.ytplayer !== 'undefined') {
-		// last_time_update = '';
-		var time = OHSynchronizer.ytplayer.getCurrentTime();
-		time_update = (time * 1000);
-		playing = OHSynchronizer.ytplayer.getPlayerState();
-			if (playing == 1) {
-				if (last_time_update == time_update) current_time_msec += 50;
-				if (last_time_update != time_update) current_time_msec = time_update;
-			}
-
-		var chime1 = document.getElementById("audio-chime1");
-		var chime2 = document.getElementById("audio-chime2");
-		var minutes = Math.floor(time / 60);
-		var hours = Math.floor(minutes / 60);
-		var offset = $('#sync-roll').val();
-		var looping = OHSynchronizer.looping;
-		// We only play chimes if on the transcript tab, and looping is active
-		if (Math.floor(time) % 60 == (60 - offset) && $("#transcript").is(':visible') && looping !== -1 && playing == 1) { chime1.play(); }
-		if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible') && looping !== -1 && playing == 1) { chime2.play(); }
-
-		// If looping is active, we will jump back to a specific time should the the time be at the minute + offset
-		if ((Math.floor(time) % 60 == offset || time == OHSynchronizer.ytplayer.getDuration()) && $("#transcript").is(':visible') && looping !== -1) {
-			document.getElementById("sync-minute").innerHTML = parseInt(document.getElementById("sync-minute").innerHTML) + 1;
-			OHSynchronizer.Transcript.syncControl("back");
-			OHSynchronizer.ytplayer.playVideo();
-		}
-
-		time = time - minutes * 60;
-		var seconds = time.toFixed(0);
-		if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
-		if (minutes === 60) minutes = 0;
-
-		document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
-		// If the user is working on an index segment, we need to watch the playhead
-		$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
-		last_time_update = time_update;
-	}
+OHSynchronizer.YouTube.prototype.seekTo = function(time) {
+	this.ytplayer.seekTo(OHSynchronizer.timestampAsSeconds(time));
 }
 
 /** Index Segment Functions **/
 
 // Here we update the timestamp for the Tag Segment function for YouTube
-OHSynchronizer.YouTube.updateTimestamp = function() {
+OHSynchronizer.YouTube.prototype.updateTimestamp = function() {
 	var player = "";
 
-	var time = OHSynchronizer.ytplayer.getCurrentTime();
+	var time = this.ytplayer.getCurrentTime();
 	var minutes = Math.floor(time / 60);
 	var hours = Math.floor(minutes / 60);
 	time = time - minutes * 60;
@@ -638,61 +656,72 @@ OHSynchronizer.YouTube.updateTimestamp = function() {
 };
 
 // Here we handle the keyword player controls for YouTube
-OHSynchronizer.YouTube.playerControls = function(button) {
+OHSynchronizer.YouTube.prototype.playerControls = function(button) {
 	switch(button) {
 		case "beginning":
-			OHSynchronizer.ytplayer.seekTo(0);
+			this.ytplayer.seekTo(0);
 			break;
 
 		case "backward":
-			OHSynchronizer.ytplayer.seekTo(OHSynchronizer.ytplayer.getCurrentTime() - 15);
+			this.ytplayer.seekTo(this.ytplayer.getCurrentTime() - 15);
 			break;
 
 		case "play":
-			OHSynchronizer.ytplayer.playVideo();
+			this.ytplayer.playVideo();
 			break;
 
 		case "stop":
-			OHSynchronizer.ytplayer.pauseVideo();
+			this.ytplayer.pauseVideo();
 			break;
 
 		case "forward":
-			OHSynchronizer.ytplayer.seekTo(OHSynchronizer.ytplayer.getCurrentTime() + 15);
+			this.ytplayer.seekTo(this.ytplayer.getCurrentTime() + 15);
 			break;
 
 		case "update":
-			OHSynchronizer.YouTube.updateTimestamp();
+			this.updateTimestamp();
 			break;
 
 		case "seek":
-			OHSynchronizer.YouTube.seekMinute(parseInt(document.getElementById("sync-minute").innerHTML));
+			this.seekMinute(parseInt(document.getElementById("sync-minute").innerHTML));
 			break;
 		case "pause":
-			OHSynchronizer.YouTube.updateTimestamp();
-			OHSynchronizer.ytplayer.pauseVideo();
+			this.updateTimestamp();
+			this.ytplayer.pauseVideo();
 			break;
 		default:
 			break;
 	}
 }
 
-OHSynchronizer.AblePlayer = function(){};
-OHSynchronizer.AblePlayer.player = function() {
+OHSynchronizer.AblePlayer = function(){
+	OHSynchronizer.Player.call(this);
+};
+OHSynchronizer.AblePlayer.prototype = Object.create(OHSynchronizer.Player.prototype);
+OHSynchronizer.AblePlayer.prototype.constructor = OHSynchronizer.AblePlayer;
+
+OHSynchronizer.AblePlayer.prototype.player = function() {
 	if ($("#audio").is(':visible')) return document.getElementById("audio-player");
 	else if ($("#video").is(':visible')) return document.getElementById("video-player");
 }
-OHSynchronizer.AblePlayer.seekMinute = function(minute) {
+OHSynchronizer.AblePlayer.prototype.seekMinute = function(minute) {
 	var offset = $('#sync-roll').val();
-	OHSynchronizer.AblePlayer.player().currentTime = minute * 60 - offset;
+	this.player().currentTime = minute * 60 - offset;
 }
-OHSynchronizer.AblePlayer.seekTo = function(time) {
-	OHSynchronizer.AblePlayer.player().currentTime = OHSynchronizer.timestampAsSeconds(time);
+OHSynchronizer.AblePlayer.prototype.seekTo = function(time) {
+	this.player().currentTime = OHSynchronizer.timestampAsSeconds(time);
+}
+OHSynchronizer.AblePlayer.prototype.currentTime = function() {
+	return this.player().currentTime;
+}
+OHSynchronizer.AblePlayer.prototype.duration = function() {
+	return this.player().duration;
 }
 
 // Here we update the timestamp for the Tag Segment function for AblePlayer
-OHSynchronizer.AblePlayer.updateTimestamp = function() {
+OHSynchronizer.AblePlayer.prototype.updateTimestamp = function() {
 
-	var time = OHSynchronizer.AblePlayer.player().currentTime;
+	var time = this.player().currentTime;
 	var minutes = Math.floor(time / 60);
 	var hours = Math.floor(minutes / 60);
 	time = time - minutes * 60;
@@ -706,104 +735,38 @@ OHSynchronizer.AblePlayer.updateTimestamp = function() {
 };
 
 // Here we handle the keyword player controls for AblePlayer
-OHSynchronizer.AblePlayer.playerControls = function(button) {
+OHSynchronizer.AblePlayer.prototype.playerControls = function(button) {
 	switch(button) {
 		case "beginning":
-			player().currentTime = 0;
+			this.player().currentTime = 0;
 			break;
 
 		case "backward":
-			player().currentTime -= 15;
+			this.player().currentTime -= 15;
 			break;
 
 		case "play":
-			player().play();
+			this.player().play();
 			break;
 
 		case "stop":
-			player().pause();
+			this.player().pause();
 			break;
 
 		case "forward":
-			player().currentTime += 15;
+			this.player().currentTime += 15;
 			break;
 
 		case "update":
-			updateTimestamp();
+			this.updateTimestamp();
 			break;
 
 		case "seek":
-			OHSynchronizer.AblePlayer.seekMinute(parseInt(document.getElementById("sync-minute").innerHTML));
+			this.seekMinute(parseInt(document.getElementById("sync-minute").innerHTML));
 			break;
 
 		default:
 			break;
-	}
-}
-
-// Here we continually update the timestamp on the sync controls
-// Only for AblePlayer
-OHSynchronizer.AblePlayer.transcriptTimestamp = function() {
-	var player = "";
-	var chime1 = document.getElementById("audio-chime1");
-	var chime2 = document.getElementById("audio-chime2");
-
-	if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
-	else if ($("#video").is(':visible')) player = document.getElementById("video-player");
-
-	var time = player.currentTime;
-	var minutes = Math.floor(time / 60);
-	var hours = Math.floor(minutes / 60);
-	var offset = $('#sync-roll').val();
-
-	// We only play chimes if we're on the transcript tab, and looping is active
-	if (Math.floor(time) % 60 == (60 - offset) && $("#transcript").is(':visible') && OHSynchronizer.looping !== -1) { chime1.play(); }
-	if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && $("#transcript").is(':visible') && OHSynchronizer.looping !== -1) { chime2.play(); }
-
-	// If looping is active, we will jump back to a specific time should the the time be at the minute + offset
-	if ((Math.floor(time) % 60 == offset || time === player.duration ) && $("#transcript").is(':visible') && OHSynchronizer.looping !== -1) {
-		document.getElementById("sync-minute").innerHTML = parseInt(document.getElementById("sync-minute").innerHTML) + 1;
-		OHSynchronizer.Transcript.syncControl("back");
-		player.play();
-	}
-
-	time = time - minutes * 60;
-	var seconds = time.toFixed(0);
-	if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
-	if (minutes === 60) minutes = 0;
-
-	document.getElementById("sync-time").innerHTML = Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2});
-	// If the user is working on an index segment, we need to watch the playhead
-	$("#tag-playhead").val(Number(hours).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(minutes).toLocaleString(undefined, {minimumIntegerDigits: 2}) + ":" + Number(seconds).toLocaleString(undefined, {minimumIntegerDigits: 2}));
-}
-
-OHSynchronizer.AblePlayer.transcriptLoop = function() {
-	var minute = parseInt(document.getElementById("sync-minute").innerHTML);
-	var offset = $('#sync-roll').val();
-
-	// We don't loop at the beginning of the A/V
-	if (minute === 0) {  }
-	// This is handling for the AblePlayer
-	else {
-		var player = "";
-		if ($("#audio").is(':visible')) player = document.getElementById("audio-player");
-		else if ($("#video").is(':visible')) player = document.getElementById("video-player");
-
-		// If looping is active
-		if (OHSynchronizer.looping !== -1) {
-			player.pause();
-			$('#sync-play').addClass('btn-outline-info');
-			$('#sync-play').removeClass('btn-info');
-			OHSynchronizer.looping = -1;
-		}
-		// If looping is not active
-		else {
-			player.currentTime = minute * 60 - offset;
-			player.play();
-			$('#sync-play').removeClass('btn-outline-info');
-			$('#sync-play').addClass('btn-info');
-			OHSynchronizer.looping = minute;
-		}
 	}
 }
 
@@ -885,18 +848,18 @@ OHSynchronizer.Transcript.syncControl = function(type, playerControls) {
 			if (minute <= 0) document.getElementById("sync-minute").innerHTML = 0;
 			else document.getElementById("sync-minute").innerHTML = minute;
 
-			OHSynchronizer.playerControls.seekMinute(minute);
+			playerControls.seekMinute(minute);
 			break;
 
 		case "forward":
 			minute += 1;
 			document.getElementById("sync-minute").innerHTML = minute;
 
-			OHSynchronizer.playerControls.seekMinute(minute);
+			playerControls.seekMinute(minute);
 			break;
 
 		case "loop":
-			OHSynchronizer.playerControls.transcriptLoop();
+			playerControls.transcriptLoop();
 			break;
 
 		default:
