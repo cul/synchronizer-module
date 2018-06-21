@@ -119,6 +119,8 @@
 						<ul id="list-tabs">
 							<li><a href="#tabs-transcript">Transcript</a></li>
 							<li><a href="#tabs-index">Index</a></li>
+							<li>
+							</li>
 						</ul>
 
 						<div id="tabs-transcript">
@@ -129,7 +131,6 @@
 									<div id="sync-minute" class="btn btn-secondary" title='minute to be synchronized' type="button">0</div>
 									<span id="sync-forward" class="btn btn-info" type="button" title='jump to next minute' onclick="OHSynchronizer.Transcript.syncControl('forward',OHSynchronizer.playerControls)"><i class="fa fa-forward"></i></span>
 									<span id="sync-play" class="btn btn-outline-info" type="button" title='start/stop loop' onclick="OHSynchronizer.Transcript.syncControl('loop',OHSynchronizer.playerControls)"><i class="fa fa-retweet"></i></span>
-									<div id="sync-posneg" class="btn btn-secondary" type="button"><i class="fa fa-plus"></i><i class="fa fa-minus"></i></div>
 									<input id="sync-roll" class="btn btn-secondary" type="text" maxlength="3" size="3" value="10" name="sync-roll">
 									<div id="sync-time" class="btn btn-secondary" type="button">00:00:00</div>
 								</div>
@@ -148,7 +149,7 @@
 								<div id="endTime" class="hidden">0</div>
 							</div>
 						</div><!-- /#tabs-index -->
-
+						<div class="clearfix"></div>
 					</div><!-- /#text-tabs -->
 				</div><!-- /#right-sidebar -->
 			</div><!-- /#working-area -->
