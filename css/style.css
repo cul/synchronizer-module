@@ -58,6 +58,10 @@ input[type="file"] {
   white-space: pre-wrap;
   word-wrap: break-word;
 }
+#transcript {
+  max-height:80vh;
+  overflow:auto;
+}
 /*  */
 
 /* Transcript Syncing */
@@ -70,9 +74,10 @@ input[type="file"] {
 
 #sync-controls {
 	z-index: 5;
-	position: fixed;
-	width: 350px;
-	right: 10px;
+	position: absolute;
+	/*width: 350px;*/
+	right: 20px;
+  top: 5px;
 	/* background: #000; */
 }
 
@@ -80,7 +85,10 @@ input[type="file"] {
 #sync-time {
   background-color: #fff;
   font-weight: bold;
-  font-size: 1.2em;
+  font-size: 1em;
+}
+#sync-time {
+  background-color: transparent;
 }
 
 #sync-posneg {
@@ -122,8 +130,11 @@ label i {
 }
 
 #tag-segment-btn {
-	margin-top: -40px;
-	margin-bottom: 10px;
+  position: absolute;
+  top: 5px;
+  right: 20px;
+	/*margin-top: -40px;*/
+	/*margin-bottom: 10px;*/
 }
 
 #indexAccordion {
@@ -133,7 +144,6 @@ label i {
 }
 
 #text-tabs {
-	border-bottom: none;
 }
 /*  */
 
@@ -199,3 +209,12 @@ a.dropdown-item:hover {
   text-decoration: none;
 }
 /*  */
+
+/* Helper classes */
+.clearfix {
+}
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
+}
