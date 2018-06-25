@@ -880,10 +880,10 @@ OHSynchronizer.Index.tagSave = function() {
 
 	// Get an array of jQuery objects for each accordion panel
 	var accordion = $("#indexAccordion");
-  var panelIDs = $.map(accordion.children("div").get(), function(panel) {
+	var panelIDs = $.map(accordion.children("div").get(), function(panel) {
 		var id = $(panel).attr('id');
-    if (id !== edit) return id;
-  });
+		if (id !== edit) return id;
+	});
 
 	if (title === "" || title === null) alert("You must enter a title.");
 	else if ($.inArray(timestamp, panelIDs) > -1) alert("A segment for this timestamp already exists.");
@@ -961,23 +961,23 @@ OHSynchronizer.Index.tagCancel = function() {
 OHSynchronizer.Index.sortAccordion = function() {
 	var accordion = $("#indexAccordion");
 
-  // Get an array of jQuery objects for each accordion panel
-  var entries = $.map(accordion.children("div").get(), function(entry) {
-    var $entry = $(entry);
-    return $entry;
-  });
+	// Get an array of jQuery objects for each accordion panel
+	var entries = $.map(accordion.children("div").get(), function(entry) {
+		var $entry = $(entry);
+		return $entry;
+	});
 
   // Sort the array by the div's id
-  entries.sort(function(a, b) {
+	entries.sort(function(a, b) {
 		var timeA = new Date('1970-01-01T' + a.attr('id') + 'Z');
 		var timeB = new Date('1970-01-01T' + b.attr('id') + 'Z');
-    return timeA - timeB;
-  });
+		return timeA - timeB;
+	});
 
-  // Put them in the right order in the accordion
-  $.each(entries, function() {
-    this.detach().appendTo(accordion);
-  });
+	// Put them in the right order in the accordion
+	$.each(entries, function() {
+		this.detach().appendTo(accordion);
+	});
 }
 
 // Here we remove items the user no longer wishes to see
