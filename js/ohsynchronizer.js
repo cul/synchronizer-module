@@ -336,7 +336,8 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 		reader.onload = function(event) {
 			var target = event.target.result;
 
-		  var fileType = $("#file-type").val();
+			var fileType = $("#file-type").val();
+			var timecodeRegEx = /(([\d]{2}:[\d]{2}:[\d]{2}.[\d]{3}\s-->\s[\d]{2}:[\d]{2}:[\d]{2}.[\d]{3}))+/;
 			if (fileType == 'index') {
 				// VTT Parsing
 				if (ext === 'vtt') {
@@ -353,7 +354,7 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 
 							var k = 0;
 							for (k; k < text.length; k++) {
-								if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[k])) { break; }
+								if (timecodeRegEx.test(text[k])) { break; }
 
 								// First we pull out the interview-level metadata
 								if (/(Title:)+/.test(text[k])) {
@@ -385,7 +386,7 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 
 							for (var i = 0; i < text.length; i++) {
 								// We are only concerned with timestamped segments at this point of the parsing
-								if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[i])) {
+								if (timecodeRegEx.test(text[i])) {
 									timestamp = text[i].substring(0, 12);
 									// document.getElementById('endTime').innerHTML = text[i].substring(17);
 
@@ -470,7 +471,7 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 					if (ext === 'vtt') {
 						$("#finish-area").show();
 
-						if (!(/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(target)) || target.indexOf("WEBVTT") !== 0){
+						if (!(timecodeRegEx.test(target)) || target.indexOf("WEBVTT") !== 0){
 							OHSynchronizer.errorHandler(new Error("Not a valid VTT transcript file."));
 						}
 						else {
