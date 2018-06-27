@@ -12,7 +12,7 @@
 	// Initialize close buttons, tabs, and accordion
 	OHSynchronizer.Index.closeButtons();
 
-  $("#text-tabs").tabs({
+	$("#text-tabs").tabs({
 		active: 0
 	});
 
@@ -23,18 +23,18 @@
 
 	// Activate our index and preview index accordions
 	$("#indexAccordion").accordion({
-    header: "> div > h3",
-    autoHeight: false,
-    collapsible: true,
+		header: "> div > h3",
+		autoHeight: false,
+		collapsible: true,
 		clearStyle: true,
-    active: false
-  });
+		active: false
+	});
 
 	// Disallow non-numerical values in transcript controls
 	// Only allow 0-9, backspace, and delete
 	$('#sync-roll').keypress(function (event) {
-    if (event.shiftKey == true) { event.preventDefault(); }
-    if ((event.charCode >= 48 && event.charCode <= 57) || event.keyCode == 8 || event.keyCode == 46 || event.keyCode == 37 || event.keyCode == 39) { }
+		if (event.shiftKey == true) { event.preventDefault(); }
+		if ((event.charCode >= 48 && event.charCode <= 57) || event.keyCode == 8 || event.keyCode == 46 || event.keyCode == 37 || event.keyCode == 39) { }
 		else { event.preventDefault(); }
 	});
 
@@ -63,7 +63,7 @@
 
 	// Scroll to top function
 	$('#working-area').scroll(function() {
-    $('#media-playback').css('top', $(this).scrollTop());
+		$('#media-playback').css('top', $(this).scrollTop());
 	});
 	// Here we post success messages for uploaded files
 	OHSynchronizer.Events.uploadsuccess = function(event) {
