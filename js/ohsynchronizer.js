@@ -50,6 +50,12 @@ OHSynchronizer.ytplayer = null;
 // Looping is used to notify various functions if Transcript looping is currently active
 OHSynchronizer.looping = -1;
 
+OHSynchronizer.Events = {
+	// no op handlers by default, can be overridden by context
+	uploadsuccess : function(event) {},
+	hlssuccess : function(event) {}
+};
+
 /** Import Functions **/
 
 OHSynchronizer.Import = function(){};
@@ -178,13 +184,6 @@ OHSynchronizer.Import.checkExt = function(ext) {
 	 return allowed.indexOf(ext);
 }
 
-// Here we post success messages for uploaded files
-OHSynchronizer.Import.uploadSuccess = function(file) {
-	var success = "";
-	success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />File Name: ' + file.name + "<br />File Size: " + parseInt(file.size / 1024, 10) + "<br />File Type: " + file.type + "<br />Last Modified Date: " + new Date(file.lastModified) + "</div>";
-	$("#messagesBar").append(success);
-}
-
 /** Rendering Functions **/
 
 // Here we load HLS playlists
@@ -210,9 +209,7 @@ OHSynchronizer.Import.renderHLS = function(url) {
 	$("#tag-segment-btn").show();
 	$("#finish-area").show();
 	if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
-	var success = "";
-	success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />The Wowza URL ' + url + " was successfully ingested.</div>";
-	$("#messagesBar").append(success);
+	OHSynchronizer.Events.hlssuccess(new CustomEvent("hlssuccess", {detail: url}));
 	OHSynchronizer.Index.closeButtons();
 }
 
@@ -234,7 +231,7 @@ OHSynchronizer.Import.renderVideo = function(file) {
 			if (document.getElementById('transcript').innerHTML != '') {
 				$("#sync-controls").show();
 			}
-			OHSynchronizer.Index.uploadSuccess(file);
+			OHSynchronizer.Events.uploadsuccess(new CustomEvent("uploadsuccess", {detail: file}));
 			OHSynchronizer.Index.closeButtons();
 		}
 	}
@@ -305,7 +302,7 @@ OHSynchronizer.Import.renderAudio = function(file) {
 			$("#tag-segment-btn").show();
 			$("#finish-area").show();
 			if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
-			uploadSuccess(file);
+			OHSynchronizer.Events.uploadsuccess(new CustomEvent("uploadsuccess", {detail: file}));
 			OHSynchronizer.Index.closeButtons();
 		}
 	}
@@ -352,7 +349,7 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 					else {
 						// Having interview-level metadata is required
 						if (/(Title:)+/.test(target) && /(Date:)+/.test(target) && /(Identifier:)+/.test(target)) {
-							OHSynchronizer.Import.uploadSuccess(file);
+							OHSynchronizer.Events.uploadsuccess(new CustomEvent("uploadsuccess", {detail: file}));
 							OHSynchronizer.Index.closeButtons();
 							// We'll break up the file line by line
 							var text = target.split(/\r?\n|\r/);
@@ -481,7 +478,7 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 						}
 						else {
 							if ($("#audio").is(':visible') || $("#video").is(':visible') || document.getElementById("ytplayer").innerHTML != '') $("#sync-controls").show();
-							OHSynchronizer.Import.uploadSuccess(file);
+							OHSynchronizer.Events.uploadsuccess(new CustomEvent("uploadsuccess", {detail: file}));
 							OHSynchronizer.Index.closeButtons();
 							// We'll break up the file line by line
 							var text = target.split(/\r?\n|\r/);
