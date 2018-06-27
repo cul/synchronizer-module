@@ -183,7 +183,6 @@ OHSynchronizer.Import.uploadSuccess = function(file) {
 	var success = "";
 	success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />File Name: ' + file.name + "<br />File Size: " + parseInt(file.size / 1024, 10) + "<br />File Type: " + file.type + "<br />Last Modified Date: " + new Date(file.lastModified) + "</div>";
 	$("#messagesBar").append(success);
-	OHSynchronizer.Index.closeButtons();
 }
 
 /** Rendering Functions **/
@@ -203,8 +202,11 @@ OHSynchronizer.Import.renderHLS = function(url) {
 		video.play();
 	});
 	$("#media-upload").hide();
-	$("#video").show();
+	// hide audio
 	$("#audio").hide();
+	// show video
+	$("#video").show();
+	// show segment controls
 	$("#tag-segment-btn").show();
 	$("#finish-area").show();
 	if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
@@ -224,14 +226,16 @@ OHSynchronizer.Import.renderVideo = function(file) {
 
 			videoNode.src = target;
 			$("#media-upload").hide();
-			$("#video").show();
+			// hide audio
 			$("#audio").hide();
+			$("#video").show();
 			$("#tag-segment-btn").show();
 			$("#finish-area").show();
 			if (document.getElementById('transcript').innerHTML != '') {
 				$("#sync-controls").show();
 			}
 			OHSynchronizer.Index.uploadSuccess(file);
+			OHSynchronizer.Index.closeButtons();
 		}
 	}
 	catch (e) {
@@ -302,6 +306,7 @@ OHSynchronizer.Import.renderAudio = function(file) {
 			$("#finish-area").show();
 			if (document.getElementById('transcript').innerHTML != '') { $("#sync-controls").show(); }
 			uploadSuccess(file);
+			OHSynchronizer.Index.closeButtons();
 		}
 	}
 	catch (e) {
@@ -348,7 +353,7 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 						// Having interview-level metadata is required
 						if (/(Title:)+/.test(target) && /(Date:)+/.test(target) && /(Identifier:)+/.test(target)) {
 							OHSynchronizer.Import.uploadSuccess(file);
-
+							OHSynchronizer.Index.closeButtons();
 							// We'll break up the file line by line
 							var text = target.split(/\r?\n|\r/);
 
@@ -477,7 +482,7 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 						else {
 							if ($("#audio").is(':visible') || $("#video").is(':visible') || document.getElementById("ytplayer").innerHTML != '') $("#sync-controls").show();
 							OHSynchronizer.Import.uploadSuccess(file);
-
+							OHSynchronizer.Index.closeButtons();
 							// We'll break up the file line by line
 							var text = target.split(/\r?\n|\r/);
 
