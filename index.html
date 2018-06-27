@@ -56,13 +56,13 @@
 							<p>Click browse to select an applicable audio or video file from your local file system, or enter a URL.</p>
 							<p>
 								<label class="btn btn-primary">
-							    <input id="media-file-upload" type="file" onchange="uploadFile('media-file-upload')">
+							    <input id="media-file-upload" type="file" onchange="OHSynchronizer.Import.uploadFile('#media-file-upload')">
 							    Browse Locally
 								</label>
 							</p>
 							<p>&nbsp;</p>
-							<p><input id="media-url-upload" type="text" placeholder="Enter a URL here">
-								<button id="media-url-submit" class="btn btn-primary" onclick="uploadURLFile('media-url-upload')">Submit</button>
+							<p><input id="media-url-upload" type="text" placeholder="Enter a URL here" value="https://ldpd-wowza-test1.svc.cul.columbia.edu:8443/vod/mp4:CARN27_v_1_READY_TO_EXPORT.mp4/playlist.m3u8">
+								<button id="media-url-submit" class="btn btn-primary" onclick="OHSynchronizer.Import.uploadURLFile('#media-url-upload')">Submit</button>
 							</p>
 						</div>
 
@@ -78,15 +78,15 @@
 					<div id="finish-area" class="">
 						<!-- Whether you're previewing or exporting a transcript or an index is determined by which tab is active. -->
 						<div class="btn-group" role="group">
-							<button id="clear" type="button" class="btn btn-secondary" onclick="clearBoxes()">Cancel Session</button>
-							<button id="preview" type="button" class="btn btn-secondary" onclick="previewWork()">Preview</button>
-							<button id="preview-close" type="button" class="btn btn-secondary hidden" onclick="previewClose()">Close Preview</button>
+							<button id="clear" type="button" class="btn btn-secondary" onclick="OHSynchronizer.clearBoxes()">Cancel Session</button>
+							<button id="preview" type="button" class="btn btn-secondary" onclick="OHSynchronizer.Export.previewWork()">Preview</button>
+							<button id="preview-close" type="button" class="btn btn-secondary hidden" onclick="OHSynchronizer.Export.previewClose()">Close Preview</button>
 							<div class="btn-group" role="group">
 						    <button id="export" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 						      Export
 						    </button>
 						    <div class="dropdown-menu" aria-labelledby="btnGroupExport">
-						      <a id="downloadVTT" class="dropdown-item" onclick="exportFile('vtt')">Download VTT</a>
+						      <a id="downloadVTT" class="dropdown-item" onclick="OHSynchronizer.Export.exportFile('vtt')">Download VTT</a>
 						      <!-- <a id="downloadAnno" class="dropdown-item" onclick="exportFile('anno')">Download WebAnno</a>
 						      <a id="downloadXML" class="dropdown-item" onclick="exportFile('xml')">Download XML</a> -->
 						    </div>
@@ -109,7 +109,7 @@
 							</select>
 							&nbsp;
 							<label class="btn btn-primary">
-								<input id="input-text" type="file" onchange="uploadFile('input-text')">
+								<input id="input-text" type="file" onchange="OHSynchronizer.Import.uploadFile('input-text')">
 								Browse
 							</label>
 						</p>
@@ -125,10 +125,10 @@
 							<div id="input-transcript">
 								<h2>Transcript</h2>
 								<div id="sync-controls" class="form-group row btn-group" role="group">
-									<span id="sync-back" class="btn btn-info" type="button" title='jump to previous minute' onclick="syncControl('back')"><i class="fa fa-backward"></i></span>
+									<span id="sync-back" class="btn btn-info" type="button" title='jump to previous minute' onclick="OHSynchronizer.Transcript.syncControl('back',OHSynchronizer.playerControls)"><i class="fa fa-backward"></i></span>
 									<div id="sync-minute" class="btn btn-secondary" title='minute to be synchronized' type="button">0</div>
-									<span id="sync-forward" class="btn btn-info" type="button" title='jump to next minute' onclick="syncControl('forward')"><i class="fa fa-forward"></i></span>
-									<span id="sync-play" class="btn btn-outline-info" type="button" title='start/stop loop' onclick="syncControl('loop')"><i class="fa fa-retweet"></i></span>
+									<span id="sync-forward" class="btn btn-info" type="button" title='jump to next minute' onclick="OHSynchronizer.Transcript.syncControl('forward',OHSynchronizer.playerControls)"><i class="fa fa-forward"></i></span>
+									<span id="sync-play" class="btn btn-outline-info" type="button" title='start/stop loop' onclick="OHSynchronizer.Transcript.syncControl('loop',OHSynchronizer.playerControls)"><i class="fa fa-retweet"></i></span>
 									<div id="sync-posneg" class="btn btn-secondary" type="button"><i class="fa fa-plus"></i><i class="fa fa-minus"></i></div>
 									<input id="sync-roll" class="btn btn-secondary" type="text" maxlength="3" size="3" value="10" name="sync-roll">
 									<div id="sync-time" class="btn btn-secondary" type="button">00:00:00</div>
@@ -179,25 +179,15 @@
 								<input id="tag-playhead" class="form-control" type="text" readonly>
 							</div>
 						</div>
-						<!-- AblePlayer Controls -->
-						<div id="tag-controls-ap" class="form-group row btn-group" role="group">
+						<!-- player Controls -->
+						<div id="tag-controls" class="form-group row btn-group" role="group">
 							<div class="col-md-1">&nbsp;</div>
-							<button id="control-beginning-ap" type="button" class="btn btn-secondary" onclick="playerControls('beginning')"><i class="fa fa-fast-backward" title="Jump to Beginning of Segment"></i></button>
-							<button id="control-backward-ap" type="button" class="btn btn-secondary" onclick="playerControls('backward')"><i class="fa fa-arrow-left" title="Jump Back 15 Seconds"></i></button>
-							<button id="control-play-ap" type="button" class="btn btn-secondary" onclick="playerControls('play')"><i class="fa fa-play" title="Play"></i></button>
-							<button id="control-stop-ap" type="button" class="btn btn-secondary" onclick="playerControls('stop')"><i class="fa fa-stop" title="Stop"></i></button>
-							<button id="control-forward-ap" type="button" class="btn btn-secondary" onclick="playerControls('forward')"><i class="fa fa-arrow-right" title="Jump Forward 15 Seconds"></i></button>
-							<button id="control-update-time-ap" type="button" class="btn btn-secondary" onclick="playerControls('update')">Update Time</button>
-						</div>
-						<!-- YouTube Controls -->
-						<div id="tag-controls-yt" class="form-group row btn-group" role="group">
-							<div class="col-md-1">&nbsp;</div>
-							<button id="control-beginning-yt" type="button" class="btn btn-secondary"><i class="fa fa-fast-backward" title="Jump to Beginning of Segment"></i></button>
-							<button id="control-backward-yt" type="button" class="btn btn-secondary"><i class="fa fa-arrow-left" title="Jump Back 15 Seconds"></i></button>
-							<button id="control-play-yt" type="button" class="btn btn-secondary"><i class="fa fa-play" title="Play"></i></button>
-							<button id="control-stop-yt" type="button" class="btn btn-secondary"><i class="fa fa-stop" title="Stop"></i></button>
-							<button id="control-forward-yt" type="button" class="btn btn-secondary"><i class="fa fa-arrow-right" title="Jump Forward 15 Seconds"></i></button>
-							<button id="control-update-time-yt" type="button" class="btn btn-secondary">Update Time</button>
+							<button id="control-beginning" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('beginning')"><i class="fa fa-fast-backward" title="Jump to Beginning of Segment"></i></button>
+							<button id="control-backward" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('backward')"><i class="fa fa-arrow-left" title="Jump Back 15 Seconds"></i></button>
+							<button id="control-play" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('play')"><i class="fa fa-play" title="Play"></i></button>
+							<button id="control-stop" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('stop')"><i class="fa fa-stop" title="Stop"></i></button>
+							<button id="control-forward" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('forward')"><i class="fa fa-arrow-right" title="Jump Forward 15 Seconds"></i></button>
+							<button id="control-update-time" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('update')">Update Time</button>
 						</div>
 						<div class="form-group row">
 							<label for="tag-segment-title" class="col-md-3 col-form-label"><i class="fa fa-asterisk"></i>Segment Title</label>
@@ -231,8 +221,8 @@
 						</div>
 						<div class="form-group row">
 							<div class="col-md-1">&nbsp;</div>
-							<button type="button" class="btn btn-primary" onclick="tagSave()">Accept</button>
-							<button type="button" class="btn btn-secondary" onclick="tagCancel()">Cancel</button>
+							<button type="button" class="btn btn-primary" onclick="OHSynchronizer.Index.tagSave()">Accept</button>
+							<button type="button" class="btn btn-secondary" onclick="OHSynchronizer.Index.tagCancel()">Cancel</button>
 						</div>
 					</form>
 				</div>
@@ -256,6 +246,7 @@
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 		<script src="./js/ableplayer.min.js"></script>
 		<script src="./js/hls.min.js"></script> <!-- Must be loaded locally because CDN provider is broken -->
+		<script src="./js/ohsynchronizer.js"></script>
 		<script src="./js/script.js"></script>
 	</body>
 
