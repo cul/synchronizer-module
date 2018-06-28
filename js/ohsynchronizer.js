@@ -63,16 +63,12 @@ OHSynchronizer.Import = function(){};
 OHSynchronizer.Import.uploadFile = function (sender) {
 	// Grab the files from the user's selection
 	var input = $(sender)[0];
-	console.log(input);
 	for (var i = 0; i < input.files.length; i++) {
 		var file = input.files[i];
-		console.log(file);
 
 		// Get file extension
 		var name = file.name.split('.');
 		var ext = name[name.length - 1].toLowerCase();
-		console.log(ext);
-		console.log(OHSynchronizer.Import.checkExt(ext));
 
 		if (OHSynchronizer.Import.checkExt(ext) > -1) OHSynchronizer.Import.determineFile(file, ext, sender);
 		else OHSynchronizer.errorHandler(new Error("Bad File - cannot load data from " + file.name));
@@ -84,7 +80,6 @@ OHSynchronizer.Import.uploadFile = function (sender) {
 OHSynchronizer.Import.uploadURLFile = function(sender) {
 	// Continue onward, grab the URL value
 	var input = $(sender)[0];
-	console.log(input);
 	var url = input.value;
 	var id = '';
 
@@ -250,9 +245,8 @@ OHSynchronizer.Import.renderVideo = function(file) {
 	}
 
 	reader.readAsDataURL(file);
-	var player = $('#video-player')[0];
-	player.addEventListener('durationchange', function() {
-		var time = player.duration;
+	$('#video-player').bind('durationchange', function() {
+		var time = this.duration;
 		var minutes = Math.floor(time / 60);
 		var hours = Math.floor(minutes / 60);
 		time = time - minutes * 60;
@@ -321,9 +315,8 @@ OHSynchronizer.Import.renderAudio = function(file) {
 	}
 
 	reader.readAsDataURL(file);
-	var player = $('#audio-player')[0];
-	player.addEventListener('durationchange', function() {
-		var time = player.duration;
+	$('#audio-player').bind('durationchange', function() {
+		var time = this.duration;
 		var minutes = Math.floor(time / 60);
 		var hours = Math.floor(minutes / 60);
 		time = time - minutes * 60;
@@ -605,35 +598,31 @@ OHSynchronizer.YouTube.prototype.initializeControls = function(event) {
 	if (seconds < 10) seconds = '0' + seconds.toString();
 	$('#endTime')[0].innerHTML = (hours + ':' + minutes + ':' + seconds);
 
-	var playButton = $("#control-beginning")[0];
-	playButton.addEventListener("click", function() {
+	$("#control-beginning").bind("click", function() {
 		player.ytplayer.seekTo(0);
 	});
 
-	var pauseButton = $("#control-backward")[0];
-	pauseButton.addEventListener("click", function() {
+	$("#control-backward").bind("click", function() {
 		var now = player.ytplayer.getCurrentTime();
 		player.ytplayer.seekTo(now - 15);
 	});
 
-	var playButton = $("#control-play")[0];
-	playButton.addEventListener("click", function() {
+	$("#control-play").bind("click", function() {
 		player.ytplayer.playVideo();
 	});
 
-	var pauseButton = $("#control-stop")[0];
-	pauseButton.addEventListener("click", function() {
+	$("#control-stop").bind("click", function() {
 		player.ytplayer.pauseVideo();
 	});
 
-	var playButton = $("#control-forward")[0];
-	playButton.addEventListener("click", function() {
+	$("#control-forward").bind("click", function() {
 		var now = player.getCurrentTime();
 		player.ytplayer.seekTo(now + 15);
 	});
 
-	var pauseButton = $("#control-update-time")[0];
-	pauseButton.addEventListener("click", function(){player.updateTimestamp()});
+	$("#control-update-time").bind("click", function(){
+		player.updateTimestamp()
+	});
 	this.transcriptTimestamp();
 
 }
@@ -642,7 +631,7 @@ OHSynchronizer.YouTube.prototype.seekMinute = function(minute) {
 	this.ytplayer.seekTo(minute * 60 - offset);
 }
 OHSynchronizer.YouTube.prototype.seekTo = function(time) {
-	this.ytplayer.seekTo(OHSynchronizer.timestampAsSeconds(time));
+	this.ytplayer.seekTo(time);
 }
 
 /** Index Segment Functions **/
@@ -718,7 +707,7 @@ OHSynchronizer.AblePlayer.prototype.seekMinute = function(minute) {
 	this.player().currentTime = minute * 60 - offset;
 }
 OHSynchronizer.AblePlayer.prototype.seekTo = function(time) {
-	this.player().currentTime = OHSynchronizer.timestampAsSeconds(time);
+	this.player().currentTime = parseInt(time);
 }
 OHSynchronizer.AblePlayer.prototype.currentTime = function() {
 	return this.player().currentTime;
@@ -783,66 +772,60 @@ OHSynchronizer.AblePlayer.prototype.playerControls = function(button) {
 OHSynchronizer.Transcript = function(){};
 // Here we add a Sync Marker
 OHSynchronizer.Transcript.addSyncMarker = function() {
-	for (var word of document.getElementsByClassName('transcript-word')) {
-		word.addEventListener('click', function(){
-			var minute = parseInt($("#sync-minute")[0].innerHTML);
-			if (minute == 0) minute++;
-			var marker = "{" + minute + ":00}";
-			var regEx = new RegExp(marker);
+	$('.transcript-word').bind('click', function(){
+		var minute = parseInt($("#sync-minute")[0].innerHTML);
+		if (minute == 0) minute++;
+		var marker = "{" + minute + ":00}";
+		var regEx = new RegExp(marker);
 
-			// If this word is already a sync marker, we don't make it another one
-			if ($(this).hasClass('transcript-clicked')) {
-				OHSynchronizer.errorHandler(new Error("Word already associated with a transcript sync marker."));
-			}
-			else {
-				// If a marker already exists for this minute, remove it and remove the word highlighting
-				for (var sync of document.getElementsByClassName('transcript-timestamp')) {
-					var mark = sync.innerText;
-					if (regEx.test(mark)) {
-						$(sync).next(".transcript-clicked").removeClass('transcript-clicked');
-						sync.remove();
-					}
-				}
-
-				$(this).addClass('transcript-clicked');
-				$('<span class="transcript-timestamp">{' + minute + ':00}&nbsp;</span>').insertBefore($(this));
-
-				// Increase the Sync Current Mark
-				$("#sync-minute")[0].innerHTML = minute + 1;
-
-				OHSynchronizer.Transcript.updateCurrentMark();
-				OHSynchronizer.Transcript.removeSyncMarker();
-
-				// If we are looping, we automatically jump forward
-				if (OHSynchronizer.looping !== -1) {
-					$("#sync-minute")[0].innerHTML = minute;
-					OHSynchronizer.Transcript.syncControl("forward", OHSynchronizer.playerControls);
+		// If this word is already a sync marker, we don't make it another one
+		if ($(this).hasClass('transcript-clicked')) {
+			OHSynchronizer.errorHandler(new Error("Word already associated with a transcript sync marker."));
+		}
+		else {
+			// If a marker already exists for this minute, remove it and remove the word highlighting
+			for (var sync of document.getElementsByClassName('transcript-timestamp')) {
+				var mark = sync.innerText;
+				if (regEx.test(mark)) {
+					$(sync).next(".transcript-clicked").removeClass('transcript-clicked');
+					sync.remove();
 				}
 			}
-		}, false);
-	}
+
+			$(this).addClass('transcript-clicked');
+			$('<span class="transcript-timestamp">{' + minute + ':00}&nbsp;</span>').insertBefore($(this));
+
+			// Increase the Sync Current Mark
+			$("#sync-minute")[0].innerHTML = minute + 1;
+
+			OHSynchronizer.Transcript.updateCurrentMark();
+			OHSynchronizer.Transcript.removeSyncMarker();
+
+			// If we are looping, we automatically jump forward
+			if (OHSynchronizer.looping !== -1) {
+				$("#sync-minute")[0].innerHTML = minute;
+				OHSynchronizer.Transcript.syncControl("forward", OHSynchronizer.playerControls);
+			}
+		}
+	});
 }
 
 // Here we update Transcript Sync Current Mark
 OHSynchronizer.Transcript.updateCurrentMark = function() {
-	for (var sync of document.getElementsByClassName('transcript-timestamp')) {
-		sync.addEventListener('click', function(){
-			var mark = $(this)[0].innerHTML;
-			mark = mark.replace("{", '');
-			var num = mark.split(":");
-			$("#sync-minute")[0].innerHTML = num[0];
-		}, false);
-	}
+	$('.transcript-timestamp').bind('click', function(){
+		var mark = $(this)[0].innerHTML;
+		mark = mark.replace("{", '');
+		var num = mark.split(":");
+		$("#sync-minute")[0].innerHTML = num[0];
+	})
 }
 
 // Here we remove a Transcript Sync Marker
 OHSynchronizer.Transcript.removeSyncMarker = function() {
-	for (var sync of document.getElementsByClassName('transcript-timestamp')) {
-		sync.addEventListener('dblclick', function(){
-			$(this).next(".transcript-clicked").removeClass('transcript-clicked');
-			$(this).remove();
-		}, false);
-	}
+	$('.transcript-timestamp').bind('dblclick', function(){
+		$(this).next(".transcript-clicked").removeClass('transcript-clicked');
+		$(this).remove();
+	});
 }
 
 // Here we capture Transcript sync control clicks
@@ -888,8 +871,7 @@ OHSynchronizer.Index.tagSave = function() {
 	var synopsis = $("#tag-segment-synopsis").val();
 
 	// Get an array of jQuery objects for each accordion panel
-	var accordion = $("#indexAccordion")[0];
-	var panelIDs = $.map(accordion.children("div").get(), function(panel) {
+	var panelIDs = $("#indexAccordion > div").map(function(panel) {
 		var id = $(panel).attr('id');
 		if (id !== edit) return id;
 	});
@@ -925,34 +907,32 @@ OHSynchronizer.Index.tagSave = function() {
 
 // Here we enable the edit buttons for segments
 OHSynchronizer.Index.tagEdit = function() {
-	for (var edit of document.querySelectorAll('.tag-edit')) {
-		edit.addEventListener('click', function(){
-			// Pop up the modal
-			$('#index-tag').modal('show');
+	$('.tag-edit').bind('click', function(){
+		// Pop up the modal
+		$('#index-tag').modal('show');
 
-			// Get our data for editing
-			var id = $(this).parent().parent().parent();
-			var timestamp = id.attr('id');
-			var title = id.find("h3").text();
-			var synopsis = id.find("span.tag-segment-synopsis").text();
-			var keywords = id.find("span.tag-keywords").text();
-			var subjects = id.find("span.tag-subjects").text();
-			var transcript = id.find("span.tag-partial-transcript").text();
+		// Get our data for editing
+		var id = $(this).parent().parent().parent();
+		var timestamp = id.attr('id');
+		var title = id.find("h3").text();
+		var synopsis = id.find("span.tag-segment-synopsis").text();
+		var keywords = id.find("span.tag-keywords").text();
+		var subjects = id.find("span.tag-subjects").text();
+		var transcript = id.find("span.tag-partial-transcript").text();
 
-			// Tell the global variable we're editing
-			$("#editVar")[0].innerHTML = timestamp;
+		// Tell the global variable we're editing
+		$("#editVar")[0].innerHTML = timestamp;
 
-			// Set the fields to the appropriate values
-			$("#tag-timestamp").val(timestamp);
-			$("#tag-segment-title").val(title.split(/-(.+)/)[1]);
-			$("#tag-segment-synopsis").val(synopsis);
-			$("#tag-keywords").val(keywords);
-			$("#tag-subjects").val(subjects);
-			$("#tag-partial-transcript").val(transcript);
+		// Set the fields to the appropriate values
+		$("#tag-timestamp").val(timestamp);
+		$("#tag-segment-title").val(title.split(/-(.+)/)[1]);
+		$("#tag-segment-synopsis").val(synopsis);
+		$("#tag-keywords").val(keywords);
+		$("#tag-subjects").val(subjects);
+		$("#tag-partial-transcript").val(transcript);
 
-			OHSynchronizer.playerControls.seekTo(timestamp);
-		}, false);
-	}
+		OHSynchronizer.playerControls.seekTo(OHSynchronizer.timestampAsSeconds(timestamp));
+	});
 }
 
 // Here we clear and back out of the Tag Segment modal
@@ -992,18 +972,14 @@ OHSynchronizer.Index.sortAccordion = function() {
 // Here we remove items the user no longer wishes to see
 // Includes deleting Segment Tags
 OHSynchronizer.Index.closeButtons = function() {
-	for (var close of document.querySelectorAll('.close')) {
-	  close.addEventListener('click', function(){
-			$(this).parent('div').fadeOut();
-		}, false);
-	}
+	$('.close').bind('click', function(){
+		$(this).parent('div').fadeOut();
+	});
 
-	for (var close of document.querySelectorAll('.tag-delete')) {
-	  close.addEventListener('click', function(){
-			var panel = $(this).parents('div').get(2);
-			panel.remove();
-		}, false);
-	}
+	$('.tag-delete').bind('click', function(){
+		var panel = $(this).parents('div').get(2);
+		panel.remove();
+	});
 }
 
 /** Export Functions **/
@@ -1159,7 +1135,7 @@ OHSynchronizer.Export.previewWork = function() {
 		$("#indexAccordion").hide();
 
 		// Initialize the new accordion
-		$("#previewAccordion")[0].accordion({
+		$("#previewAccordion").accordion({
 			header: "> div > h3",
 			autoHeight: false,
 			collapsible: true,
@@ -1175,7 +1151,7 @@ OHSynchronizer.Export.previewWork = function() {
 			}
 		});
 
-		$("#previewAccordion")[0].accordion("refresh");
+		$("#previewAccordion").accordion("refresh");
 		OHSynchronizer.Export.addPreviewSegments();
 	}
 	else {
@@ -1185,29 +1161,20 @@ OHSynchronizer.Export.previewWork = function() {
 
 // Here we activate the minute sync markers created for previewing transcript
 OHSynchronizer.Export.addPreviewMinutes = function() {
-	for (var minute of document.getElementsByClassName('preview-minute')) {
-		minute.addEventListener('click', function(){
-			var timestamp = $(this)[0].innerText.split('[');
-			var minute = timestamp[1].split(':');
-			OHSynchronizer.playerControls.seekMinute(parseInt(minute[0]));
-		});
-	}
+	$('.preview-minute').bind('click', function(){
+		var timestamp = $(this)[0].innerText.split('[');
+		var minute = timestamp[1].split(':');
+		OHSynchronizer.playerControls.seekMinute(parseInt(minute[0]));
+	});
 }
 
 // Here we activate the index segment buttons to for playing index segments during preview
 OHSynchronizer.Export.addPreviewSegments = function() {
-	for (var segment of document.getElementsByClassName('preview-segment')) {
-		segment.addEventListener('click', function(){
-			var timestamp = $(this).parent().parent().parent().attr("id");
-			var hours = timestamp[0] + timestamp[1];
-			var minutes = timestamp[3] + timestamp[4];
-			var seconds = timestamp[6] + timestamp[7];
-			var playhead = (parseInt(hours) * 60 * 60) + (parseInt(minutes) * 60) + parseInt(seconds);
-
-			OHSynchronizer.playerControls.seekTo(playhead);
-			OHSynchronizer.playerControls.playerControls("play");
-		});
-	}
+	$('.preview-segment').bind('click', function(){
+		var timestamp = $(this).parent().parent().parent().attr("id");
+		OHSynchronizer.playerControls.seekTo(OHSynchronizer.timestampAsSeconds(timestamp));
+		OHSynchronizer.playerControls.playerControls("play");
+	});
 }
 
 // Here we return to editing work once we are finished with previewing the end result
