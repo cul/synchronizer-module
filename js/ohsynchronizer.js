@@ -170,18 +170,19 @@ OHSynchronizer.Import.determineFile = function(file, ext, sender) {
 }
 
 // Here we ensure the extension is usable by the system
+OHSynchronizer.Import.allowedExts = [
+	"txt",
+	"vtt",
+	"xml",
+	"srt",
+	"mp4",
+	"webm",
+	"m3u8",
+	"ogg",
+	"mp3"
+];
 OHSynchronizer.Import.checkExt = function(ext) {
-	var allowed = ["txt",
-								 "vtt",
-								 "xml",
-								 "srt",
-								 "mp4",
-								 "webm",
-								 "m3u8",
-								 "ogg",
-								 "mp3"];
-
-	 return allowed.indexOf(ext);
+	return OHSynchronizer.Import.allowedExts.indexOf(ext);
 }
 
 /** Rendering Functions **/
@@ -196,8 +197,8 @@ OHSynchronizer.Import.renderHLS = function(url) {
 		OHSynchronizer.playerControls = new OHSynchronizer.AblePlayer();
 		// Watch the AblePlayer time status for Transcript Syncing
 		// Must set before video plays
-		$("#video-player")[0].ontimeupdate = function() { OHSynchronizer.playerControls.transcriptTimestamp() };
-		$("#audio-player")[0].ontimeupdate = function() { OHSynchronizer.playerControls.transcriptTimestamp() };
+		$("#video-player").bind('timeupdate', function() { OHSynchronizer.playerControls.transcriptTimestamp() });
+		$("#audio-player").bind('timeupdate', function() { OHSynchronizer.playerControls.transcriptTimestamp() });
 		video.play();
 	});
 	$("#media-upload").hide();
@@ -593,10 +594,7 @@ OHSynchronizer.YouTube.prototype.initializeControls = function(event) {
 	time = time - minutes * 60;
 	var seconds = time.toFixed(3);
 
-	if (hours < 10) hours = '0' + hours;
-	if (minutes < 10) minutes = '0' + minutes;
-	if (seconds < 10) seconds = '0' + seconds.toString();
-	$('#endTime')[0].innerHTML = (hours + ':' + minutes + ':' + seconds);
+	$('#endTime')[0].innerHTML = OHSynchronizer.valuesAsTimestamp(hours, minutes, seconds);
 
 	$("#control-beginning").bind("click", function() {
 		player.ytplayer.seekTo(0);
@@ -646,11 +644,7 @@ OHSynchronizer.YouTube.prototype.updateTimestamp = function() {
 	time = time - minutes * 60;
 	var seconds = time.toFixed(3);
 
-	if (hours < 10) hours = '0' + hours;
-	if (minutes < 10) minutes = '0' + minutes;
-	if (seconds < 10) seconds = '0' + seconds.toString();
-
-	$("#tag-timestamp").val(hours + ':' + minutes + ':' + seconds);
+	$("#tag-timestamp").val(OHSynchronizer.valuesAsTimestamp(hours, minutes, seconds));
 };
 
 // Here we handle the keyword player controls for YouTube
@@ -725,11 +719,7 @@ OHSynchronizer.AblePlayer.prototype.updateTimestamp = function() {
 	time = time - minutes * 60;
 	var seconds = time.toFixed(3);
 
-	if (hours < 10) hours = '0' + hours;
-	if (minutes < 10) minutes = '0' + minutes;
-	if (seconds < 10) seconds = '0' + seconds.toString();
-
-	$("#tag-timestamp").val(hours + ':' + minutes + ':' + seconds);
+	$("#tag-timestamp").val(OHSynchronizer.valuesAsTimestamp(hours, minutes, seconds));
 };
 
 // Here we handle the keyword player controls for AblePlayer
@@ -1108,7 +1098,7 @@ OHSynchronizer.Export.previewWork = function() {
 		var first = false;
 
 		for (var i = 0; i < text.length; i++) {
-			if (/(([0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]\s-->\s[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]))+/.test(text[i])) {
+			if (/(([0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{3}\s-->\s[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{3}))+/.test(text[i])) {
 			if (!first) first = true;
 			var timestamp = text[i][3] !== "0" ? (text[i][3] + text[i][4]) : text[i][4];
 			if (timestamp !== "0") { $('#transcript-preview')[0].innerHTML += '<span class="preview-minute">[' + timestamp + ':00]&nbsp;</span>'; }
@@ -1264,4 +1254,3 @@ OHSynchronizer.clearBoxes = function() {
 		location.reload(true);
 	}
 }
-
