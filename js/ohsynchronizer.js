@@ -377,7 +377,6 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 
 							// Now we build segment panels
 							var accordion = $("#indexAccordion");
-							var panel = '';
 							var timestamp = '';
 							var title = '';
 							var transcript = '';
@@ -436,23 +435,17 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 									}
 
 									// Now that we've gathered all the data for the variables, we build a panel
-									panel = '<div id="' + timestamp + '" class="segment-panel">';
-									panel += '<h3>' + timestamp + "-" + title + '</h3>';
-									panel += '<div>';
-									panel += '<div class="col-md-2 pull-right"><button class="btn btn-xs btn-secondary tag-edit">Edit</button> ';
-									panel += '<button class="btn btn-xs btn-primary tag-delete">Delete</button></div>';
-									panel += '<p>Synopsis: <span class="tag-segment-synopsis">' + synopsis + "</span></p>";
-									panel += '<p>Keywords: <span class="tag-keywords">' + keywords + "</span></p>";
-									panel += '<p>Subjects: <span class="tag-subjects">' + subjects + "</span></p>";
-									panel += '<p>Partial Transcript: <span class="tag-partial-transcript">' + transcript + "</span></p>";
-									panel += '</div></div>';
+									OHSynchronizer.Index.addSegment({
+										startTime: timestamp,
+										title: title,
+										description: synopsis,
+										keywords: keywords,
+										subjects: subjects,
+										partialTranscript: transcript
+									})
 								}
-								accordion.append(panel);
-								panel = '';
 							}
 
-							OHSynchronizer.Index.sortAccordion();
-							accordion.accordion("refresh");
 							OHSynchronizer.Index.tagEdit();
 							OHSynchronizer.Index.tagCancel();
 							OHSynchronizer.Index.closeButtons();
@@ -850,15 +843,32 @@ OHSynchronizer.Transcript.syncControl = function(type, playerControls) {
 }
 
 OHSynchronizer.Index = function() {};
+OHSynchronizer.Index.addSegment = function(segment) {
+	var panel = '<div id="' + segment.startTime + '" class="segment-panel">';
+	panel += '<h3>' + segment.startTime + '-<span class="tag-title">' + segment.title + '</span></h3>';
+	panel += '<div>';
+	panel += '<div class="col-md-2 pull-right"><button class="btn btn-xs btn-secondary tag-edit">Edit</button> ';
+	panel += '<button class="btn btn-xs btn-primary tag-delete">Delete</button></div>';
+	panel += '<p>Synopsis: <span class="tag-segment-synopsis">' + segment.description + "</span></p>";
+	panel += '<p>Keywords: <span class="tag-keywords">' + segment.keywords + "</span></p>";
+	panel += '<p>Subjects: <span class="tag-subjects">' + segment.subjects + "</span></p>";
+	panel += '<p>Partial Transcript: <span class="tag-partial-transcript">' + segment.partialTranscript + "</span></p>";
+	panel += '</div></div>';
+
+	$("#indexAccordion").append(panel);
+	OHSynchronizer.Index.sortAccordion();
+	$("#indexAccordion").accordion("refresh");
+}
 // Here we save the contents of the Tag Segment modal
 OHSynchronizer.Index.tagSave = function() {
 	var edit = $("#editVar")[0].innerHTML;
-	var timestamp = $("#tag-timestamp").val();
-	var title = $("#tag-segment-title").val();
-	var transcript = $("#tag-partial-transcript").val();
-	var keywords = $("#tag-keywords").val();
-	var subjects = $("#tag-subjects").val();
-	var synopsis = $("#tag-segment-synopsis").val();
+	var segment = {};
+	segment.startTime = $("#tag-timestamp").val();
+	segment.title = $("#tag-segment-title").val();
+	segment.partialTranscript = $("#tag-partial-transcript").val();
+	segment.keywords = $("#tag-keywords").val();
+	segment.subjects = $("#tag-subjects").val();
+	segment.description = $("#tag-segment-synopsis").val();
 
 	// Get an array of jQuery objects for each accordion panel
 	var panelIDs = $("#indexAccordion > div").map(function(panel) {
@@ -866,8 +876,8 @@ OHSynchronizer.Index.tagSave = function() {
 		if (id !== edit) return id;
 	});
 
-	if (title === "" || title === null) alert("You must enter a title.");
-	else if ($.inArray(timestamp, panelIDs) > -1) alert("A segment for this timestamp already exists.");
+	if (segment.title === "" || segment.title === null) alert("You must enter a title.");
+	else if ($.inArray(segment.startTime, panelIDs) > -1) alert("A segment for this timestamp already exists.");
 	else {
 		// If we're editing a panel, we need to remove the existing panel from the accordion
 		if (edit !== "-1") {
@@ -875,20 +885,8 @@ OHSynchronizer.Index.tagSave = function() {
 			editPanel.remove();
 		}
 
-		var panel = '<div id="' + timestamp + '" class="segment-panel">';
-		panel += '<h3>' + timestamp + "-" + title + '</h3>';
-		panel += '<div>';
-		panel += '<div class="col-md-2 pull-right"><button class="btn btn-xs btn-secondary tag-edit">Edit</button> ';
-		panel += '<button class="btn btn-xs btn-primary tag-delete">Delete</button></div>';
-		panel += '<p>Synopsis: <span class="tag-segment-synopsis">' + synopsis + "</span></p>";
-		panel += '<p>Keywords: <span class="tag-keywords">' + keywords + "</span></p>";
-		panel += '<p>Subjects: <span class="tag-subjects">' + subjects + "</span></p>";
-		panel += '<p>Partial Transcript: <span class="tag-partial-transcript">' + transcript + "</span></p>";
-		panel += '</div></div>';
+		OHSynchronizer.Index.addSegment(segment);
 
-		$("#indexAccordion").append(panel);
-		OHSynchronizer.Index.sortAccordion();
-		$("#indexAccordion").accordion("refresh");
 		OHSynchronizer.Index.tagEdit();
 		OHSynchronizer.Index.tagCancel();
 		OHSynchronizer.Index.closeButtons();
@@ -902,20 +900,20 @@ OHSynchronizer.Index.tagEdit = function() {
 		$('#index-tag').modal('show');
 
 		// Get our data for editing
-		var id = $(this).parent().parent().parent();
+		var id = $(this).closest('.segment-panel');
 		var timestamp = id.attr('id');
-		var title = id.find("h3").text();
-		var synopsis = id.find("span.tag-segment-synopsis").text();
-		var keywords = id.find("span.tag-keywords").text();
-		var subjects = id.find("span.tag-subjects").text();
-		var transcript = id.find("span.tag-partial-transcript").text();
+		var title = id.find(".tag-title").text();
+		var synopsis = id.find(".tag-segment-synopsis").text();
+		var keywords = id.find(".tag-keywords").text();
+		var subjects = id.find(".tag-subjects").text();
+		var transcript = id.find(".tag-partial-transcript").text();
 
 		// Tell the global variable we're editing
 		$("#editVar")[0].innerHTML = timestamp;
 
 		// Set the fields to the appropriate values
 		$("#tag-timestamp").val(timestamp);
-		$("#tag-segment-title").val(title.split(/-(.+)/)[1]);
+		$("#tag-segment-title").val(title);
 		$("#tag-segment-synopsis").val(synopsis);
 		$("#tag-keywords").val(keywords);
 		$("#tag-subjects").val(subjects);
@@ -1025,48 +1023,46 @@ OHSynchronizer.Export.transcriptVTT = function() {
 	}
 }
 
+// Here we prepare index data for VTT files with jquery
+OHSynchronizer.Export.indexSegmentData = function() {
+	var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
+	var content = (metadata != '') ? 'WEBVTT\n\nNOTE\n' + metadata + '\n\n' : 'WEBVTT\n\n';
+	var endProxy = {startTime : $('#endTime')[0].innerHTML };
+	// We'll break up the text by segments
+	var segments = $('#indexAccordion > .segment-panel').map(function(index, div){
+		return {
+			startTime: $(div).attr('id'),
+			title: $(div).find(".tag-title").text(),
+			keywords: $(div).find(".tag-keywords").text(),
+			subjects: $(div).find(".tag-subjects").text(),
+			description: $(div).find(".tag-segment-synopsis").text(),
+			partialTranscript: $(div).find(".tag-partial-transcript").text(),
+		}
+	});
+	segments.map(function(index, segment) {
+		segment.endTime = (segments[index + 1] || endProxy).startTime;
+	});
+
+	return segments;
+}
 // Here we prepare index data for VTT files
 OHSynchronizer.Export.indexVTT = function() {
 	var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
 	var content = (metadata != '') ? 'WEBVTT\n\nNOTE\n' + metadata + '\n\n' : 'WEBVTT\n\n';
 
 	// We'll break up the text by segments
-	var text = $('#indexAccordion')[0].innerHTML.split(/<\/div><\/div>/);
+	var segments = OHSynchronizer.Export.indexSegmentData();
 
-	for (var i = 0; i < text.length - 1; i++) {
-		var currTime = '';
-		var currIndex0 = 0;
-		var currIndex1 = 0;
-		var nextTime = '';
-		var title = '';
-		var partialTranscript = '';
-		var description = '';
-		var keywords = '';
-		var subjects = '';
+	segments.each(function(index, segment) {
 
-		// We will need to know what the current and upcoming time segments are
-		currIndex0 = text[i].indexOf('<div id="') + 9;
-		currIndex1 = text[i].indexOf('" class="segment-panel">');
-		currTime = text[i].substring(currIndex0, currIndex1);
-
-		// If there isn't a nextTime, then it's the end
-		nextTime = i < text.length - 2 ? text[i + 1].substring(text[i + 1].indexOf('<div id="') + 9, text[i + 1].indexOf('" class="segment-panel">')) : $('#endTime')[0].innerHTML;
-
-		// Substring city to get all of the data
-		title = text[i].substring(text[i].indexOf('</span>' + currTime + '-') + 20, text[i].indexOf("</h3>"));
-		description = text[i].substring(text[i].indexOf("tag-segment-synopsis") + 22, text[i].indexOf("</span>", text[i].indexOf("tag-segment-synopsis")));
-		keywords = text[i].substring(text[i].indexOf("tag-keywords") + 14, text[i].indexOf("</span>", text[i].indexOf("tag-keywords")));
-		subjects = text[i].substring(text[i].indexOf("tag-subjects") + 14, text[i].indexOf("</span>", text[i].indexOf("tag-subjects")));
-		partialTranscript = text[i].substring(text[i].indexOf("tag-partial-transcript") + 24, text[i].indexOf("</span>", text[i].indexOf("tag-partial-transcript")));
-
-		content += currTime + ' --> ' + nextTime + '\n{\n';
-		content += '  "title": "' + title.replace(/"/g, '\\"') + '",\n';
-		content += '  "partial_transcript": "' + partialTranscript.replace(/"/g, '\\"') + '",\n';
-		content += '  "description": "' + description.replace(/"/g, '\\"') + '",\n';
-		content += '  "keywords": "' + keywords.replace(/"/g, '\\"') + '",\n';
-		content += '  "subjects": "' + subjects.replace(/"/g, '\\"') + '"\n';
+		content += segment.startTime + ' --> ' + segment.endTime + '\n{\n';
+		content += '  "title": "' + segment.title.replace(/"/g, '\\"') + '",\n';
+		content += '  "partial_transcript": "' + segment.partialTranscript.replace(/"/g, '\\"') + '",\n';
+		content += '  "description": "' + segment.description.replace(/"/g, '\\"') + '",\n';
+		content += '  "keywords": "' + segment.keywords.replace(/"/g, '\\"') + '",\n';
+		content += '  "subjects": "' + segment.subjects.replace(/"/g, '\\"') + '"\n';
 		content += '}\n\n\n';
-	}
+	});
 
 	return content;
 }
