@@ -142,11 +142,9 @@
 						<div id="tabs-index">
 							<div id="input-index">
 								<h2>Index Document</h2>
-								<button id="tag-segment-btn" type="button" class="btn btn-primary pull-right" data-toggle="modal" data-target=".index-tag" data-backdrop="static" data-keyboard="false">Add Segment</button>
+								<button type="button" class="btn btn-primary pull-right tag-add-segment" data-toggle="modal" data-target=".index-tag" data-backdrop="static" data-keyboard="false">Add Segment</button>
 
-								<div id="indexAccordion"></div>
-								<div id="editVar" class="hidden">-1</div>
-								<div id="endTime" class="hidden">0</div>
+								<div class="indexAccordion"></div>
 							</div>
 						</div><!-- /#tabs-index -->
 						<div class="clearfix"></div>
@@ -181,14 +179,14 @@
 							</div>
 						</div>
 						<!-- player Controls -->
-						<div id="tag-controls" class="form-group row btn-group" role="group">
+						<div id="tag-controls" class="form-group row btn-group tag-controls" role="group">
 							<div class="col-md-1">&nbsp;</div>
-							<button id="control-beginning" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('beginning')"><i class="fa fa-fast-backward" title="Jump to Beginning of Segment"></i></button>
-							<button id="control-backward" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('backward')"><i class="fa fa-arrow-left" title="Jump Back 15 Seconds"></i></button>
-							<button id="control-play" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('play')"><i class="fa fa-play" title="Play"></i></button>
-							<button id="control-stop" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('stop')"><i class="fa fa-stop" title="Stop"></i></button>
-							<button id="control-forward" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('forward')"><i class="fa fa-arrow-right" title="Jump Forward 15 Seconds"></i></button>
-							<button id="control-update-time" type="button" class="btn btn-secondary" onclick="OHSynchronizer.playerControls.playerControls('update')">Update Time</button>
+							<button id="control-beginning" type="button" class="btn btn-secondary tag-control-beginning"><i class="fa fa-fast-backward" title="Jump to Beginning of Segment"></i></button>
+							<button id="control-backward" type="button" class="btn btn-secondary tag-control-backward"><i class="fa fa-arrow-left" title="Jump Back 15 Seconds"></i></button>
+							<button id="control-play" type="button" class="btn btn-secondary tag-control-play"><i class="fa fa-play" title="Play"></i></button>
+							<button id="control-stop" type="button" class="btn btn-secondary tag-control-stop"><i class="fa fa-stop" title="Stop"></i></button>
+							<button id="control-forward" type="button" class="btn btn-secondary tag-control-forward"><i class="fa fa-arrow-right" title="Jump Forward 15 Seconds"></i></button>
+							<button id="control-update-time" type="button" class="btn btn-secondary tag-control-update">Update Time</button>
 						</div>
 						<div class="form-group row">
 							<label for="tag-segment-title" class="col-md-3 col-form-label"><i class="fa fa-asterisk"></i>Segment Title</label>
@@ -222,8 +220,8 @@
 						</div>
 						<div class="form-group row">
 							<div class="col-md-1">&nbsp;</div>
-							<button type="button" class="btn btn-primary" onclick="OHSynchronizer.Index.tagSave()">Accept</button>
-							<button type="button" class="btn btn-secondary" onclick="OHSynchronizer.Index.tagCancel()">Cancel</button>
+							<button type="button" class="btn btn-primary index-tag-save">Accept</button>
+							<button type="button" class="btn btn-secondary index-tag-cancel">Cancel</button>
 						</div>
 					</form>
 				</div>

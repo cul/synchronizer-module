@@ -137,7 +137,7 @@ label i {
 	/*margin-bottom: 10px;*/
 }
 
-#indexAccordion {
+.indexAccordion {
   clear: both;
   margin-top: 20px;
   margin-bottom: 20px;

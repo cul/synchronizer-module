@@ -21,15 +21,6 @@
 		OHSynchronizer.looping = -1;
 	});
 
-	// Activate our index and preview index accordions
-	$("#indexAccordion").accordion({
-		header: "> div > h3",
-		autoHeight: false,
-		collapsible: true,
-		clearStyle: true,
-		active: false
-	});
-
 	// Disallow non-numerical values in transcript controls
 	// Only allow 0-9, backspace, and delete
 	$('#sync-roll').keypress(function (event) {
@@ -44,8 +35,8 @@
 	});
 
 	// Update the Tag Segment timestamp when the modal opens from Add Segment
-	$('#tag-segment-btn').click(function () {
-		$("#tag-controls").show();
+	$('.tag-add-segment').click(function () {
+		$(".tag-controls").show();
 		OHSynchronizer.playerControls.updateTimestamp();
 	});
 

@@ -207,7 +207,7 @@ OHSynchronizer.Import.renderHLS = function(url) {
 	// show video
 	$("#video").show();
 	// show segment controls
-	$("#tag-segment-btn").show();
+	$(".tag-add-segment").show();
 	$("#finish-area").show();
 	if ($('#transcript')[0].innerHTML != '') { $("#sync-controls").show(); }
 	OHSynchronizer.Events.hlssuccess(new CustomEvent("hlssuccess", {detail: url}));
@@ -227,7 +227,7 @@ OHSynchronizer.Import.renderVideo = function(file) {
 			// hide audio
 			$("#audio").hide();
 			$("#video").show();
-			$("#tag-segment-btn").show();
+			$(".tag-add-segment").show();
 			$("#finish-area").show();
 			if ($('#transcript')[0].innerHTML != '') {
 				$("#sync-controls").show();
@@ -241,7 +241,7 @@ OHSynchronizer.Import.renderVideo = function(file) {
 		$("#media-upload").show();
 		$("#video").hide();
 		$("#audio").hide();
-		$("#tag-segment-btn").hide();
+		$(".tag-add-segment").hide();
 		$("#sync-controls").hide();
 	}
 
@@ -264,7 +264,7 @@ OHSynchronizer.Import.renderVideo = function(file) {
 OHSynchronizer.Import.loadYouTube = function(id) {
 	if ($('#transcript')[0].innerHTML != '') { $("#sync-controls").show(); }
 	$("#finish-area").show();
-	$("#tag-segment-btn").show();
+	$(".tag-add-segment").show();
 	$("#media-upload").hide();
 
 	// Create the iFrame for the YouTube player with the requested video
@@ -282,6 +282,12 @@ OHSynchronizer.Import.loadYouTube = function(id) {
 		events: {
 			'onReady': function(event) {
 				OHSynchronizer.playerControls.initializeControls(event);
+				$('.tag-control-beginning').bind('click', function(){ OHSynchronizer.playerControls.playerControls('beginning') });
+				$('.tag-control-backward').bind('click', function(){ OHSynchronizer.playerControls.playerControls('backward') });
+				$('.tag-control-play').bind('click', function(){ OHSynchronizer.playerControls.playerControls('play') });
+				$('.tag-control-stop').bind('click', function(){ OHSynchronizer.playerControls.playerControls('stop') });
+				$('.tag-control-forward').bind('click', function(){ OHSynchronizer.playerControls.playerControls('forward') });
+				$('.tag-control-update').bind('click', function(){ OHSynchronizer.playerControls.playerControls('update') });
 			}
 		}
 	});
@@ -299,7 +305,7 @@ OHSynchronizer.Import.renderAudio = function(file) {
 			$("#media-upload").hide();
 			$("#audio").show();
 			$("#video").hide();
-			$("#tag-segment-btn").show();
+			$(".tag-add-segment").show();
 			$("#finish-area").show();
 			if ($('#transcript')[0].innerHTML != '') { $("#sync-controls").show(); }
 			OHSynchronizer.Events.uploadsuccess(new CustomEvent("uploadsuccess", {detail: file}));
@@ -311,7 +317,7 @@ OHSynchronizer.Import.renderAudio = function(file) {
 		$("#media-upload").show();
 		$("#video").hide();
 		$("#audio").hide();
-		$("#tag-segment-btn").hide();
+		$(".tag-add-segment").hide();
 		$("#sync-controls").hide();
 	}
 
@@ -340,6 +346,8 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 			var fileType = $("#file-type").val();
 			var timecodeRegEx = /(([\d]{2}:[\d]{2}:[\d]{2}.[\d]{3}\s-->\s[\d]{2}:[\d]{2}:[\d]{2}.[\d]{3}))+/;
 			if (fileType == 'index') {
+				var index = new OHSynchronizer.Index('input-index');
+				index.initializeAccordion();
 				// VTT Parsing
 				if (ext === 'vtt') {
 					$("#finish-area").show();
@@ -376,7 +384,7 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 							}
 
 							// Now we build segment panels
-							var accordion = $("#indexAccordion");
+							var accordion = index.accordion();
 							var timestamp = '';
 							var title = '';
 							var transcript = '';
@@ -435,19 +443,20 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 									}
 
 									// Now that we've gathered all the data for the variables, we build a panel
-									OHSynchronizer.Index.addSegment({
+									index.addSegment({
 										startTime: timestamp,
 										title: title,
 										description: synopsis,
 										keywords: keywords,
 										subjects: subjects,
 										partialTranscript: transcript
-									})
+									});
 								}
 							}
 
-							OHSynchronizer.Index.tagEdit();
-							OHSynchronizer.Index.tagCancel();
+							index.sortAccordion();
+							index.tagEdit();
+							index.tagCancel();
 							OHSynchronizer.Index.closeButtons();
 						}
 						else OHSynchronizer.errorHandler(new Error("Not a valid index file - missing interview-level metadata."));
@@ -842,8 +851,30 @@ OHSynchronizer.Transcript.syncControl = function(type, playerControls) {
 	}
 }
 
-OHSynchronizer.Index = function() {};
-OHSynchronizer.Index.addSegment = function(segment) {
+OHSynchronizer.Index = function(id) {
+	Object.call(this);
+	this.indexDiv = $('#' + id);
+	var index = this;
+	$('.index-tag-save').bind('click', function(){
+		index.tagSave();
+	});
+	$('.index-tag-cancel').bind('click', function(){
+		index.tagCancel();
+	});
+	this.indexDiv.attr('data-editVar','-1');
+	this.indexDiv.attr('data-endTime','0');
+};
+OHSynchronizer.Index.prototype.initializeAccordion = function() {
+	this.accordion().accordion({
+		header: "> div > h3",
+		autoHeight: false,
+		collapsible: true,
+		clearStyle: true,
+		active: false
+	});
+};
+
+OHSynchronizer.Index.segmentHtml = function(segment) {
 	var panel = '<div id="' + segment.startTime + '" class="segment-panel">';
 	panel += '<h3>' + segment.startTime + '-<span class="tag-title">' + segment.title + '</span></h3>';
 	panel += '<div>';
@@ -854,14 +885,19 @@ OHSynchronizer.Index.addSegment = function(segment) {
 	panel += '<p>Subjects: <span class="tag-subjects">' + segment.subjects + "</span></p>";
 	panel += '<p>Partial Transcript: <span class="tag-partial-transcript">' + segment.partialTranscript + "</span></p>";
 	panel += '</div></div>';
+	return panel;
+}
 
-	$("#indexAccordion").append(panel);
-	OHSynchronizer.Index.sortAccordion();
-	$("#indexAccordion").accordion("refresh");
+OHSynchronizer.Index.prototype.constructor = OHSynchronizer.Index;
+OHSynchronizer.Index.prototype.accordion = function() {
+	return this.indexDiv.find(".indexAccordion");
+}
+OHSynchronizer.Index.prototype.addSegment = function(segment) {
+	this.accordion().append(OHSynchronizer.Index.segmentHtml(segment));
 }
 // Here we save the contents of the Tag Segment modal
-OHSynchronizer.Index.tagSave = function() {
-	var edit = $("#editVar")[0].innerHTML;
+OHSynchronizer.Index.prototype.tagSave = function() {
+	var edit = this.indexDiv.attr('data-editVar');
 	var segment = {};
 	segment.startTime = $("#tag-timestamp").val();
 	segment.title = $("#tag-segment-title").val();
@@ -871,7 +907,7 @@ OHSynchronizer.Index.tagSave = function() {
 	segment.description = $("#tag-segment-synopsis").val();
 
 	// Get an array of jQuery objects for each accordion panel
-	var panelIDs = $("#indexAccordion > div").map(function(panel) {
+	var panelIDs = $(".indexAccordion > div").map(function(panel) {
 		var id = $(panel).attr('id');
 		if (id !== edit) return id;
 	});
@@ -885,16 +921,17 @@ OHSynchronizer.Index.tagSave = function() {
 			editPanel.remove();
 		}
 
-		OHSynchronizer.Index.addSegment(segment);
+		this.addSegment(segment);
+		this.sortAccordion();
 
-		OHSynchronizer.Index.tagEdit();
-		OHSynchronizer.Index.tagCancel();
+		this.tagEdit();
+		this.tagCancel();
 		OHSynchronizer.Index.closeButtons();
 	}
 }
 
 // Here we enable the edit buttons for segments
-OHSynchronizer.Index.tagEdit = function() {
+OHSynchronizer.Index.prototype.tagEdit = function() {
 	$('.tag-edit').bind('click', function(){
 		// Pop up the modal
 		$('#index-tag').modal('show');
@@ -909,7 +946,7 @@ OHSynchronizer.Index.tagEdit = function() {
 		var transcript = id.find(".tag-partial-transcript").text();
 
 		// Tell the global variable we're editing
-		$("#editVar")[0].innerHTML = timestamp;
+		this.indexDiv.attr('data-editVar',timestamp);
 
 		// Set the fields to the appropriate values
 		$("#tag-timestamp").val(timestamp);
@@ -924,19 +961,19 @@ OHSynchronizer.Index.tagEdit = function() {
 }
 
 // Here we clear and back out of the Tag Segment modal
-OHSynchronizer.Index.tagCancel = function() {
+OHSynchronizer.Index.prototype.tagCancel = function() {
 	$("#tag-segment-title").val("");
 	$("#tag-partial-transcript").val("");
 	$("#tag-keywords").val("");
 	$("#tag-subjects").val("");
 	$("#tag-segment-synopsis").val("");
 	$("#index-tag").modal('hide');
-	$("#editVar")[0].innerHTML = "-1";
+	this.indexDiv.attr('data-editVar',"-1");
 }
 
 // Here we sort the accordion according to the timestamp to keep the parts in proper time order
-OHSynchronizer.Index.sortAccordion = function() {
-	var accordion = $("#indexAccordion");
+OHSynchronizer.Index.prototype.sortAccordion = function() {
+	var accordion = this.accordion();
 
 	// Get an array of jQuery objects for each accordion panel
 	var entries = $.map(accordion.children("div").get(), function(entry) {
@@ -955,6 +992,7 @@ OHSynchronizer.Index.sortAccordion = function() {
 	$.each(entries, function() {
 		this.detach().appendTo(accordion);
 	});
+	accordion.accordion("refresh");
 }
 
 // Here we remove items the user no longer wishes to see
@@ -1029,7 +1067,7 @@ OHSynchronizer.Export.indexSegmentData = function() {
 	var content = (metadata != '') ? 'WEBVTT\n\nNOTE\n' + metadata + '\n\n' : 'WEBVTT\n\n';
 	var endProxy = {startTime : $('#endTime')[0].innerHTML };
 	// We'll break up the text by segments
-	var segments = $('#indexAccordion > .segment-panel').map(function(index, div){
+	var segments = $('.indexAccordion > .segment-panel').map(function(index, div){
 		return {
 			startTime: $(div).attr('id'),
 			title: $(div).find(".tag-title").text(),
@@ -1109,16 +1147,16 @@ OHSynchronizer.Export.previewWork = function() {
 
 		OHSynchronizer.Export.addPreviewMinutes();
 	}
-	else if (type.toLowerCase() == "index" && $('#indexAccordion')[0] != '') {
+	else if (type.toLowerCase() == "index" && $('.indexAccordion')[0] != '') {
 		// The current open work needs to be hidden to prevent editing while previewing
-		$("#tag-segment-btn").hide();
-		$("#previewAccordion").show();
+		$(".tag-add-segment").hide();
 		$("#export").addClass('hidden');
 		$("#preview").addClass('hidden');
 		$("#preview-close").removeClass('hidden');
 
-		$("#indexAccordion").clone().prop({ id: "previewAccordion", name: "indexClone"}).appendTo($('#input-index'));
-		$("#indexAccordion").hide();
+		$(".indexAccordion").clone().prop({ id: "previewAccordion", name: "indexClone"}).appendTo($('#input-index'));
+		$(".indexAccordion").hide();
+		$("#previewAccordion").show();
 
 		// Initialize the new accordion
 		$("#previewAccordion").accordion({
@@ -1173,8 +1211,8 @@ OHSynchronizer.Export.previewClose = function() {
 	$("#sync-controls").show();
 	$("#transcript-preview")[0].innerHTML = '';
 	$("#transcript-preview").hide();
-	$("#tag-segment-btn").show();
-	$("#indexAccordion").show();
+	$(".tag-add-segment").show();
+	$(".indexAccordion").show();
 	if ($("#previewAccordion")[0] != null) $("#previewAccordion")[0].remove();
 	$("#export").removeClass('hidden');
 	$("#preview").removeClass('hidden');
@@ -1207,7 +1245,7 @@ OHSynchronizer.Export.exportFile = function(sender) {
 				break;
 		}
 	}
-	else if (type.toLowerCase() == "index" && $('#indexAccordion') != '') {
+	else if (type.toLowerCase() == "index" && $('.indexAccordion') != '') {
 		switch (sender) {
 			case "vtt":
 				var content = OHSynchronizer.Export.indexVTT();
