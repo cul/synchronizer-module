@@ -37,12 +37,15 @@ OHSynchronizer.timestampAsSeconds = function(timestamp) {
 	return result;
 }
 
-OHSynchronizer.twoDigits = function(value) {
-	return Number(value).toLocaleString(undefined, {minimumIntegerDigits: 2})
+OHSynchronizer.twoDigits = function(value, frac) {
+	return Number(value).toLocaleString(undefined, {minimumIntegerDigits: 2, maximumFractionDigits: frac, minimumFractionDigits: frac})
 }
 
-OHSynchronizer.valuesAsTimestamp = function(hours, minutes, seconds) {
-	return OHSynchronizer.twoDigits(hours) + ":" + OHSynchronizer.twoDigits(minutes) + ":" + OHSynchronizer.twoDigits(seconds);
+OHSynchronizer.secondsAsTimestamp = function(time, frac = 3) {
+	var minutes = Math.floor(time / 60);
+	var hours = Math.floor(minutes / 60);
+	var seconds = (time - minutes * 60).toFixed(3);
+	return OHSynchronizer.twoDigits(hours, 0) + ":" + OHSynchronizer.twoDigits(minutes, 0) + ":" + OHSynchronizer.twoDigits(seconds, frac);
 }
 
 OHSynchronizer.ytplayer = null;
@@ -248,15 +251,7 @@ OHSynchronizer.Import.renderVideo = function(file) {
 	reader.readAsDataURL(file);
 	$('#video-player').bind('durationchange', function() {
 		var time = this.duration;
-		var minutes = Math.floor(time / 60);
-		var hours = Math.floor(minutes / 60);
-		time = time - minutes * 60;
-		var seconds = time.toFixed(3);
-
-		if (hours < 10) hours = '0' + hours;
-		if (minutes < 10) minutes = '0' + minutes;
-		if (seconds < 10) seconds = '0' + seconds.toString();
-		$('#endTime')[0].innerHTML = (hours + ':' + minutes + ':' + seconds);
+		$('#endTime')[0].innerHTML = OHSynchronizer.secondsAsTimestamp(time);
 	});
 }
 
@@ -324,15 +319,7 @@ OHSynchronizer.Import.renderAudio = function(file) {
 	reader.readAsDataURL(file);
 	$('#audio-player').bind('durationchange', function() {
 		var time = this.duration;
-		var minutes = Math.floor(time / 60);
-		var hours = Math.floor(minutes / 60);
-		time = time - minutes * 60;
-		var seconds = time.toFixed(3);
-
-		if (hours < 10) hours = '0' + hours;
-		if (minutes < 10) minutes = '0' + minutes;
-		if (seconds < 10) seconds = '0' + seconds.toString();
-		$('#endTime')[0].innerHTML = (hours + ':' + minutes + ':' + seconds);
+		$('#endTime')[0].innerHTML = OHSynchronizer.secondsAsTimestamp(time);
 	});
 }
 
@@ -520,8 +507,6 @@ OHSynchronizer.Player.prototype = {
 		else if ($("#video").is(':visible')) player = $("#video-player")[0];
 
 		var time = this.currentTime();
-		var minutes = Math.floor(time / 60);
-		var hours = Math.floor(minutes / 60);
 		var offset = $('#sync-roll').val();
 
 		// We only play chimes if we're on the transcript tab, and looping is active
@@ -536,19 +521,13 @@ OHSynchronizer.Player.prototype = {
 			this.playerControls("play");
 		}
 
-		time = time - minutes * 60;
-		var seconds = time.toFixed(0);
-		if (seconds >= 60 && seconds % 60 == 0) seconds = 0;
-		if (minutes === 60) minutes = 0;
-
-		var timestamp = OHSynchronizer.valuesAsTimestamp(hours, minutes, seconds);
+		var timestamp = OHSynchronizer.secondsAsTimestamp(time, 0);
 		$("#sync-time")[0].innerHTML = timestamp;
 		// If the user is working on an index segment, we need to watch the playhead
 		$("#tag-playhead").val(timestamp);
 	},
 	transcriptLoop: function() {
 		var minute = parseInt($("#sync-minute")[0].innerHTML);
-		var offset = $('#sync-roll').val();
 
 		// We don't loop at the beginning of the A/V
 		if (minute === 0) {  }
@@ -562,7 +541,7 @@ OHSynchronizer.Player.prototype = {
 			}
 			// If looping is not active we start it
 			else {
-				this.seekTo("00:" + (minute - 1) + ":" + (60 - offset) + ".000");
+				this.seekMinute(minute);
 				this.playerControls("play");
 				$('#sync-play').removeClass('btn-outline-info');
 				$('#sync-play').addClass('btn-info');
@@ -591,12 +570,7 @@ OHSynchronizer.YouTube.prototype.initializeControls = function(event) {
 
 	// Capture the end timestamp of the YouTube video
 	var time = this.ytplayer.getDuration();
-	var minutes = Math.floor(time / 60);
-	var hours = Math.floor(minutes / 60);
-	time = time - minutes * 60;
-	var seconds = time.toFixed(3);
-
-	$('#endTime')[0].innerHTML = OHSynchronizer.valuesAsTimestamp(hours, minutes, seconds);
+	$('#endTime')[0].innerHTML = OHSynchronizer.secondsAsTimestamp(time);
 
 	$("#control-beginning").bind("click", function() {
 		player.ytplayer.seekTo(0);
@@ -641,12 +615,7 @@ OHSynchronizer.YouTube.prototype.updateTimestamp = function() {
 	var player = "";
 
 	var time = this.ytplayer.getCurrentTime();
-	var minutes = Math.floor(time / 60);
-	var hours = Math.floor(minutes / 60);
-	time = time - minutes * 60;
-	var seconds = time.toFixed(3);
-
-	$("#tag-timestamp").val(OHSynchronizer.valuesAsTimestamp(hours, minutes, seconds));
+	$("#tag-timestamp").val(OHSynchronizer.secondsAsTimestamp(time));
 };
 
 // Here we handle the keyword player controls for YouTube
@@ -714,14 +683,8 @@ OHSynchronizer.AblePlayer.prototype.duration = function() {
 
 // Here we update the timestamp for the Tag Segment function for AblePlayer
 OHSynchronizer.AblePlayer.prototype.updateTimestamp = function() {
-
 	var time = this.player().currentTime;
-	var minutes = Math.floor(time / 60);
-	var hours = Math.floor(minutes / 60);
-	time = time - minutes * 60;
-	var seconds = time.toFixed(3);
-
-	$("#tag-timestamp").val(OHSynchronizer.valuesAsTimestamp(hours, minutes, seconds));
+	$("#tag-timestamp").val(OHSynchronizer.secondsAsTimestamp(time));
 };
 
 // Here we handle the keyword player controls for AblePlayer
