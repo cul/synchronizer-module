@@ -80,10 +80,8 @@ OHSynchronizer.Import.uploadFile = function (sender) {
 
 // Here we accept URL-based files
 // This function is no longer utilized for non-AV files
-OHSynchronizer.Import.uploadURLFile = function(sender) {
+OHSynchronizer.Import.uploadURLFile = function(url) {
 	// Continue onward, grab the URL value
-	var input = $(sender)[0];
-	var url = input.value;
 	var id = '';
 
 	// Get file extension from url
@@ -167,7 +165,7 @@ OHSynchronizer.Import.determineFile = function(file, ext, sender) {
 	}
 	else if (sender === "#input-text") {
 		if ($("#file-type").val() == 'none') OHSynchronizer.errorHandler(new Error("Please select the type of file you are uploading from the dropdown list provided."));
-		else OHSynchronizer.Import.renderText(file, ext);
+		else OHSynchronizer.Import.renderText(file, ext, $("#file-type").val());
 	}
 	else OHSynchronizer.errorHandler(new Error("Bad File - cannot display data."));
 }
@@ -189,7 +187,14 @@ OHSynchronizer.Import.checkExt = function(ext) {
 }
 
 /** Rendering Functions **/
-
+OHSynchronizer.Import.bindNavControls = function(controls) {
+	$('.tag-control-beginning').bind('click', function(){ controls.playerControls('beginning') });
+	$('.tag-control-backward').bind('click', function(){ controls.playerControls('backward') });
+	$('.tag-control-play').bind('click', function(){ controls.playerControls('play') });
+	$('.tag-control-stop').bind('click', function(){ controls.playerControls('stop') });
+	$('.tag-control-forward').bind('click', function(){ controls.playerControls('forward') });
+	$('.tag-control-update').bind('click', function(){ controls.playerControls('update') });
+}
 // Here we load HLS playlists
 OHSynchronizer.Import.renderHLS = function(url) {
 	var player = document.querySelector('video');
@@ -198,6 +203,7 @@ OHSynchronizer.Import.renderHLS = function(url) {
 	hls.attachMedia(player);
 	hls.on(Hls.Events.MANIFEST_PARSED,function() {
 		OHSynchronizer.playerControls = new OHSynchronizer.AblePlayer();
+		OHSynchronizer.Import.bindNavControls(OHSynchronizer.playerControls);
 		// Watch the AblePlayer time status for Transcript Syncing
 		// Must set before video plays
 		$("#video-player").bind('timeupdate', function() { OHSynchronizer.playerControls.transcriptTimestamp() });
@@ -212,7 +218,7 @@ OHSynchronizer.Import.renderHLS = function(url) {
 	// show segment controls
 	$(".tag-add-segment").show();
 	$("#finish-area").show();
-	if ($('#transcript')[0].innerHTML != '') { $("#sync-controls").show(); }
+	if ($('#transcript')[0] && $('#transcript')[0].innerHTML != '') { $("#sync-controls").show(); }
 	OHSynchronizer.Events.hlssuccess(new CustomEvent("hlssuccess", {detail: url}));
 	OHSynchronizer.Index.closeButtons();
 }
@@ -277,12 +283,7 @@ OHSynchronizer.Import.loadYouTube = function(id) {
 		events: {
 			'onReady': function(event) {
 				OHSynchronizer.playerControls.initializeControls(event);
-				$('.tag-control-beginning').bind('click', function(){ OHSynchronizer.playerControls.playerControls('beginning') });
-				$('.tag-control-backward').bind('click', function(){ OHSynchronizer.playerControls.playerControls('backward') });
-				$('.tag-control-play').bind('click', function(){ OHSynchronizer.playerControls.playerControls('play') });
-				$('.tag-control-stop').bind('click', function(){ OHSynchronizer.playerControls.playerControls('stop') });
-				$('.tag-control-forward').bind('click', function(){ OHSynchronizer.playerControls.playerControls('forward') });
-				$('.tag-control-update').bind('click', function(){ OHSynchronizer.playerControls.playerControls('update') });
+				OHSynchronizer.Import.bindNavControls(OHSynchronizer.playerControls);
 			}
 		}
 	});
@@ -324,13 +325,12 @@ OHSynchronizer.Import.renderAudio = function(file) {
 }
 
 // Here we display index or transcript file data
-OHSynchronizer.Import.renderText = function(file, ext) {
+OHSynchronizer.Import.fileReader = function(file, ext, fileType) {
 	var reader = new FileReader();
 	try {
 		reader.onload = function(event) {
 			var target = event.target.result;
 
-			var fileType = $("#file-type").val();
 			var timecodeRegEx = /(([\d]{2}:[\d]{2}:[\d]{2}.[\d]{3}\s-->\s[\d]{2}:[\d]{2}:[\d]{2}.[\d]{3}))+/;
 			if (fileType == 'index') {
 				var index = new OHSynchronizer.Index('input-index');
@@ -489,10 +489,13 @@ OHSynchronizer.Import.renderText = function(file, ext) {
 			}
 			else { OHSynchronizer.errorHandler(new Error("No example file for parsing index and transcript data together available.")); }
 		}
+		return reader;
 	}
 	catch (e) { OHSynchronizer.errorHandler(e); }
-
-	reader.readAsText(file);
+}
+OHSynchronizer.Import.renderText = function(file, ext, fileType) {
+	var reader = OHSynchronizer.Import.fileReader(file, ext, fileType);
+	if (reader) reader.readAsText(file);
 }
 
 /** Player Functions **/
@@ -500,8 +503,8 @@ OHSynchronizer.Player = function(){};
 // Here we handling looping controls for Transcript syncing
 OHSynchronizer.Player.prototype = {
 	transcriptTimestamp: function() {
-		var chime1 = $("#audio-chime1")[0];
-		var chime2 = $("#audio-chime2")[0];
+		var chime1 = $(".loop-boundary-chime")[0];
+		var chime2 = $(".loop-mid-chime")[0];
 
 		if ($("#audio").is(':visible')) player = $("#audio-player")[0];
 		else if ($("#video").is(':visible')) player = $("#video-player")[0];
@@ -510,7 +513,8 @@ OHSynchronizer.Player.prototype = {
 		var offset = $('#sync-roll').val();
 
 		// We only play chimes if we're on the transcript tab, and looping is active
-		var loopingOnTranscript = $("#transcript").is(':visible') && OHSynchronizer.looping !== -1;
+		var synchingTranscript = $("#transcript").is(':visible');
+		var loopingOnTranscript =  synchingTranscript && OHSynchronizer.looping !== -1;
 		if (Math.floor(time) % 60 == (60 - offset) && loopingOnTranscript) { chime1.play(); }
 		if (Math.floor(time) % 60 == 0 && Math.floor(time) != 0 && loopingOnTranscript) { chime2.play(); }
 
@@ -522,7 +526,7 @@ OHSynchronizer.Player.prototype = {
 		}
 
 		var timestamp = OHSynchronizer.secondsAsTimestamp(time, 0);
-		$("#sync-time")[0].innerHTML = timestamp;
+		$("#sync-time").html(timestamp);
 		// If the user is working on an index segment, we need to watch the playhead
 		$("#tag-playhead").val(timestamp);
 	},
@@ -826,6 +830,7 @@ OHSynchronizer.Index = function(id) {
 	});
 	this.indexDiv.attr('data-editVar','-1');
 	this.indexDiv.attr('data-endTime','0');
+	$('.synch-download-button').bind('click', function() { OHSynchronizer.Export.exportIndex('vtt', index); });
 };
 OHSynchronizer.Index.prototype.initializeAccordion = function() {
 	this.accordion().accordion({
@@ -853,10 +858,11 @@ OHSynchronizer.Index.segmentHtml = function(segment) {
 
 OHSynchronizer.Index.prototype.constructor = OHSynchronizer.Index;
 OHSynchronizer.Index.prototype.accordion = function() {
-	return this.indexDiv.find(".indexAccordion");
+	return this.indexDiv.find(".indexAccordion") || this.indexDiv.append('<div class="indexAccordion"></div>');
 }
 OHSynchronizer.Index.prototype.addSegment = function(segment) {
-	this.accordion().append(OHSynchronizer.Index.segmentHtml(segment));
+	var newPanel = this.accordion().append(OHSynchronizer.Index.segmentHtml(segment));
+
 }
 // Here we save the contents of the Tag Segment modal
 OHSynchronizer.Index.prototype.tagSave = function() {
@@ -895,6 +901,7 @@ OHSynchronizer.Index.prototype.tagSave = function() {
 
 // Here we enable the edit buttons for segments
 OHSynchronizer.Index.prototype.tagEdit = function() {
+	var widget = this;
 	$('.tag-edit').bind('click', function(){
 		// Pop up the modal
 		$('#index-tag').modal('show');
@@ -909,7 +916,7 @@ OHSynchronizer.Index.prototype.tagEdit = function() {
 		var transcript = id.find(".tag-partial-transcript").text();
 
 		// Tell the global variable we're editing
-		this.indexDiv.attr('data-editVar',timestamp);
+		widget.indexDiv.attr('data-editVar',timestamp);
 
 		// Set the fields to the appropriate values
 		$("#tag-timestamp").val(timestamp);
@@ -1025,12 +1032,12 @@ OHSynchronizer.Export.transcriptVTT = function() {
 }
 
 // Here we prepare index data for VTT files with jquery
-OHSynchronizer.Export.indexSegmentData = function() {
+OHSynchronizer.Export.indexSegmentData = function(widget) {
 	var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
 	var content = (metadata != '') ? 'WEBVTT\n\nNOTE\n' + metadata + '\n\n' : 'WEBVTT\n\n';
-	var endProxy = {startTime : $('#endTime')[0].innerHTML };
+	var endProxy = {startTime : OHSynchronizer.secondsAsTimestamp(OHSynchronizer.playerControls.duration())};
 	// We'll break up the text by segments
-	var segments = $('.indexAccordion > .segment-panel').map(function(index, div){
+	var segments = $(widget.indexDiv).find('.segment-panel').map(function(index, div){
 		return {
 			startTime: $(div).attr('id'),
 			title: $(div).find(".tag-title").text(),
@@ -1047,12 +1054,12 @@ OHSynchronizer.Export.indexSegmentData = function() {
 	return segments;
 }
 // Here we prepare index data for VTT files
-OHSynchronizer.Export.indexVTT = function() {
+OHSynchronizer.Export.indexVTT = function(widget) {
 	var metadata = $('#interview-metadata')[0].innerHTML.replace(/<br>/g, '\n');
 	var content = (metadata != '') ? 'WEBVTT\n\nNOTE\n' + metadata + '\n\n' : 'WEBVTT\n\n';
 
 	// We'll break up the text by segments
-	var segments = OHSynchronizer.Export.indexSegmentData();
+	var segments = OHSynchronizer.Export.indexSegmentData(widget);
 
 	segments.each(function(index, segment) {
 
@@ -1069,9 +1076,7 @@ OHSynchronizer.Export.indexVTT = function() {
 }
 
 // Here we use VTT-esque data to preview the end result
-OHSynchronizer.Export.previewWork = function() {
-	var type = $("ul#list-tabs li.ui-tabs-active > a")[0].innerHTML;
-
+OHSynchronizer.Export.previewWork = function(type) {
 	// Make sure looping isn't running, we'll stop the A/V media and return the playhead to the beginning
 	looping = -1;
 	OHSynchronizer.playerControls.playerControls("beginning");
@@ -1084,7 +1089,7 @@ OHSynchronizer.Export.previewWork = function() {
 		$("#sync-controls").hide();
 		$("#transcript-preview").show();
 		$("#export").addClass('hidden');
-		$("#preview").addClass('hidden');
+		$(".preview-button").addClass('hidden');
 		$("#preview-close").removeClass('hidden');
 
 		var content = OHSynchronizer.Export.transcriptVTT();
@@ -1114,7 +1119,7 @@ OHSynchronizer.Export.previewWork = function() {
 		// The current open work needs to be hidden to prevent editing while previewing
 		$(".tag-add-segment").hide();
 		$("#export").addClass('hidden');
-		$("#preview").addClass('hidden');
+		$(".preview-button").addClass('hidden');
 		$("#preview-close").removeClass('hidden');
 
 		$(".indexAccordion").clone().prop({ id: "previewAccordion", name: "indexClone"}).appendTo($('#input-index'));
@@ -1172,64 +1177,58 @@ OHSynchronizer.Export.previewClose = function() {
 
 	$("#transcript").show();
 	$("#sync-controls").show();
-	$("#transcript-preview")[0].innerHTML = '';
+	$("#transcript-preview").html('');
 	$("#transcript-preview").hide();
 	$(".tag-add-segment").show();
 	$(".indexAccordion").show();
-	if ($("#previewAccordion")[0] != null) $("#previewAccordion")[0].remove();
+	$("div").remove("#previewAccordion");
 	$("#export").removeClass('hidden');
-	$("#preview").removeClass('hidden');
+	$(".preview-button").removeClass('hidden');
 	$("#preview-close").addClass('hidden');
 }
 
 // Here we use prepared data for export to a downloadable file
-OHSynchronizer.Export.exportFile = function(sender) {
-	var type = $("ul#list-tabs li.ui-tabs-active > a")[0].innerHTML;
+OHSynchronizer.Export.exportTranscript = function(sender, widget) {
+	switch (sender) {
+		case "vtt":
+			var content = OHSynchronizer.Export.transcriptVTT();
+			if (!content) break;
 
-	if (type.toLowerCase() == "transcript" && $('#transcript')[0].innerHTML != '') {
-		switch (sender) {
-			case "vtt":
-				var content = OHSynchronizer.Export.transcriptVTT();
-				if (!content) break;
+			// This will create a temporary link DOM element that we will click for the user to download the generated file
+			var element = document.createElement('a');
+		  element.setAttribute('href', 'data:text/vtt;charset=utf-8,' + encodeURIComponent(content));
+		  element.setAttribute('download', 'transcript.vtt');
+		  element.style.display = 'none';
+		  document.body.appendChild(element);
+		  element.click();
+		  document.body.removeChild(element);
 
-				// This will create a temporary link DOM element that we will click for the user to download the generated file
-				var element = document.createElement('a');
-			  element.setAttribute('href', 'data:text/vtt;charset=utf-8,' + encodeURIComponent(content));
-			  element.setAttribute('download', 'transcript.vtt');
-			  element.style.display = 'none';
-			  document.body.appendChild(element);
-			  element.click();
-			  document.body.removeChild(element);
+			break;
 
-				break;
-
-			default:
-				OHSynchronizer.errorHandler(new Error("This function is still under development."));
-				break;
-		}
+		default:
+			OHSynchronizer.errorHandler(new Error("This function is still under development."));
+			break;
 	}
-	else if (type.toLowerCase() == "index" && $('.indexAccordion') != '') {
-		switch (sender) {
-			case "vtt":
-				var content = OHSynchronizer.Export.indexVTT();
+}
 
-				// This will create a temporary link DOM element that we will click for the user to download the generated file
-				var element = document.createElement('a');
-				element.setAttribute('href', 'data:text/vtt;charset=utf-8,' + encodeURIComponent(content));
-				element.setAttribute('download', 'index.vtt');
-				element.style.display = 'none';
-				document.body.appendChild(element);
-				element.click();
-				document.body.removeChild(element);
-				break;
+OHSynchronizer.Export.exportIndex = function(sender, widget) {
+	switch (sender) {
+		case "vtt":
+			var content = OHSynchronizer.Export.indexVTT(widget);
 
-			default:
-				OHSynchronizer.errorHandler(new Error("This function is still under development."));
-				break;
-		}
-	}
-	else {
-		OHSynchronizer.errorHandler(new Error("The selected transcript or index document is empty."));
+			// This will create a temporary link DOM element that we will click for the user to download the generated file
+			var element = document.createElement('a');
+			element.setAttribute('href', 'data:text/vtt;charset=utf-8,' + encodeURIComponent(content));
+			element.setAttribute('download', 'index.vtt');
+			element.style.display = 'none';
+			document.body.appendChild(element);
+			element.click();
+			document.body.removeChild(element);
+			break;
+
+		default:
+			OHSynchronizer.errorHandler(new Error("This function is still under development."));
+			break;
 	}
 }
 
