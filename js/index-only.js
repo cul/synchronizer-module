@@ -12,48 +12,15 @@
 	// Initialize close buttons, tabs, and accordion
 	OHSynchronizer.Index.closeButtons();
 
-	$("#text-tabs").tabs({
-		active: 0
-	});
-
-	// If the Index tab is clicked, ensure transcript looping is deactivated
-	$('a[href$="tabs-index"]').click(function () {
-		OHSynchronizer.looping = -1;
-	});
-
-	// Disallow non-numerical values in transcript controls
-	// Only allow 0-9, backspace, and delete
-	$('#sync-roll').keypress(function (event) {
-		if (event.shiftKey == true) { event.preventDefault(); }
-		if ((event.charCode >= 48 && event.charCode <= 57) || event.keyCode == 8 || event.keyCode == 46 || event.keyCode == 37 || event.keyCode == 39) { }
-		else { event.preventDefault(); }
-	});
-
-	// Never let the transcript roll control be empty
-	$('#sync-roll').blur(function () {
-		if(!$(this).val()) { $(this).val('0'); }
-	});
-
 	// Update the Tag Segment timestamp when the modal opens from Add Segment
 	$('.tag-add-segment').click(function () {
 		$(".tag-controls").show();
 		OHSynchronizer.playerControls.updateTimestamp();
 	});
 
-	// If the dropdown list is changed, change the active tab to the selected dropdown item
-	$("#file-type, #input-text").click(function() {
-		var selected = "#tabs-" + $("#file-type").val();
-		$('#text-tabs a[href="' + selected + '"]').trigger('click');
-		$('.preview-button').bind('click', function() {
-			OHSynchronizer.Export.previewWork($("#file-type").val());
-		});
+	$('.preview-button').bind('click', function() {
+		OHSynchronizer.Export.previewWork('index');
 	});
-
-	// Load YouTube Frame API
-	var tag = document.createElement('script');
-	tag.src = "https://www.youtube.com/iframe_api";
-	var firstScriptTag = document.getElementsByTagName('script')[0];
-	firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
 	// Scroll to top function
 	$('#working-area').scroll(function() {
@@ -73,4 +40,18 @@
 		success += '<div class="col-md-6"><i class="fa fa-times-circle-o close"></i><p class="success-bar"><strong>Upload Successful</strong><br />The Wowza URL ' + url + " was successfully ingested.</div>";
 		$("#messagesBar").append(success);
 	};
+	var info = {
+		media: "https://ldpd-wowza-test1.svc.cul.columbia.edu:8443/vod/mp4:CARN27_v_1_READY_TO_EXPORT.mp4/playlist.m3u8",
+		index: "./assets/OHMS-Sample-003.metadata.vtt",
+		transcript: "./assets/OHMS-Sample-003.captions.vtt"
+	};
+	OHSynchronizer.Import.uploadURLFile(info.media);
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', info.index, true);
+	xhr.responseType = 'blob';
+	xhr.onload = function(e) {
+		var blob = new Blob([xhr.response], {type: 'text/vtt'});
+		OHSynchronizer.Import.renderText(blob, 'vtt', 'index');
+	};
+	xhr.send();
 }(jQuery));
