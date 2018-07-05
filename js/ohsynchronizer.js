@@ -38,7 +38,7 @@ OHSynchronizer.timestampAsSeconds = function(timestamp) {
 }
 
 OHSynchronizer.twoDigits = function(value, frac) {
-	return Number(value).toLocaleString(undefined, {minimumIntegerDigits: 2, maximumFractionDigits: frac, minimumFractionDigits: frac})
+	return Number(value).toLocaleString(undefined, {minimumIntegerDigits: 2, maximumFractionDigits: frac, minimumFractionDigits: frac});
 }
 
 OHSynchronizer.secondsAsTimestamp = function(time, frac = 3) {
@@ -164,10 +164,27 @@ OHSynchronizer.Import.determineFile = function(file, ext, sender) {
 		}
 	}
 	else if (sender === "#input-text") {
-		if ($("#file-type").val() == 'none') OHSynchronizer.errorHandler(new Error("Please select the type of file you are uploading from the dropdown list provided."));
-		else OHSynchronizer.Import.renderText(file, ext, $("#file-type").val());
+		var fileType = $("#file-type").val();
+		if (fileType == 'none') {
+			OHSynchronizer.errorHandler(new Error("Please select the type of file you are uploading from the dropdown list provided."));
+			return;
+		}
+		var widget = OHSynchronizer.Import.widget(fileType);
+		if (widget) OHSynchronizer.Import.renderText(file, ext, widget);
 	}
 	else OHSynchronizer.errorHandler(new Error("Bad File - cannot display data."));
+}
+
+OHSynchronizer.Import.widget = function(type) {
+	switch(type) {
+		case "index":
+			return new OHSynchronizer.Index('input-index');
+		case "transcript":
+			return new OHSynchronizer.Transcript('input-transcript');
+		default:
+			OHSynchronizer.errorHandler(new Error("No example file for parsing index and transcript data together available."));
+			return false;
+	}
 }
 
 // Here we ensure the extension is usable by the system
@@ -182,6 +199,8 @@ OHSynchronizer.Import.allowedExts = [
 	"ogg",
 	"mp3"
 ];
+OHSynchronizer.Import.timecodeRegEx = /(([\d]{2}:[\d]{2}:[\d]{2}.[\d]{3}\s-->\s[\d]{2}:[\d]{2}:[\d]{2}.[\d]{3}))+/;
+
 OHSynchronizer.Import.checkExt = function(ext) {
 	return OHSynchronizer.Import.allowedExts.indexOf(ext);
 }
@@ -325,181 +344,13 @@ OHSynchronizer.Import.renderAudio = function(file) {
 }
 
 // Here we display index or transcript file data
-OHSynchronizer.Import.fileReader = function(file, ext, fileType) {
-	var reader = new FileReader();
-	try {
-		reader.onload = function(event) {
-			var target = event.target.result;
-
-			var timecodeRegEx = /(([\d]{2}:[\d]{2}:[\d]{2}.[\d]{3}\s-->\s[\d]{2}:[\d]{2}:[\d]{2}.[\d]{3}))+/;
-			if (fileType == 'index') {
-				var index = new OHSynchronizer.Index('input-index');
-				index.initializeAccordion();
-				// VTT Parsing
-				if (ext === 'vtt') {
-					$("#finish-area").show();
-
-					if (target.indexOf("WEBVTT") !== 0) OHSynchronizer.errorHandler(new Error("Not a valid VTT index file."));
-					else {
-						// Having interview-level metadata is required
-						if (/(Title:)+/.test(target) && /(Date:)+/.test(target) && /(Identifier:)+/.test(target)) {
-							OHSynchronizer.Events.uploadsuccess(new CustomEvent("uploadsuccess", {detail: file}));
-							OHSynchronizer.Index.closeButtons();
-							// We'll break up the file line by line
-							var text = target.split(/\r?\n|\r/);
-
-							var k = 0;
-							for (k; k < text.length; k++) {
-								if (timecodeRegEx.test(text[k])) { break; }
-
-								// First we pull out the interview-level metadata
-								if (/(Title:)+/.test(text[k])) {
-									// Save the interview title
-									$('#tag-interview-title').val(text[k].slice(7));
-
-									// Then add the rest of the information to the metadata section
-									while (text[k] !== '' && k < text.length) {
-										$('#interview-metadata')[0].innerHTML += text[k] + '<br />';
-										k++;
-									}
-								}
-							}
-
-							// And we can remove the lines we've already seen to make segment parsing easier
-							for (var j = k - 1; j >= 0; j--) {
-								text.shift();
-							}
-
-							// Now we build segment panels
-							var accordion = index.accordion();
-							var timestamp = '';
-							var title = '';
-							var transcript = '';
-							var synopsis = '';
-							var keywords = '';
-							var subjects = '';
-
-							for (var i = 0; i < text.length; i++) {
-								// We are only concerned with timestamped segments at this point of the parsing
-								if (timecodeRegEx.test(text[i])) {
-									timestamp = text[i].substring(0, 12);
-									// $('#endTime').innerHTML = text[i].substring(17);
-
-									while (text[i] !== "}" && i < text.length) {
-										if (/("title":)+/.test(text[i])) {
-											title = text[i].substring(text[i].indexOf('"title":') + 9).replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
-											while (!/("partial_transcript":)+/.test(text[i + 1]) &&  i < text.length) {
-												i++;
-												title += text[i].replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
-											}
-										}
-
-										if (/("partial_transcript":)+/.test(text[i])) {
-											transcript = text[i].substring(text[i].indexOf('"partial_transcript":') + 22).replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
-											while (!/("description":)+/.test(text[i + 1]) &&  i < text.length) {
-												i++;
-												transcript += text[i].replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
-											}
-										}
-
-										if (/("description":)+/.test(text[i])) {
-											synopsis = text[i].substring(text[i].indexOf('"description":') + 15).replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
-											while (!/("keywords":)+/.test(text[i + 1]) &&  i < text.length) {
-												i++;
-												synopsis += text[i].replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
-											}
-										}
-
-										if (/("keywords":)+/.test(text[i])) {
-											keywords = text[i].substring(text[i].indexOf('"keywords":') + 12).replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
-											while (!/("subjects":)+/.test(text[i + 1]) &&  i < text.length) {
-												i++;
-												keywords += text[i].replace(/(\\")/g,'"').replace(/(",)$/,'').replace(/^"/,'');
-											}
-										}
-
-										if (/("subjects":)+/.test(text[i])) {
-											subjects = text[i].substring(text[i].indexOf('"subjects":') + 12).replace(/(\\")/g,'"').replace(/(")$/,'').replace(/^"/,'');
-											while (text[i + 1] !== "}" &&  i < text.length) {
-												i++;
-												subjects += text[i].replace(/(\\")/g,'"').replace(/(")$/,'').replace(/^"/,'');
-											}
-										}
-
-										i++;
-									}
-
-									// Now that we've gathered all the data for the variables, we build a panel
-									index.addSegment({
-										startTime: timestamp,
-										title: title,
-										description: synopsis,
-										keywords: keywords,
-										subjects: subjects,
-										partialTranscript: transcript
-									});
-								}
-							}
-
-							index.sortAccordion();
-							index.tagEdit();
-							index.tagCancel();
-							OHSynchronizer.Index.closeButtons();
-						}
-						else OHSynchronizer.errorHandler(new Error("Not a valid index file - missing interview-level metadata."));
-					}
-				}
-				else OHSynchronizer.errorHandler(new Error("Not a valid file extension."));
-			}
-			else if (fileType == 'transcript') {
-				// If there's no A/V present, there is no transcript Syncing
-				if (!($("#audio").is(':visible')) && !($("#video").is(':visible')) && $("#ytplayer")[0].innerHTML === '') {
-					OHSynchronizer.errorHandler(new Error("You must first upload an A/V file in order to sync a transcript."));
-				}
-				// VTT Parsing
-				else {
-					if (ext === 'vtt') {
-						$("#finish-area").show();
-
-						if (!(timecodeRegEx.test(target)) || target.indexOf("WEBVTT") !== 0){
-							OHSynchronizer.errorHandler(new Error("Not a valid VTT transcript file."));
-						}
-						else {
-							if ($("#audio").is(':visible') || $("#video").is(':visible') || $("#ytplayer")[0].innerHTML != '') $("#sync-controls").show();
-							OHSynchronizer.Events.uploadsuccess(new CustomEvent("uploadsuccess", {detail: file}));
-							OHSynchronizer.Index.closeButtons();
-							// We'll break up the file line by line
-							var text = target.split(/\r?\n|\r/);
-
-							// We implement a Web Worker because larger transcript files will freeze the browser
-							if (window.Worker) {
-								var textWorker = new Worker(OHSynchronizer.webWorkers + "/transcript.js");
-								textWorker.postMessage(text);
-								textWorker.onmessage = function(e) {
-									$('#transcript')[0].innerHTML += e.data;
-
-								  // Enable click functions, addSyncMarker calls all three functions
-									OHSynchronizer.Transcript.addSyncMarker();
-								}
-							}
-						}
-					}
-					else OHSynchronizer.errorHandler(new Error("Not a valid file extension."));
-				}
-			}
-			else { OHSynchronizer.errorHandler(new Error("No example file for parsing index and transcript data together available.")); }
-		}
-		return reader;
-	}
-	catch (e) { OHSynchronizer.errorHandler(e); }
-}
-OHSynchronizer.Import.renderText = function(file, ext, fileType) {
-	var reader = OHSynchronizer.Import.fileReader(file, ext, fileType);
+OHSynchronizer.Import.renderText = function(file, ext, widget) {
+	var reader = widget.fileReader(file, ext);
 	if (reader) reader.readAsText(file);
 }
 
 /** Player Functions **/
-OHSynchronizer.Player = function(){};
+OHSynchronizer.Player = function(){}
 // Here we handling looping controls for Transcript syncing
 OHSynchronizer.Player.prototype = {
 	transcriptTimestamp: function() {
@@ -553,12 +404,15 @@ OHSynchronizer.Player.prototype = {
 			}
 		}
 	}
-};
+}
+
 OHSynchronizer.YouTube = function(){
 	OHSynchronizer.Player.call(this);
-};
+}
+
 OHSynchronizer.YouTube.prototype = Object.create(OHSynchronizer.Player.prototype);
 OHSynchronizer.YouTube.prototype.constructor = OHSynchronizer.YouTube;
+
 OHSynchronizer.YouTube.prototype.currentTime = function() {
 	return this.ytplayer.getCurrentTime();
 }
@@ -604,10 +458,12 @@ OHSynchronizer.YouTube.prototype.initializeControls = function(event) {
 	this.transcriptTimestamp();
 
 }
+
 OHSynchronizer.YouTube.prototype.seekMinute = function(minute) {
 	var offset = $('#sync-roll').val();
 	this.ytplayer.seekTo(minute * 60 - offset);
 }
+
 OHSynchronizer.YouTube.prototype.seekTo = function(time) {
 	this.ytplayer.seekTo(time);
 }
@@ -620,7 +476,7 @@ OHSynchronizer.YouTube.prototype.updateTimestamp = function() {
 
 	var time = this.ytplayer.getCurrentTime();
 	$("#tag-timestamp").val(OHSynchronizer.secondsAsTimestamp(time));
-};
+}
 
 // Here we handle the keyword player controls for YouTube
 OHSynchronizer.YouTube.prototype.playerControls = function(button) {
@@ -671,16 +527,20 @@ OHSynchronizer.AblePlayer.prototype.player = function() {
 	if ($("#audio").is(':visible')) return $("#audio-player")[0];
 	else if ($("#video").is(':visible')) return $("#video-player")[0];
 }
+
 OHSynchronizer.AblePlayer.prototype.seekMinute = function(minute) {
 	var offset = $('#sync-roll').val();
 	this.player().currentTime = minute * 60 - offset;
 }
+
 OHSynchronizer.AblePlayer.prototype.seekTo = function(time) {
 	this.player().currentTime = parseInt(time);
 }
+
 OHSynchronizer.AblePlayer.prototype.currentTime = function() {
 	return this.player().currentTime;
 }
+
 OHSynchronizer.AblePlayer.prototype.duration = function() {
 	return this.player().duration;
 }
@@ -689,7 +549,7 @@ OHSynchronizer.AblePlayer.prototype.duration = function() {
 OHSynchronizer.AblePlayer.prototype.updateTimestamp = function() {
 	var time = this.player().currentTime;
 	$("#tag-timestamp").val(OHSynchronizer.secondsAsTimestamp(time));
-};
+}
 
 // Here we handle the keyword player controls for AblePlayer
 OHSynchronizer.AblePlayer.prototype.playerControls = function(button) {
@@ -728,9 +588,60 @@ OHSynchronizer.AblePlayer.prototype.playerControls = function(button) {
 }
 
 /** Transcript Sync Functions **/
-OHSynchronizer.Transcript = function(){};
+OHSynchronizer.Transcript = function(id){
+	Object.call(this);
+	this.contentDiv = $('#' + id);
+	this.type = 'transcript';
+}
+
+OHSynchronizer.Transcript.prototype.constructor = OHSynchronizer.Transcript;
+
+OHSynchronizer.Transcript.prototype.fileReader = function(file, ext) {
+	var reader = new FileReader();
+	var transcript = this;
+	try {
+		reader.onload = function(event) {
+			var target = event.target.result;
+
+			// If there's no A/V present, there is no transcript Syncing
+			if (!($("#audio").is(':visible')) && !($("#video").is(':visible')) && $("#ytplayer")[0].innerHTML === '') {
+				OHSynchronizer.errorHandler(new Error("You must first upload an A/V file in order to sync a transcript."));
+			} else {
+			// VTT Parsing
+
+				if (ext === 'vtt') {
+					$("#finish-area").show();
+
+					if (!(OHSynchronizer.Import.timecodeRegEx.test(target)) || target.indexOf("WEBVTT") !== 0){
+						OHSynchronizer.errorHandler(new Error("Not a valid VTT transcript file."));
+					} else {
+						if ($("#audio").is(':visible') || $("#video").is(':visible') || $("#ytplayer")[0].innerHTML != '') $("#sync-controls").show();
+						OHSynchronizer.Events.uploadsuccess(new CustomEvent("uploadsuccess", {detail: file}));
+						OHSynchronizer.Index.closeButtons();
+						// We'll break up the file line by line
+						var text = target.split(/\r?\n|\r/);
+
+						// We implement a Web Worker because larger transcript files will freeze the browser
+						if (window.Worker) {
+							var textWorker = new Worker(OHSynchronizer.webWorkers + "/transcript.js");
+							textWorker.postMessage(text);
+							textWorker.onmessage = function(e) {
+								$('#transcript')[0].innerHTML += e.data;
+
+								// Enable click functions, addSyncMarker calls all three functions
+								transcript.addSyncMarker();
+							}
+						}
+					}
+				}
+				else OHSynchronizer.errorHandler(new Error("Not a valid file extension."));
+			}
+		}
+		return reader;
+	} catch (e) { OHSynchronizer.errorHandler(e); }
+}
 // Here we add a Sync Marker
-OHSynchronizer.Transcript.addSyncMarker = function() {
+OHSynchronizer.Transcript.prototype.addSyncMarker = function() {
 	$('.transcript-word').bind('click', function(){
 		var minute = parseInt($("#sync-minute")[0].innerHTML);
 		if (minute == 0) minute++;
@@ -818,8 +729,10 @@ OHSynchronizer.Transcript.syncControl = function(type, playerControls) {
 	}
 }
 
-OHSynchronizer.Index = function(id) {
+OHSynchronizer.Index = function(id, previewOnly = false) {
 	Object.call(this);
+	this.type = 'index';
+	this.previewOnly = previewOnly;
 	this.indexDiv = $('#' + id);
 	var index = this;
 	$('.index-tag-save').bind('click', function(){
@@ -831,7 +744,9 @@ OHSynchronizer.Index = function(id) {
 	this.indexDiv.attr('data-editVar','-1');
 	this.indexDiv.attr('data-endTime','0');
 	$('.synch-download-button').bind('click', function() { OHSynchronizer.Export.exportIndex('vtt', index); });
-};
+	if (previewOnly) $(".tag-add-segment").hide();
+}
+
 OHSynchronizer.Index.prototype.initializeAccordion = function() {
 	this.accordion().accordion({
 		header: "> div > h3",
@@ -840,7 +755,7 @@ OHSynchronizer.Index.prototype.initializeAccordion = function() {
 		clearStyle: true,
 		active: false
 	});
-};
+}
 
 OHSynchronizer.Index.segmentHtml = function(segment) {
 	var panel = '<div id="' + segment.startTime + '" class="segment-panel">';
@@ -857,13 +772,115 @@ OHSynchronizer.Index.segmentHtml = function(segment) {
 }
 
 OHSynchronizer.Index.prototype.constructor = OHSynchronizer.Index;
+
 OHSynchronizer.Index.prototype.accordion = function() {
 	return this.indexDiv.find(".indexAccordion") || this.indexDiv.append('<div class="indexAccordion"></div>');
 }
+
 OHSynchronizer.Index.prototype.addSegment = function(segment) {
 	var newPanel = this.accordion().append(OHSynchronizer.Index.segmentHtml(segment));
-
+	return newPanel;
 }
+
+// Here we display index or transcript file data
+OHSynchronizer.Index.prototype.fileReader = function(file, ext) {
+	var reader = new FileReader();
+	var index = this;
+	if (ext != 'vtt') {
+		OHSynchronizer.errorHandler(new Error("Not a valid file extension."));
+		return;
+	}
+	try {
+		// VTT Parsing
+		reader.onload = function(event) {
+			var target = event.target.result;
+
+			index.initializeAccordion();
+			$("#finish-area").show();
+
+			if (target.indexOf("WEBVTT") !== 0) {
+				OHSynchronizer.errorHandler(new Error("Not a valid VTT index file."));
+				return;
+			}
+			// Having interview-level metadata is required
+			if (!/(Title:)+/.test(target) || !/(Date:)+/.test(target) || !/(Identifier:)+/.test(target)) {
+				OHSynchronizer.errorHandler(new Error("Not a valid index file - missing interview-level metadata."));
+				return;
+			}
+			OHSynchronizer.Events.uploadsuccess(new CustomEvent("uploadsuccess", {detail: file}));
+			OHSynchronizer.Index.closeButtons();
+			// We'll break up the file line by line
+			var text = target.split(/\r?\n|\r/);
+
+			var k = 0;
+			for (k; k < text.length; k++) {
+				if (OHSynchronizer.Import.timecodeRegEx.test(text[k])) { break; }
+
+				// First we pull out the interview-level metadata
+				if (/(Title:)+/.test(text[k])) {
+					// Save the interview title
+					$('#tag-interview-title').val(text[k].slice(7));
+
+					// Then add the rest of the information to the metadata section
+					while (text[k] !== '' && k < text.length) {
+						$('#interview-metadata')[0].innerHTML += text[k] + '<br />';
+						k++;
+					}
+				}
+			}
+
+			// And we can remove the lines we've already seen to make segment parsing easier
+			for (var j = k - 1; j >= 0; j--) {
+				text.shift();
+			}
+
+			// Now we build segment panels
+			var accordion = index.accordion();
+			var timestamp = '';
+			var title = '';
+			var transcript = '';
+			var synopsis = '';
+			var keywords = '';
+			var subjects = '';
+
+			for (var i = 0; i < text.length; i++) {
+				// We are only concerned with timestamped segments at this point of the parsing
+				if (OHSynchronizer.Import.timecodeRegEx.test(text[i])) {
+					timestamp = text[i].substring(0, 12);
+					// read json data from subsequent lines, line by line, until an indented end brace is encountered
+					indexJson = '';
+					i++;
+					while (text[i] !== "}" && i < text.length) {
+						indexJson += text[i];
+						if (text[i] === '}') break;
+						i++;
+
+					}
+					indexJson += '}';
+					indexObj = JSON.parse(indexJson);
+
+					// Now that we've gathered all the data for the variables, we build a panel
+					index.addSegment({
+						startTime: timestamp,
+						title: indexObj.title,
+						description: indexObj.description,
+						keywords: indexObj.keywords,
+						subjects: indexObj.subjects,
+						partialTranscript: indexObj.partial_transcript
+					});
+				}
+			}
+
+			index.sortAccordion();
+			index.tagEdit();
+			index.tagCancel();
+			OHSynchronizer.Index.closeButtons();
+			if (index.previewOnly) index.initPreviewControls(index.accordion());
+		}
+		return reader;
+	} catch (e) { OHSynchronizer.errorHandler(e); }
+}
+
 // Here we save the contents of the Tag Segment modal
 OHSynchronizer.Index.prototype.tagSave = function() {
 	var edit = this.indexDiv.attr('data-editVar');
@@ -965,6 +982,47 @@ OHSynchronizer.Index.prototype.sortAccordion = function() {
 	accordion.accordion("refresh");
 }
 
+OHSynchronizer.Index.prototype.preview = function() {
+	var accordion = this.accordion();
+	if (accordion[0] != '') {
+		// The current open work needs to be hidden to prevent editing while previewing
+		$(".tag-add-segment").hide();
+		$("#export").addClass('hidden');
+		$(".preview-button").addClass('hidden');
+		$("#preview-close").removeClass('hidden');
+
+		accordion.clone().prop({ id: "previewAccordion", name: "indexClone"}).appendTo($('#input-index'));
+		accordion.hide();
+		$("#previewAccordion").show();
+
+		// Initialize the new accordion
+		$("#previewAccordion").accordion({
+			header: "> div > h3",
+			autoHeight: false,
+			collapsible: true,
+			clearStyle: true,
+			active: false
+		});
+		this.initPreviewControls($("#previewAccordion"));
+	} else {
+		OHSynchronizer.errorHandler(new Error("The selected index document is empty."));
+	}
+}
+
+OHSynchronizer.Index.prototype.initPreviewControls = function(accordion) {
+	accordion.find(".tag-edit").each(function() { $(this).remove(); });
+	accordion.find(".tag-delete").each(function() {
+		$('<button class="btn btn-xs btn-primary preview-segment">Play Segment</button>').insertAfter($(this));
+		$(this).remove();
+	});
+
+	accordion.accordion("refresh");
+	$('.preview-segment').bind('click', function(){
+		var timestamp = $(this).closest(".segment-panel").attr("id");
+		OHSynchronizer.playerControls.seekTo(OHSynchronizer.timestampAsSeconds(timestamp));
+		OHSynchronizer.playerControls.playerControls("play");
+	});
+}
 // Here we remove items the user no longer wishes to see
 // Includes deleting Segment Tags
 OHSynchronizer.Index.closeButtons = function() {
