@@ -6,7 +6,7 @@
       "subjects" : "dc:subject",
       "description" : "dcterms:abstract",
       "keywords" : "http://www.w3.org/ns/dcat#keyword",
-      "partial_transcript" : "todo:1"
+      "partial_transcript" : "http://dbpedia.org/ontology/quote"
     }
   ],
   "id": "doi:10.7916/XXXXXXXX/index",
