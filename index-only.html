@@ -36,21 +36,6 @@
 			<div id="working-area" class="col-md-12">
 				<div id="left-sidebar" class="container">
 					<div id="media-playback" class="">
-						<div id="media-upload" class="col-md-12 upload-box">
-							<i class="fa fa-times-circle-o close"></i>
-							<p>Click browse to select an applicable audio or video file from your local file system, or enter a URL.</p>
-							<p>
-								<label class="btn btn-primary">
-							    <input id="media-file-upload" type="file" onchange="OHSynchronizer.Import.uploadFile('#media-file-upload')">
-							    Browse Locally
-								</label>
-							</p>
-							<p>&nbsp;</p>
-							<p><input id="media-url-upload" type="text" placeholder="Enter a URL here" value="https://ldpd-wowza-test1.svc.cul.columbia.edu:8443/vod/mp4:CARN27_v_1_READY_TO_EXPORT.mp4/playlist.m3u8">
-								<button id="media-url-submit" class="btn btn-primary" onclick="OHSynchronizer.Import.uploadURLFile($('#media-url-upload').attr('value'));">Submit</button>
-							</p>
-						</div>
-
 						<div id="ytplayer"></div>
 						<div id="video"><video id="video-player" data-able-player preload="auto" autoplay></video></div>
 						<div id="audio"><audio id="audio-player" data-able-player preload="auto" autoplay></audio></div>
@@ -81,49 +66,7 @@
 				</div><!-- /#left-sidebar -->
 
 				<div id="right-sidebar">
-					<div id="upload-text" class="upload-box">
-						<i class="fa fa-times-circle-o close"></i>
-						<p>Click browse to select an applicable interview metadata, index, or transcript file from your local file system or enter a URL in the file name box. Index and Transcript uploads automatically look for Interview-level metadata.</p>
-						<p>
-							I am uploading:
-							<select id="file-type">
-								<option selected="selected" value="none">-- Select --</option>
-							  <option value="index">Index</option>
-							  <option value="transcript">Transcript</option>
-							  <!-- <option value="multi">Index and Transcript</option> -->
-							</select>
-							&nbsp;
-							<label class="btn btn-primary">
-								<input id="input-text" type="file" onchange="OHSynchronizer.Import.uploadFile('#input-text')">
-								Browse
-							</label>
-						</p>
-					</div><!-- /#upload-text -->
-
 					<div id="text-tabs" class="">
-						<ul id="list-tabs">
-							<li><a href="#tabs-transcript">Transcript</a></li>
-							<li><a href="#tabs-index">Index</a></li>
-							<li>
-							</li>
-						</ul>
-
-						<div id="tabs-transcript">
-							<div id="input-transcript">
-								<h2>Transcript</h2>
-								<div id="sync-controls" class="form-group row btn-group" role="group">
-									<span id="sync-back" class="btn btn-info" type="button" title='jump to previous minute' onclick="OHSynchronizer.Transcript.syncControl('back',OHSynchronizer.playerControls)"><i class="fa fa-backward"></i></span>
-									<div id="sync-minute" class="btn btn-secondary" title='minute to be synchronized' type="button">0</div>
-									<span id="sync-forward" class="btn btn-info" type="button" title='jump to next minute' onclick="OHSynchronizer.Transcript.syncControl('forward',OHSynchronizer.playerControls)"><i class="fa fa-forward"></i></span>
-									<span id="sync-play" class="btn btn-outline-info" type="button" title='start/stop loop' onclick="OHSynchronizer.Transcript.syncControl('loop',OHSynchronizer.playerControls)"><i class="fa fa-retweet"></i></span>
-									<input id="sync-roll" class="btn btn-secondary" type="text" maxlength="3" size="3" value="10" name="sync-roll">
-									<div id="sync-time" class="btn btn-secondary" type="button">00:00:00</div>
-								</div>
-								<div id="transcript" class="col-md-12" ></div>
-								<div id="transcript-preview" class="col-md-12" ></div>
-							</div>
-						</div><!-- /#tabs-transcript -->
-
 						<div id="tabs-index">
 							<div id="input-index">
 								<h2>Index Document</h2>
@@ -231,7 +174,7 @@
 		<script src="./js/ableplayer.min.js"></script>
 		<script src="./js/hls.min.js"></script> <!-- Must be loaded locally because CDN provider is broken -->
 		<script src="./js/ohsynchronizer.js"></script>
-		<script src="./js/script.js"></script>
+		<script src="./js/index-only.js"></script>
 	</body>
 
 </html>
