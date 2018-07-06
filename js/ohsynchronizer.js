@@ -170,7 +170,7 @@ OHSynchronizer.Import.determineFile = function(file, ext, sender) {
 			return;
 		}
 		var widget = OHSynchronizer.Import.widget(fileType);
-		if (widget) OHSynchronizer.Import.renderText(file, ext, widget);
+		if (widget) widget.renderText(file, ext);
 	}
 	else OHSynchronizer.errorHandler(new Error("Bad File - cannot display data."));
 }
@@ -206,14 +206,6 @@ OHSynchronizer.Import.checkExt = function(ext) {
 }
 
 /** Rendering Functions **/
-OHSynchronizer.Import.bindNavControls = function(controls) {
-	$('.tag-control-beginning').bind('click', function(){ controls.playerControls('beginning') });
-	$('.tag-control-backward').bind('click', function(){ controls.playerControls('backward') });
-	$('.tag-control-play').bind('click', function(){ controls.playerControls('play') });
-	$('.tag-control-stop').bind('click', function(){ controls.playerControls('stop') });
-	$('.tag-control-forward').bind('click', function(){ controls.playerControls('forward') });
-	$('.tag-control-update').bind('click', function(){ controls.playerControls('update') });
-}
 // Here we load HLS playlists
 OHSynchronizer.Import.renderHLS = function(url) {
 	var player = document.querySelector('video');
@@ -222,7 +214,7 @@ OHSynchronizer.Import.renderHLS = function(url) {
 	hls.attachMedia(player);
 	hls.on(Hls.Events.MANIFEST_PARSED,function() {
 		OHSynchronizer.playerControls = new OHSynchronizer.AblePlayer();
-		OHSynchronizer.Import.bindNavControls(OHSynchronizer.playerControls);
+		OHSynchronizer.playerControls.bindNavControls();
 		// Watch the AblePlayer time status for Transcript Syncing
 		// Must set before video plays
 		$("#video-player").bind('timeupdate', function() { OHSynchronizer.playerControls.transcriptTimestamp() });
@@ -302,7 +294,7 @@ OHSynchronizer.Import.loadYouTube = function(id) {
 		events: {
 			'onReady': function(event) {
 				OHSynchronizer.playerControls.initializeControls(event);
-				OHSynchronizer.Import.bindNavControls(OHSynchronizer.playerControls);
+				OHSynchronizer.playerControls.bindNavControls();
 			}
 		}
 	});
@@ -341,12 +333,6 @@ OHSynchronizer.Import.renderAudio = function(file) {
 		var time = this.duration;
 		$('#endTime')[0].innerHTML = OHSynchronizer.secondsAsTimestamp(time);
 	});
-}
-
-// Here we display index or transcript file data
-OHSynchronizer.Import.renderText = function(file, ext, widget) {
-	var reader = widget.fileReader(file, ext);
-	if (reader) reader.readAsText(file);
 }
 
 /** Player Functions **/
@@ -403,7 +389,17 @@ OHSynchronizer.Player.prototype = {
 				OHSynchronizer.looping = minute;
 			}
 		}
+	},
+	bindNavControls: function() {
+		var controls = this;
+		$('.tag-control-beginning').bind('click', function(){ controls.playerControls('beginning') });
+		$('.tag-control-backward').bind('click', function(){ controls.playerControls('backward') });
+		$('.tag-control-play').bind('click', function(){ controls.playerControls('play') });
+		$('.tag-control-stop').bind('click', function(){ controls.playerControls('stop') });
+		$('.tag-control-forward').bind('click', function(){ controls.playerControls('forward') });
+		$('.tag-control-update').bind('click', function(){ controls.playerControls('update') });
 	}
+
 }
 
 OHSynchronizer.YouTube = function(){
@@ -640,6 +636,12 @@ OHSynchronizer.Transcript.prototype.fileReader = function(file, ext) {
 		return reader;
 	} catch (e) { OHSynchronizer.errorHandler(e); }
 }
+
+OHSynchronizer.Transcript.prototype.renderText = function(file, ext) {
+	var reader = this.fileReader(file, ext);
+	if (reader) reader.readAsText(file);
+}
+
 // Here we add a Sync Marker
 OHSynchronizer.Transcript.prototype.addSyncMarker = function() {
 	$('.transcript-word').bind('click', function(){
@@ -780,6 +782,11 @@ OHSynchronizer.Index.prototype.accordion = function() {
 OHSynchronizer.Index.prototype.addSegment = function(segment) {
 	var newPanel = this.accordion().append(OHSynchronizer.Index.segmentHtml(segment));
 	return newPanel;
+}
+
+OHSynchronizer.Index.prototype.renderText = function(file, ext) {
+	var reader = this.fileReader(file, ext);
+	if (reader) reader.readAsText(file);
 }
 
 // Here we display index or transcript file data
@@ -1140,8 +1147,9 @@ OHSynchronizer.Export.previewWork = function(type) {
 	OHSynchronizer.playerControls.playerControls("beginning");
 	OHSynchronizer.playerControls.playerControls("stop");
 
-	if ($('#media-upload').visible) OHSynchronizer.errorHandler(new Error("You must first upload media in order to preview."));
-	else if (type.toLowerCase() == "transcript" && $('#transcript')[0].innerHTML != '') {
+	if ($('#media-upload').visible){
+		OHSynchronizer.errorHandler(new Error("You must first upload media in order to preview."));
+	} else if (type.toLowerCase() == "transcript" && $('#transcript')[0].innerHTML != '') {
 		// The current open work needs to be hidden to prevent editing while previewing
 		$("#transcript").hide();
 		$("#sync-controls").hide();

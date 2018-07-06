@@ -53,8 +53,7 @@
 	xhr.responseType = 'blob';
 	xhr.onload = function(e) {
 		var blob = new Blob([xhr.response], {type: 'text/vtt'});
-		var reader = widget.fileReader(blob, 'vtt');
-		if (reader) reader.readAsText(blob);
+		widget.renderText(blob, 'vtt');
 	};
 	xhr.send();
 }(jQuery));
