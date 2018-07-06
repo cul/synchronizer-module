@@ -214,26 +214,6 @@ OHSynchronizer.Import.mediaFromFile = function(file, ext) {
 			break;
 	}
 }
-OHSynchronizer.Import.workFromFile = function(fileType, file, ext) {
-	if (fileType != 'index' && fileType != 'transcript') {
-		OHSynchronizer.errorHandler(new Error("Please select the type of file you are uploading from the dropdown list provided."));
-		return;
-	}
-	var widget = OHSynchronizer.Import.widget(fileType);
-	if (widget) widget.renderText(file, ext);
-}
-
-OHSynchronizer.Import.widget = function(type) {
-	switch(type) {
-		case "index":
-			return new OHSynchronizer.Index('input-index');
-		case "transcript":
-			return new OHSynchronizer.Transcript('input-transcript');
-		default:
-			OHSynchronizer.errorHandler(new Error("No example file for parsing index and transcript data together available."));
-			return false;
-	}
-}
 
 // Here we ensure the extension is usable by the system
 OHSynchronizer.Import.allowedExts = [
