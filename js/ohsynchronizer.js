@@ -12,9 +12,70 @@
 // This must be presented before any function that can utilize it
 
 var OHSynchronizer = function(features = [], options = {}){
-	Object.call(this);
+	var ohs = this;
+	features.map(function(feature){
+		switch(feature.type) {
+			case 'player':
+				ohs.player(feature, options);
+				break;
+			case 'index':
+				ohs.index(feature, options);
+				break;
+			case 'transcript':
+				ohs.transcript(feature, options);
+				break;
+			default:
+				console.log("Bad feature OHSynchronizer feature type");
+				console.log(feature);
+		}
+	});
 };
-OHSynchronizer.prototype = Object.create(Object.prototype);
+
+OHSynchronizer.prototype = {
+	player: function(feature, options) {
+		if (feature.url) {
+			OHSynchronizer.Import.mediaFromUrl(feature.url);
+		} else if (feature.fileId) {
+			OHSynchronizer.Import.mediaFromFile.apply(null, OHSynchronizer.Import.uploadedFile(feature.fileId));
+		} else if (feature.file) {
+			OHSynchronizer.Import.mediaFromFile.apply(null, feature.file);
+		}
+	},
+
+	index: function(feature, options) {
+		var widget = new OHSynchronizer.Index(feature.id, options);
+		if (feature.fileId) {
+			var fileInfo = OHSynchronizer.Import.uploadedFile(feature.fileId);
+			if (widget) widget.renderText(fileInfo[0], fileInfo[1]);
+		} else if (feature.url) {
+			var xhr = new XMLHttpRequest();
+			xhr.open('GET', feature.url, true);
+			xhr.responseType = 'blob';
+			xhr.onload = function(e) {
+				var blob = new Blob([xhr.response], {type: 'text/vtt'});
+				widget.renderText(blob, 'vtt');
+			};
+			xhr.send();
+		}
+	},
+
+	transcript: function(feature, options) {
+		var widget = new OHSynchronizer.Transcript(feature.id, options);
+		if (feature.fileId) {
+			var fileInfo = OHSynchronizer.Import.uploadedFile(feature.fileId);
+			if (widget) widget.renderText(fileInfo[0], fileInfo[1]);
+		} else if (feature.url) {
+			var xhr = new XMLHttpRequest();
+			xhr.open('GET', feature.url, true);
+			xhr.responseType = 'blob';
+			xhr.onload = function(e) {
+				var blob = new Blob([xhr.response], {type: 'text/vtt'});
+				widget.renderText(blob, 'vtt');
+			};
+			xhr.send();
+		}
+	}
+}
 OHSynchronizer.prototype.constructor = OHSynchronizer;
 
 // get the relative path of this file, to find WebWorker modules later
@@ -165,9 +226,8 @@ OHSynchronizer.Import.mediaFromFile = function(file, ext) {
 			break;
 	}
 }
-OHSynchronizer.Import.workFromFile = function(file, ext) {
-	var fileType = $("#file-type").val();
-	if (fileType == 'none') {
+OHSynchronizer.Import.workFromFile = function(fileType, file, ext) {
+	if (fileType != 'index' && fileType != 'transcript') {
 		OHSynchronizer.errorHandler(new Error("Please select the type of file you are uploading from the dropdown list provided."));
 		return;
 	}
@@ -584,7 +644,7 @@ OHSynchronizer.AblePlayer.prototype.playerControls = function(button) {
 }
 
 /** Transcript Sync Functions **/
-OHSynchronizer.Transcript = function(id){
+OHSynchronizer.Transcript = function(id, options = {}){
 	Object.call(this);
 	this.contentDiv = $('#' + id);
 	this.type = 'transcript';
@@ -731,10 +791,10 @@ OHSynchronizer.Transcript.syncControl = function(type, playerControls) {
 	}
 }
 
-OHSynchronizer.Index = function(id, previewOnly = false) {
+OHSynchronizer.Index = function(id, options = {}) {
 	Object.call(this);
 	this.type = 'index';
-	this.previewOnly = previewOnly;
+	this.previewOnly = options.previewOnly;
 	this.indexDiv = $('#' + id);
 	var index = this;
 	$('.index-tag-save').bind('click', function(){
@@ -746,7 +806,7 @@ OHSynchronizer.Index = function(id, previewOnly = false) {
 	this.indexDiv.attr('data-editVar','-1');
 	this.indexDiv.attr('data-endTime','0');
 	$('.synch-download-button').bind('click', function() { OHSynchronizer.Export.exportIndex('vtt', index); });
-	if (previewOnly) $(".tag-add-segment").hide();
+	if (this.previewOnly) $(".tag-add-segment").hide();
 }
 
 OHSynchronizer.Index.prototype.initializeAccordion = function() {

@@ -45,15 +45,16 @@
 		index: "./assets/OHMS-Sample-003.metadata.vtt",
 		transcript: "./assets/OHMS-Sample-003.captions.vtt"
 	};
-	OHSynchronizer.Import.mediaFromUrl(info.media);
-	var previewOnly = false;
-	var widget = new OHSynchronizer.Index('input-index', previewOnly);
-	var xhr = new XMLHttpRequest();
-	xhr.open('GET', info.index, true);
-	xhr.responseType = 'blob';
-	xhr.onload = function(e) {
-		var blob = new Blob([xhr.response], {type: 'text/vtt'});
-		widget.renderText(blob, 'vtt');
-	};
-	xhr.send();
+
+	var widgetOptions = { previewOnly: false };
+	var player = {
+		type: 'player',
+		url: info.media
+	}
+	var index = {
+		id: 'input-index',
+		type: 'index',
+		url: info.index
+	}
+	var widget = new OHSynchronizer([player, index], widgetOptions);
 }(jQuery));
