@@ -159,7 +159,7 @@ OHSynchronizer.Import.mediaFromUrl = function(url) {
 
 	if (ext == "m3u8") {
 		OHSynchronizer.Import.renderHLS(url);
-		OHSynchronizer.playerControls = OHSynchronizer.AblePlayer;
+		OHSynchronizer.playerControls = new OHSynchronizer.AblePlayer();
 	}
 	// HTTP is only allowed for Wowza URLs
 	else if (!https) {
@@ -176,7 +176,7 @@ OHSynchronizer.Import.mediaFromUrl = function(url) {
 					OHSynchronizer.Import.playerForFile(blob, ext);
 				})
 				.catch(function(e) { OHSynchronizer.errorHandler(e);	});
-			  OHSynchronizer.playerControls = OHSynchronizer.AblePlayer;
+			OHSynchronizer.playerControls = new OHSynchronizer.AblePlayer();
 		}
 		else {
 			var error = new Error("This field only accepts audio and video file URLs.");
