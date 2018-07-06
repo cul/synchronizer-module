@@ -120,8 +120,7 @@ OHSynchronizer.Import.uploadURLFile = function(url) {
 			fetch(url)
 				.then(res => res.blob())
 				.then(blob => {
-					if (OHSynchronizer.Import.checkExt(ext) > -1) OHSynchronizer.Import.determineFile(blob, ext, sender);
-					else OHSynchronizer.errorHandler(new Error("Bad File - cannot load data from " + url));
+					OHSynchronizer.Import.determineFile(blob, ext, sender);
 				})
 				.catch(function(e) { OHSynchronizer.errorHandler(e);	});
 			  OHSynchronizer.playerControls = OHSynchronizer.AblePlayer;
