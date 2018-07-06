@@ -11,24 +11,11 @@
 // Here we embed the empty YouTube video player
 // This must be presented before any function that can utilize it
 
-var OHSynchronizer = function(features = [], options = {}){
-	var ohs = this;
-	features.map(function(feature){
-		switch(feature.type) {
-			case 'player':
-				ohs.player(feature, options);
-				break;
-			case 'index':
-				ohs.index(feature, options);
-				break;
-			case 'transcript':
-				ohs.transcript(feature, options);
-				break;
-			default:
-				console.log("Bad feature OHSynchronizer feature type");
-				console.log(feature);
-		}
-	});
+var OHSynchronizer = function(config = {}){
+	if (!config.options) config.options = {};
+	if (config.player) this.player(config.player, config.options);
+	if (config.index) this.index(config.index, config.options);
+	if (config.transcript) this.transcript(config.transcript, config.options);
 };
 
 OHSynchronizer.prototype = {
@@ -76,6 +63,7 @@ OHSynchronizer.prototype = {
 		}
 	}
 }
+
 OHSynchronizer.prototype.constructor = OHSynchronizer;
 
 // get the relative path of this file, to find WebWorker modules later

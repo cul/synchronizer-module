@@ -56,5 +56,5 @@
 		type: 'index',
 		url: info.index
 	}
-	var widget = new OHSynchronizer([player, index], widgetOptions);
+	var widget = new OHSynchronizer({player: player, index: index, options: widgetOptions});
 }(jQuery));
