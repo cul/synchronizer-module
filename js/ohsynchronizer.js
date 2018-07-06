@@ -11,7 +11,11 @@
 // Here we embed the empty YouTube video player
 // This must be presented before any function that can utilize it
 
-var OHSynchronizer = function(){};
+var OHSynchronizer = function(features = [], options = {}){
+	Object.call(this);
+};
+OHSynchronizer.prototype = Object.create(Object.prototype);
+OHSynchronizer.prototype.constructor = OHSynchronizer;
 
 // get the relative path of this file, to find WebWorker modules later
 OHSynchronizer.webWorkers = $("script[src$='ohsynchronizer.js']").attr('src').replace(/\.js.*$/,'');
@@ -63,7 +67,7 @@ OHSynchronizer.Events = {
 
 OHSynchronizer.Import = function(){};
 // Here we accept locally uploaded files
-OHSynchronizer.Import.uploadFile = function (sender) {
+OHSynchronizer.Import.uploadedFile = function (sender) {
 	// Grab the files from the user's selection
 	var input = $(sender)[0];
 	for (var i = 0; i < input.files.length; i++) {
@@ -73,14 +77,14 @@ OHSynchronizer.Import.uploadFile = function (sender) {
 		var name = file.name.split('.');
 		var ext = name[name.length - 1].toLowerCase();
 
-		if (OHSynchronizer.Import.checkExt(ext) > -1) OHSynchronizer.Import.determineFile(file, ext, sender);
+		if (OHSynchronizer.Import.checkExt(ext) > -1) return [file, ext];
 		else OHSynchronizer.errorHandler(new Error("Bad File - cannot load data from " + file.name));
 	}
 }
 
 // Here we accept URL-based files
 // This function is no longer utilized for non-AV files
-OHSynchronizer.Import.uploadURLFile = function(url) {
+OHSynchronizer.Import.mediaFromUrl = function(url) {
 	// Continue onward, grab the URL value
 	var id = '';
 
@@ -120,7 +124,7 @@ OHSynchronizer.Import.uploadURLFile = function(url) {
 			fetch(url)
 				.then(res => res.blob())
 				.then(blob => {
-					OHSynchronizer.Import.determineFile(blob, ext, sender);
+					OHSynchronizer.Import.playerForFile(blob, ext);
 				})
 				.catch(function(e) { OHSynchronizer.errorHandler(e);	});
 			  OHSynchronizer.playerControls = OHSynchronizer.AblePlayer;
@@ -133,7 +137,7 @@ OHSynchronizer.Import.uploadURLFile = function(url) {
 }
 
 // Here we determine what kind of file was uploaded
-OHSynchronizer.Import.determineFile = function(file, ext, sender) {
+OHSynchronizer.Import.mediaFromFile = function(file, ext) {
 	// List the information from the files
 	// console.group("File Name: " + file.name);
 	// console.log("File Size: " + parseInt(file.size / 1024, 10));
@@ -145,33 +149,30 @@ OHSynchronizer.Import.determineFile = function(file, ext, sender) {
 
 	// We can't depend upon the file.type (Chrome, IE, and Safari break)
 	// Based upon the extension of the file, display its contents in specific locations
-	if (sender === "#media-file-upload" || sender === "#media-url-upload") {
-		switch(ext) {
-			case "mp4":
-			case "webm":
-				OHSynchronizer.Import.renderVideo(file);
-				break;
+	switch(ext) {
+		case "mp4":
+		case "webm":
+			OHSynchronizer.Import.renderVideo(file);
+			break;
 
-			case "ogg":
-			case "mp3":
-				OHSynchronizer.Import.renderAudio(file);
-				break;
+		case "ogg":
+		case "mp3":
+			OHSynchronizer.Import.renderAudio(file);
+			break;
 
-			default:
-				OHSynchronizer.errorHandler(new Error("Bad File - cannot display data."));
-				break;
-		}
+		default:
+			OHSynchronizer.errorHandler(new Error("Bad File - cannot display data."));
+			break;
 	}
-	else if (sender === "#input-text") {
-		var fileType = $("#file-type").val();
-		if (fileType == 'none') {
-			OHSynchronizer.errorHandler(new Error("Please select the type of file you are uploading from the dropdown list provided."));
-			return;
-		}
-		var widget = OHSynchronizer.Import.widget(fileType);
-		if (widget) widget.renderText(file, ext);
+}
+OHSynchronizer.Import.workFromFile = function(file, ext) {
+	var fileType = $("#file-type").val();
+	if (fileType == 'none') {
+		OHSynchronizer.errorHandler(new Error("Please select the type of file you are uploading from the dropdown list provided."));
+		return;
 	}
-	else OHSynchronizer.errorHandler(new Error("Bad File - cannot display data."));
+	var widget = OHSynchronizer.Import.widget(fileType);
+	if (widget) widget.renderText(file, ext);
 }
 
 OHSynchronizer.Import.widget = function(type) {
