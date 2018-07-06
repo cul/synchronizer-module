@@ -61,6 +61,10 @@ OHSynchronizer.prototype = {
 			};
 			xhr.send();
 		}
+	},
+
+	dispose: function() {
+		if (OHSynchronizer.playerControls) OHSynchronizer.playerControls.dispose();
 	}
 }
 
@@ -420,14 +424,21 @@ OHSynchronizer.Player.prototype = {
 	},
 	bindNavControls: function() {
 		var controls = this;
-		$('.tag-control-beginning').bind('click', function(){ controls.playerControls('beginning') });
-		$('.tag-control-backward').bind('click', function(){ controls.playerControls('backward') });
-		$('.tag-control-play').bind('click', function(){ controls.playerControls('play') });
-		$('.tag-control-stop').bind('click', function(){ controls.playerControls('stop') });
-		$('.tag-control-forward').bind('click', function(){ controls.playerControls('forward') });
-		$('.tag-control-update').bind('click', function(){ controls.playerControls('update') });
+		$('.tag-control-beginning').on('click', function(){ controls.playerControls('beginning') });
+		$('.tag-control-backward').on('click', function(){ controls.playerControls('backward') });
+		$('.tag-control-play').on('click', function(){ controls.playerControls('play') });
+		$('.tag-control-stop').on('click', function(){ controls.playerControls('stop') });
+		$('.tag-control-forward').on('click', function(){ controls.playerControls('forward') });
+		$('.tag-control-update').on('click', function(){ controls.playerControls('update') });
+	},
+	dispose: function() {
+		$('.tag-control-beginning').off('click');
+		$('.tag-control-backward').off('click');
+		$('.tag-control-play').off('click');
+		$('.tag-control-stop').off('click');
+		$('.tag-control-forward').off('click');
+		$('.tag-control-update').off('click');
 	}
-
 }
 
 OHSynchronizer.YouTube = function(){
@@ -444,7 +455,6 @@ OHSynchronizer.YouTube.prototype.duration = function() {
 	return this.ytplayer.getDuration();
 }
 // Here we set up segment controls for the YouTube playback
-//function initializeYTControls(event) {
 OHSynchronizer.YouTube.prototype.initializeControls = function(event) {
 	this.ytplayer = event.target;
 	var player = this;
@@ -454,33 +464,7 @@ OHSynchronizer.YouTube.prototype.initializeControls = function(event) {
 	var time = this.ytplayer.getDuration();
 	$('#endTime')[0].innerHTML = OHSynchronizer.secondsAsTimestamp(time);
 
-	$("#control-beginning").bind("click", function() {
-		player.ytplayer.seekTo(0);
-	});
-
-	$("#control-backward").bind("click", function() {
-		var now = player.ytplayer.getCurrentTime();
-		player.ytplayer.seekTo(now - 15);
-	});
-
-	$("#control-play").bind("click", function() {
-		player.ytplayer.playVideo();
-	});
-
-	$("#control-stop").bind("click", function() {
-		player.ytplayer.pauseVideo();
-	});
-
-	$("#control-forward").bind("click", function() {
-		var now = player.getCurrentTime();
-		player.ytplayer.seekTo(now + 15);
-	});
-
-	$("#control-update-time").bind("click", function(){
-		player.updateTimestamp()
-	});
 	this.transcriptTimestamp();
-
 }
 
 OHSynchronizer.YouTube.prototype.seekMinute = function(minute) {
@@ -620,6 +604,12 @@ OHSynchronizer.Transcript = function(id, options = {}){
 
 OHSynchronizer.Transcript.prototype.constructor = OHSynchronizer.Transcript;
 
+OHSynchronizer.Transcript.prototype.dispose = function() {
+	$('.transcript-word').off('click');
+	$('.transcript-timestamp').off('click');
+	$('.transcript-timestamp').off('dblclick');
+}
+
 OHSynchronizer.Transcript.prototype.fileReader = function(file, ext) {
 	var reader = new FileReader();
 	var transcript = this;
@@ -672,7 +662,7 @@ OHSynchronizer.Transcript.prototype.renderText = function(file, ext) {
 
 // Here we add a Sync Marker
 OHSynchronizer.Transcript.prototype.addSyncMarker = function() {
-	$('.transcript-word').bind('click', function(){
+	$('.transcript-word').on('click', function(){
 		var minute = parseInt($("#sync-minute")[0].innerHTML);
 		if (minute == 0) minute++;
 		var marker = "{" + minute + ":00}";
@@ -712,7 +702,7 @@ OHSynchronizer.Transcript.prototype.addSyncMarker = function() {
 
 // Here we update Transcript Sync Current Mark
 OHSynchronizer.Transcript.updateCurrentMark = function() {
-	$('.transcript-timestamp').bind('click', function(){
+	$('.transcript-timestamp').on('click', function(){
 		var mark = $(this)[0].innerHTML;
 		mark = mark.replace("{", '');
 		var num = mark.split(":");
@@ -722,7 +712,7 @@ OHSynchronizer.Transcript.updateCurrentMark = function() {
 
 // Here we remove a Transcript Sync Marker
 OHSynchronizer.Transcript.removeSyncMarker = function() {
-	$('.transcript-timestamp').bind('dblclick', function(){
+	$('.transcript-timestamp').on('dblclick', function(){
 		$(this).next(".transcript-clicked").removeClass('transcript-clicked');
 		$(this).remove();
 	});
@@ -765,16 +755,27 @@ OHSynchronizer.Index = function(id, options = {}) {
 	this.previewOnly = options.previewOnly;
 	this.indexDiv = $('#' + id);
 	var index = this;
-	$('.index-tag-save').bind('click', function(){
+	$('.index-tag-save').on('click', function(){
 		index.tagSave();
 	});
-	$('.index-tag-cancel').bind('click', function(){
+	$('.index-tag-cancel').on('click', function(){
 		index.tagCancel();
 	});
 	this.indexDiv.attr('data-editVar','-1');
 	this.indexDiv.attr('data-endTime','0');
-	$('.synch-download-button').bind('click', function() { OHSynchronizer.Export.exportIndex('vtt', index); });
+	$('.synch-download-button').on('click', function() { OHSynchronizer.Export.exportIndex('vtt', index); });
 	if (this.previewOnly) $(".tag-add-segment").hide();
+}
+OHSynchronizer.Index.prototype.constructor = OHSynchronizer.Index;
+
+OHSynchronizer.Index.prototype.dispose = function() {
+	$('.index-tag-save').off('click');
+	$('.index-tag-cancel').off('click');
+	$('.synch-download-button').off('click');
+	$('.tag-edit').off('click');
+	$('.preview-segment').off('click');
+	$('.close').off('click');
+	$('.tag-delete').off('click');
 }
 
 OHSynchronizer.Index.prototype.initializeAccordion = function() {
@@ -954,7 +955,7 @@ OHSynchronizer.Index.prototype.tagSave = function() {
 // Here we enable the edit buttons for segments
 OHSynchronizer.Index.prototype.tagEdit = function() {
 	var widget = this;
-	$('.tag-edit').bind('click', function(){
+	$('.tag-edit').on('click', function(){
 		// Pop up the modal
 		$('#index-tag').modal('show');
 
@@ -1052,7 +1053,7 @@ OHSynchronizer.Index.prototype.initPreviewControls = function(accordion) {
 	});
 
 	accordion.accordion("refresh");
-	$('.preview-segment').bind('click', function(){
+	$('.preview-segment').on('click', function(){
 		var timestamp = $(this).closest(".segment-panel").attr("id");
 		OHSynchronizer.playerControls.seekTo(OHSynchronizer.timestampAsSeconds(timestamp));
 		OHSynchronizer.playerControls.playerControls("play");
@@ -1061,11 +1062,11 @@ OHSynchronizer.Index.prototype.initPreviewControls = function(accordion) {
 // Here we remove items the user no longer wishes to see
 // Includes deleting Segment Tags
 OHSynchronizer.Index.closeButtons = function() {
-	$('.close').bind('click', function(){
+	$('.close').on('click', function(){
 		$(this).parent('div').fadeOut();
 	});
 
-	$('.tag-delete').bind('click', function(){
+	$('.tag-delete').on('click', function(){
 		var panel = $(this).parents('div').get(2);
 		panel.remove();
 	});
