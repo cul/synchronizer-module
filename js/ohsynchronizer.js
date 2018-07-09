@@ -166,6 +166,7 @@ OHSynchronizer.Import.mediaFromUrl = function(url, options = {type: 'video'}) {
 	// Find https protocol
 	var https = false;
 	if (url.toLowerCase().indexOf("https") > -1) https = true;
+	var relative = /^((\.{1,2}\/)|(\/[^\/])|(^[^\.\/]))/.test(url);
 
 	// Find YouTube information, if present
 	if (url.toLowerCase().indexOf("youtube") > -1) {
@@ -184,8 +185,8 @@ OHSynchronizer.Import.mediaFromUrl = function(url, options = {type: 'video'}) {
 		OHSynchronizer.playerControls = new OHSynchronizer.AblePlayer();
 	}
 	// HTTP is only allowed for Wowza URLs
-	else if (!https) {
-		var error = new Error("This field only accepts HTTPS URLs.");
+	else if (!https && !relative) {
+		var error = new Error("This field only accepts HTTPS or relative URLs.");
 		OHSynchronizer.errorHandler(error);
 	}
 	else if (id !== '') OHSynchronizer.Import.loadYouTube(id);
