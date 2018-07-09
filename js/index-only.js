@@ -12,12 +12,6 @@
 	// Initialize close buttons, tabs, and accordion
 	OHSynchronizer.Index.closeButtons();
 
-	// Update the Tag Segment timestamp when the modal opens from Add Segment
-	$('.tag-add-segment').click(function () {
-		$(".tag-controls").show();
-		OHSynchronizer.playerControls.updateTimestamp();
-	});
-
 	// Scroll to top function
 	$('#working-area').scroll(function() {
 		$('#media-playback').css('top', $(this).scrollTop());

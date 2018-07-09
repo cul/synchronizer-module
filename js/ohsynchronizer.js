@@ -819,7 +819,14 @@ OHSynchronizer.Index = function(id, options = {}) {
 	this.indexDiv.attr('data-editVar','-1');
 	this.indexDiv.attr('data-endTime','0');
 	$('.synch-download-button').on('click', function() { OHSynchronizer.Export.exportIndex('vtt', index); });
-	if (this.previewOnly) $(".tag-add-segment").hide();
+	if (this.previewOnly) {
+		$(".tag-add-segment").hide();
+	} else {
+		$('.tag-add-segment').on("click", function () {
+				$(".tag-controls").show();
+				OHSynchronizer.playerControls.updateTimestamp();
+		});
+	}
 }
 OHSynchronizer.Index.prototype.constructor = OHSynchronizer.Index;
 
@@ -831,6 +838,7 @@ OHSynchronizer.Index.prototype.dispose = function() {
 	$('.preview-segment').off('click');
 	$('.close').off('click');
 	$('.tag-delete').off('click');
+	$('.tag-add-segment').off('click');
 }
 
 OHSynchronizer.Index.prototype.initializeAccordion = function() {
