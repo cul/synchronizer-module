@@ -770,6 +770,10 @@ OHSynchronizer.Transcript.prototype.initPreviewControls = function() {
 	});
 }
 
+OHSynchronizer.Transcript.prototype.exportVTT = function() {
+	return OHSynchronizer.Export.transcriptVTT();
+}
+
 // Here we update Transcript Sync Current Mark
 OHSynchronizer.Transcript.updateCurrentMark = function() {
 	$('.transcript-timestamp').on('click', function(){
@@ -1137,6 +1141,11 @@ OHSynchronizer.Index.prototype.initPreviewControls = function(accordion) {
 		OHSynchronizer.playerControls.playerControls("play");
 	});
 }
+
+OHSynchronizer.Index.prototype.exportVTT = function() {
+	return OHSynchronizer.Export.indexVTT(this);
+}
+
 // Here we remove items the user no longer wishes to see
 // Includes deleting Segment Tags
 OHSynchronizer.Index.closeButtons = function() {
