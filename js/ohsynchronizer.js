@@ -44,6 +44,7 @@ OHSynchronizer.prototype = {
 			};
 			xhr.send();
 		}
+		return widget;
 	},
 
 	configTranscript: function(feature, options) {
@@ -61,6 +62,7 @@ OHSynchronizer.prototype = {
 			};
 			xhr.send();
 		}
+		return widget;
 	},
 
 	dispose: function() {
@@ -729,7 +731,8 @@ OHSynchronizer.Transcript.prototype.preview = function() {
 	$(".preview-button").addClass('hidden');
 	$("#preview-close").removeClass('hidden');
 
-	var content = OHSynchronizer.Export.transcriptVTT();
+	var content = OHSynchronizer.Export.transcriptVTT().split(/\r?\n|\r/);
+
 	if (window.Worker) {
 		var textWorker = new Worker(OHSynchronizer.webWorkers + "/transcript-preview.js");
 		textWorker.onmessage = function(e) {

@@ -18,10 +18,6 @@
 		OHSynchronizer.playerControls.updateTimestamp();
 	});
 
-	$('.preview-button').bind('click', function() {
-		OHSynchronizer.Export.previewWork('transcript');
-	});
-
 	// Scroll to top function
 	$('#working-area').scroll(function() {
 		$('#media-playback').css('top', $(this).scrollTop());
@@ -46,7 +42,7 @@
 		transcript: "./assets/OHMS-Sample-003.captions.vtt"
 	};
 
-	var widgetOptions = { previewOnly: true };
+	var widgetOptions = { previewOnly: false };
 	var player = {
 		type: 'player',
 		url: info.media
@@ -57,4 +53,8 @@
 		url: info.transcript
 	}
 	var widget = new OHSynchronizer({player: player, transcript: transcript, options: widgetOptions});
+	$('.preview-button').bind('click', function() {
+		widget.transcript.preview();
+	});
+
 }(jQuery));

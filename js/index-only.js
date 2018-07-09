@@ -18,10 +18,6 @@
 		OHSynchronizer.playerControls.updateTimestamp();
 	});
 
-	$('.preview-button').bind('click', function() {
-		OHSynchronizer.Export.previewWork('index');
-	});
-
 	// Scroll to top function
 	$('#working-area').scroll(function() {
 		$('#media-playback').css('top', $(this).scrollTop());
@@ -57,4 +53,8 @@
 		url: info.index
 	}
 	var widget = new OHSynchronizer({player: player, index: index, options: widgetOptions});
+
+	$('.preview-button').bind('click', function() {
+		widget.index.preview();
+	});
 }(jQuery));
