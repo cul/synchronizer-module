@@ -57,4 +57,5 @@
 	$('.preview-button').bind('click', function() {
 		widget.index.preview();
 	});
+	if (widgetOptions.previewOnly) widget.hideFinishingControls();
 }(jQuery));

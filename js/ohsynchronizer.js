@@ -65,6 +65,10 @@ OHSynchronizer.prototype = {
 		return widget;
 	},
 
+	hideFinishingControls: function() {
+		$('.session-controls > .btn').hide();
+	},
+
 	dispose: function() {
 		// feature disposals
 		if (OHSynchronizer.playerControls) OHSynchronizer.playerControls.dispose();
