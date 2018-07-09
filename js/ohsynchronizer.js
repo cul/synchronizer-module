@@ -11,7 +11,76 @@
 // Here we embed the empty YouTube video player
 // This must be presented before any function that can utilize it
 
-var OHSynchronizer = function(){};
+var OHSynchronizer = function(config = {}){
+	if (!config.options) config.options = {};
+	if (config.player) this.player(config.player, config.options);
+	if (config.index) this.index = this.configIndex(config.index, config.options);
+	if (config.transcript) this.transcript = this.configTranscript(config.transcript, config.options);
+};
+
+OHSynchronizer.prototype = {
+	player: function(feature, options) {
+		if (feature.url) {
+			OHSynchronizer.Import.mediaFromUrl(feature.url);
+		} else if (feature.fileId) {
+			OHSynchronizer.Import.mediaFromFile.apply(null, OHSynchronizer.Import.uploadedFile(feature.fileId));
+		} else if (feature.file) {
+			OHSynchronizer.Import.mediaFromFile.apply(null, feature.file);
+		}
+	},
+
+	configIndex: function(feature, options) {
+		var widget = new OHSynchronizer.Index(feature.id, options);
+		if (feature.fileId) {
+			var fileInfo = OHSynchronizer.Import.uploadedFile(feature.fileId);
+			if (widget) widget.renderText(fileInfo[0], fileInfo[1]);
+		} else if (feature.url) {
+			var xhr = new XMLHttpRequest();
+			xhr.open('GET', feature.url, true);
+			xhr.responseType = 'blob';
+			xhr.onload = function(e) {
+				var blob = new Blob([xhr.response], {type: 'text/vtt'});
+				widget.renderText(blob, 'vtt');
+			};
+			xhr.send();
+		}
+	},
+
+	configTranscript: function(feature, options) {
+		var widget = new OHSynchronizer.Transcript(feature.id, options);
+		if (feature.fileId) {
+			var fileInfo = OHSynchronizer.Import.uploadedFile(feature.fileId);
+			if (widget) widget.renderText(fileInfo[0], fileInfo[1]);
+		} else if (feature.url) {
+			var xhr = new XMLHttpRequest();
+			xhr.open('GET', feature.url, true);
+			xhr.responseType = 'blob';
+			xhr.onload = function(e) {
+				var blob = new Blob([xhr.response], {type: 'text/vtt'});
+				widget.renderText(blob, 'vtt');
+			};
+			xhr.send();
+		}
+	},
+
+	dispose: function() {
+		// feature disposals
+		if (OHSynchronizer.playerControls) OHSynchronizer.playerControls.dispose();
+		if (this.index) this.index.dispose();
+		if (this.transcript) this.transcript.dispose();
+		// time monitor disposals
+		$("#audio-player").off('timeupdate');
+		$("#audio-player").off('durationchange');
+		$("#video-player").off('timeupdate');
+		$("#video-player").off('durationchange');
+		// preview control disposals
+		$('.preview-button').off('click');
+		$('.preview-minute').off('click');
+		$('.preview-segment').off('click');
+	}
+}
+
+OHSynchronizer.prototype.constructor = OHSynchronizer;
 
 // get the relative path of this file, to find WebWorker modules later
 OHSynchronizer.webWorkers = $("script[src$='ohsynchronizer.js']").attr('src').replace(/\.js.*$/,'');
@@ -63,7 +132,7 @@ OHSynchronizer.Events = {
 
 OHSynchronizer.Import = function(){};
 // Here we accept locally uploaded files
-OHSynchronizer.Import.uploadFile = function (sender) {
+OHSynchronizer.Import.uploadedFile = function (sender) {
 	// Grab the files from the user's selection
 	var input = $(sender)[0];
 	for (var i = 0; i < input.files.length; i++) {
@@ -73,14 +142,14 @@ OHSynchronizer.Import.uploadFile = function (sender) {
 		var name = file.name.split('.');
 		var ext = name[name.length - 1].toLowerCase();
 
-		if (OHSynchronizer.Import.checkExt(ext) > -1) OHSynchronizer.Import.determineFile(file, ext, sender);
+		if (OHSynchronizer.Import.checkExt(ext) > -1) return [file, ext];
 		else OHSynchronizer.errorHandler(new Error("Bad File - cannot load data from " + file.name));
 	}
 }
 
 // Here we accept URL-based files
 // This function is no longer utilized for non-AV files
-OHSynchronizer.Import.uploadURLFile = function(url) {
+OHSynchronizer.Import.mediaFromUrl = function(url) {
 	// Continue onward, grab the URL value
 	var id = '';
 
@@ -106,7 +175,7 @@ OHSynchronizer.Import.uploadURLFile = function(url) {
 
 	if (ext == "m3u8") {
 		OHSynchronizer.Import.renderHLS(url);
-		OHSynchronizer.playerControls = OHSynchronizer.AblePlayer;
+		OHSynchronizer.playerControls = new OHSynchronizer.AblePlayer();
 	}
 	// HTTP is only allowed for Wowza URLs
 	else if (!https) {
@@ -120,11 +189,10 @@ OHSynchronizer.Import.uploadURLFile = function(url) {
 			fetch(url)
 				.then(res => res.blob())
 				.then(blob => {
-					if (OHSynchronizer.Import.checkExt(ext) > -1) OHSynchronizer.Import.determineFile(blob, ext, sender);
-					else OHSynchronizer.errorHandler(new Error("Bad File - cannot load data from " + url));
+					OHSynchronizer.Import.playerForFile(blob, ext);
 				})
 				.catch(function(e) { OHSynchronizer.errorHandler(e);	});
-			  OHSynchronizer.playerControls = OHSynchronizer.AblePlayer;
+			OHSynchronizer.playerControls = new OHSynchronizer.AblePlayer();
 		}
 		else {
 			var error = new Error("This field only accepts audio and video file URLs.");
@@ -134,7 +202,7 @@ OHSynchronizer.Import.uploadURLFile = function(url) {
 }
 
 // Here we determine what kind of file was uploaded
-OHSynchronizer.Import.determineFile = function(file, ext, sender) {
+OHSynchronizer.Import.mediaFromFile = function(file, ext) {
 	// List the information from the files
 	// console.group("File Name: " + file.name);
 	// console.log("File Size: " + parseInt(file.size / 1024, 10));
@@ -146,44 +214,20 @@ OHSynchronizer.Import.determineFile = function(file, ext, sender) {
 
 	// We can't depend upon the file.type (Chrome, IE, and Safari break)
 	// Based upon the extension of the file, display its contents in specific locations
-	if (sender === "#media-file-upload" || sender === "#media-url-upload") {
-		switch(ext) {
-			case "mp4":
-			case "webm":
-				OHSynchronizer.Import.renderVideo(file);
-				break;
+	switch(ext) {
+		case "mp4":
+		case "webm":
+			OHSynchronizer.Import.renderVideo(file);
+			break;
 
-			case "ogg":
-			case "mp3":
-				OHSynchronizer.Import.renderAudio(file);
-				break;
+		case "ogg":
+		case "mp3":
+			OHSynchronizer.Import.renderAudio(file);
+			break;
 
-			default:
-				OHSynchronizer.errorHandler(new Error("Bad File - cannot display data."));
-				break;
-		}
-	}
-	else if (sender === "#input-text") {
-		var fileType = $("#file-type").val();
-		if (fileType == 'none') {
-			OHSynchronizer.errorHandler(new Error("Please select the type of file you are uploading from the dropdown list provided."));
-			return;
-		}
-		var widget = OHSynchronizer.Import.widget(fileType);
-		if (widget) OHSynchronizer.Import.renderText(file, ext, widget);
-	}
-	else OHSynchronizer.errorHandler(new Error("Bad File - cannot display data."));
-}
-
-OHSynchronizer.Import.widget = function(type) {
-	switch(type) {
-		case "index":
-			return new OHSynchronizer.Index('input-index');
-		case "transcript":
-			return new OHSynchronizer.Transcript('input-transcript');
 		default:
-			OHSynchronizer.errorHandler(new Error("No example file for parsing index and transcript data together available."));
-			return false;
+			OHSynchronizer.errorHandler(new Error("Bad File - cannot display data."));
+			break;
 	}
 }
 
@@ -206,14 +250,6 @@ OHSynchronizer.Import.checkExt = function(ext) {
 }
 
 /** Rendering Functions **/
-OHSynchronizer.Import.bindNavControls = function(controls) {
-	$('.tag-control-beginning').bind('click', function(){ controls.playerControls('beginning') });
-	$('.tag-control-backward').bind('click', function(){ controls.playerControls('backward') });
-	$('.tag-control-play').bind('click', function(){ controls.playerControls('play') });
-	$('.tag-control-stop').bind('click', function(){ controls.playerControls('stop') });
-	$('.tag-control-forward').bind('click', function(){ controls.playerControls('forward') });
-	$('.tag-control-update').bind('click', function(){ controls.playerControls('update') });
-}
 // Here we load HLS playlists
 OHSynchronizer.Import.renderHLS = function(url) {
 	var player = document.querySelector('video');
@@ -222,11 +258,11 @@ OHSynchronizer.Import.renderHLS = function(url) {
 	hls.attachMedia(player);
 	hls.on(Hls.Events.MANIFEST_PARSED,function() {
 		OHSynchronizer.playerControls = new OHSynchronizer.AblePlayer();
-		OHSynchronizer.Import.bindNavControls(OHSynchronizer.playerControls);
+		OHSynchronizer.playerControls.bindNavControls();
 		// Watch the AblePlayer time status for Transcript Syncing
 		// Must set before video plays
-		$("#video-player").bind('timeupdate', function() { OHSynchronizer.playerControls.transcriptTimestamp() });
-		$("#audio-player").bind('timeupdate', function() { OHSynchronizer.playerControls.transcriptTimestamp() });
+		$("#video-player").on('timeupdate', function() { OHSynchronizer.playerControls.transcriptTimestamp() });
+		$("#audio-player").on('timeupdate', function() { OHSynchronizer.playerControls.transcriptTimestamp() });
 		video.play();
 	});
 	$("#media-upload").hide();
@@ -274,7 +310,7 @@ OHSynchronizer.Import.renderVideo = function(file) {
 	}
 
 	reader.readAsDataURL(file);
-	$('#video-player').bind('durationchange', function() {
+	$('#video-player').on('durationchange', function() {
 		var time = this.duration;
 		$('#endTime')[0].innerHTML = OHSynchronizer.secondsAsTimestamp(time);
 	});
@@ -302,7 +338,7 @@ OHSynchronizer.Import.loadYouTube = function(id) {
 		events: {
 			'onReady': function(event) {
 				OHSynchronizer.playerControls.initializeControls(event);
-				OHSynchronizer.Import.bindNavControls(OHSynchronizer.playerControls);
+				OHSynchronizer.playerControls.bindNavControls();
 			}
 		}
 	});
@@ -337,16 +373,10 @@ OHSynchronizer.Import.renderAudio = function(file) {
 	}
 
 	reader.readAsDataURL(file);
-	$('#audio-player').bind('durationchange', function() {
+	$('#audio-player').on('durationchange', function() {
 		var time = this.duration;
 		$('#endTime')[0].innerHTML = OHSynchronizer.secondsAsTimestamp(time);
 	});
-}
-
-// Here we display index or transcript file data
-OHSynchronizer.Import.renderText = function(file, ext, widget) {
-	var reader = widget.fileReader(file, ext);
-	if (reader) reader.readAsText(file);
 }
 
 /** Player Functions **/
@@ -403,6 +433,23 @@ OHSynchronizer.Player.prototype = {
 				OHSynchronizer.looping = minute;
 			}
 		}
+	},
+	bindNavControls: function() {
+		var controls = this;
+		$('.tag-control-beginning').on('click', function(){ controls.playerControls('beginning') });
+		$('.tag-control-backward').on('click', function(){ controls.playerControls('backward') });
+		$('.tag-control-play').on('click', function(){ controls.playerControls('play') });
+		$('.tag-control-stop').on('click', function(){ controls.playerControls('stop') });
+		$('.tag-control-forward').on('click', function(){ controls.playerControls('forward') });
+		$('.tag-control-update').on('click', function(){ controls.playerControls('update') });
+	},
+	dispose: function() {
+		$('.tag-control-beginning').off('click');
+		$('.tag-control-backward').off('click');
+		$('.tag-control-play').off('click');
+		$('.tag-control-stop').off('click');
+		$('.tag-control-forward').off('click');
+		$('.tag-control-update').off('click');
 	}
 }
 
@@ -420,7 +467,6 @@ OHSynchronizer.YouTube.prototype.duration = function() {
 	return this.ytplayer.getDuration();
 }
 // Here we set up segment controls for the YouTube playback
-//function initializeYTControls(event) {
 OHSynchronizer.YouTube.prototype.initializeControls = function(event) {
 	this.ytplayer = event.target;
 	var player = this;
@@ -430,33 +476,7 @@ OHSynchronizer.YouTube.prototype.initializeControls = function(event) {
 	var time = this.ytplayer.getDuration();
 	$('#endTime')[0].innerHTML = OHSynchronizer.secondsAsTimestamp(time);
 
-	$("#control-beginning").bind("click", function() {
-		player.ytplayer.seekTo(0);
-	});
-
-	$("#control-backward").bind("click", function() {
-		var now = player.ytplayer.getCurrentTime();
-		player.ytplayer.seekTo(now - 15);
-	});
-
-	$("#control-play").bind("click", function() {
-		player.ytplayer.playVideo();
-	});
-
-	$("#control-stop").bind("click", function() {
-		player.ytplayer.pauseVideo();
-	});
-
-	$("#control-forward").bind("click", function() {
-		var now = player.getCurrentTime();
-		player.ytplayer.seekTo(now + 15);
-	});
-
-	$("#control-update-time").bind("click", function(){
-		player.updateTimestamp()
-	});
 	this.transcriptTimestamp();
-
 }
 
 OHSynchronizer.YouTube.prototype.seekMinute = function(minute) {
@@ -588,13 +608,19 @@ OHSynchronizer.AblePlayer.prototype.playerControls = function(button) {
 }
 
 /** Transcript Sync Functions **/
-OHSynchronizer.Transcript = function(id){
+OHSynchronizer.Transcript = function(id, options = {}){
 	Object.call(this);
 	this.contentDiv = $('#' + id);
 	this.type = 'transcript';
 }
 
 OHSynchronizer.Transcript.prototype.constructor = OHSynchronizer.Transcript;
+
+OHSynchronizer.Transcript.prototype.dispose = function() {
+	$('.transcript-word').off('click');
+	$('.transcript-timestamp').off('click');
+	$('.transcript-timestamp').off('dblclick');
+}
 
 OHSynchronizer.Transcript.prototype.fileReader = function(file, ext) {
 	var reader = new FileReader();
@@ -640,9 +666,15 @@ OHSynchronizer.Transcript.prototype.fileReader = function(file, ext) {
 		return reader;
 	} catch (e) { OHSynchronizer.errorHandler(e); }
 }
+
+OHSynchronizer.Transcript.prototype.renderText = function(file, ext) {
+	var reader = this.fileReader(file, ext);
+	if (reader) reader.readAsText(file);
+}
+
 // Here we add a Sync Marker
 OHSynchronizer.Transcript.prototype.addSyncMarker = function() {
-	$('.transcript-word').bind('click', function(){
+	$('.transcript-word').on('click', function(){
 		var minute = parseInt($("#sync-minute")[0].innerHTML);
 		if (minute == 0) minute++;
 		var marker = "{" + minute + ":00}";
@@ -682,7 +714,7 @@ OHSynchronizer.Transcript.prototype.addSyncMarker = function() {
 
 // Here we update Transcript Sync Current Mark
 OHSynchronizer.Transcript.updateCurrentMark = function() {
-	$('.transcript-timestamp').bind('click', function(){
+	$('.transcript-timestamp').on('click', function(){
 		var mark = $(this)[0].innerHTML;
 		mark = mark.replace("{", '');
 		var num = mark.split(":");
@@ -692,7 +724,7 @@ OHSynchronizer.Transcript.updateCurrentMark = function() {
 
 // Here we remove a Transcript Sync Marker
 OHSynchronizer.Transcript.removeSyncMarker = function() {
-	$('.transcript-timestamp').bind('dblclick', function(){
+	$('.transcript-timestamp').on('dblclick', function(){
 		$(this).next(".transcript-clicked").removeClass('transcript-clicked');
 		$(this).remove();
 	});
@@ -729,22 +761,33 @@ OHSynchronizer.Transcript.syncControl = function(type, playerControls) {
 	}
 }
 
-OHSynchronizer.Index = function(id, previewOnly = false) {
+OHSynchronizer.Index = function(id, options = {}) {
 	Object.call(this);
 	this.type = 'index';
-	this.previewOnly = previewOnly;
+	this.previewOnly = options.previewOnly;
 	this.indexDiv = $('#' + id);
 	var index = this;
-	$('.index-tag-save').bind('click', function(){
+	$('.index-tag-save').on('click', function(){
 		index.tagSave();
 	});
-	$('.index-tag-cancel').bind('click', function(){
+	$('.index-tag-cancel').on('click', function(){
 		index.tagCancel();
 	});
 	this.indexDiv.attr('data-editVar','-1');
 	this.indexDiv.attr('data-endTime','0');
-	$('.synch-download-button').bind('click', function() { OHSynchronizer.Export.exportIndex('vtt', index); });
-	if (previewOnly) $(".tag-add-segment").hide();
+	$('.synch-download-button').on('click', function() { OHSynchronizer.Export.exportIndex('vtt', index); });
+	if (this.previewOnly) $(".tag-add-segment").hide();
+}
+OHSynchronizer.Index.prototype.constructor = OHSynchronizer.Index;
+
+OHSynchronizer.Index.prototype.dispose = function() {
+	$('.index-tag-save').off('click');
+	$('.index-tag-cancel').off('click');
+	$('.synch-download-button').off('click');
+	$('.tag-edit').off('click');
+	$('.preview-segment').off('click');
+	$('.close').off('click');
+	$('.tag-delete').off('click');
 }
 
 OHSynchronizer.Index.prototype.initializeAccordion = function() {
@@ -780,6 +823,11 @@ OHSynchronizer.Index.prototype.accordion = function() {
 OHSynchronizer.Index.prototype.addSegment = function(segment) {
 	var newPanel = this.accordion().append(OHSynchronizer.Index.segmentHtml(segment));
 	return newPanel;
+}
+
+OHSynchronizer.Index.prototype.renderText = function(file, ext) {
+	var reader = this.fileReader(file, ext);
+	if (reader) reader.readAsText(file);
 }
 
 // Here we display index or transcript file data
@@ -919,7 +967,7 @@ OHSynchronizer.Index.prototype.tagSave = function() {
 // Here we enable the edit buttons for segments
 OHSynchronizer.Index.prototype.tagEdit = function() {
 	var widget = this;
-	$('.tag-edit').bind('click', function(){
+	$('.tag-edit').on('click', function(){
 		// Pop up the modal
 		$('#index-tag').modal('show');
 
@@ -1017,7 +1065,7 @@ OHSynchronizer.Index.prototype.initPreviewControls = function(accordion) {
 	});
 
 	accordion.accordion("refresh");
-	$('.preview-segment').bind('click', function(){
+	$('.preview-segment').on('click', function(){
 		var timestamp = $(this).closest(".segment-panel").attr("id");
 		OHSynchronizer.playerControls.seekTo(OHSynchronizer.timestampAsSeconds(timestamp));
 		OHSynchronizer.playerControls.playerControls("play");
@@ -1026,11 +1074,11 @@ OHSynchronizer.Index.prototype.initPreviewControls = function(accordion) {
 // Here we remove items the user no longer wishes to see
 // Includes deleting Segment Tags
 OHSynchronizer.Index.closeButtons = function() {
-	$('.close').bind('click', function(){
+	$('.close').on('click', function(){
 		$(this).parent('div').fadeOut();
 	});
 
-	$('.tag-delete').bind('click', function(){
+	$('.tag-delete').on('click', function(){
 		var panel = $(this).parents('div').get(2);
 		panel.remove();
 	});
@@ -1140,8 +1188,9 @@ OHSynchronizer.Export.previewWork = function(type) {
 	OHSynchronizer.playerControls.playerControls("beginning");
 	OHSynchronizer.playerControls.playerControls("stop");
 
-	if ($('#media-upload').visible) OHSynchronizer.errorHandler(new Error("You must first upload media in order to preview."));
-	else if (type.toLowerCase() == "transcript" && $('#transcript')[0].innerHTML != '') {
+	if ($('#media-upload').visible){
+		OHSynchronizer.errorHandler(new Error("You must first upload media in order to preview."));
+	} else if (type.toLowerCase() == "transcript" && $('#transcript')[0].innerHTML != '') {
 		// The current open work needs to be hidden to prevent editing while previewing
 		$("#transcript").hide();
 		$("#sync-controls").hide();
@@ -1211,7 +1260,7 @@ OHSynchronizer.Export.previewWork = function(type) {
 
 // Here we activate the minute sync markers created for previewing transcript
 OHSynchronizer.Export.addPreviewMinutes = function() {
-	$('.preview-minute').bind('click', function(){
+	$('.preview-minute').on('click', function(){
 		var timestamp = $(this)[0].innerText.split('[');
 		var minute = timestamp[1].split(':');
 		OHSynchronizer.playerControls.seekMinute(parseInt(minute[0]));
@@ -1220,7 +1269,7 @@ OHSynchronizer.Export.addPreviewMinutes = function() {
 
 // Here we activate the index segment buttons to for playing index segments during preview
 OHSynchronizer.Export.addPreviewSegments = function() {
-	$('.preview-segment').bind('click', function(){
+	$('.preview-segment').on('click', function(){
 		var timestamp = $(this).parent().parent().parent().attr("id");
 		OHSynchronizer.playerControls.seekTo(OHSynchronizer.timestampAsSeconds(timestamp));
 		OHSynchronizer.playerControls.playerControls("play");

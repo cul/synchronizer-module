@@ -19,7 +19,7 @@
 	});
 
 	$('.preview-button').bind('click', function() {
-		OHSynchronizer.Export.previewWork('index');
+		OHSynchronizer.Export.previewWork('transcript');
 	});
 
 	// Scroll to top function
@@ -51,10 +51,10 @@
 		type: 'player',
 		url: info.media
 	}
-	var index = {
-		id: 'input-index',
-		type: 'index',
-		url: info.index
+	var transcript = {
+		id: 'transcript-index',
+		type: 'transcript',
+		url: info.transcript
 	}
-	var widget = new OHSynchronizer({player: player, index: index, options: widgetOptions});
+	var widget = new OHSynchronizer({player: player, transcript: transcript, options: widgetOptions});
 }(jQuery));
