@@ -14,8 +14,8 @@
 var OHSynchronizer = function(config = {}){
 	if (!config.options) config.options = {};
 	if (config.player) this.player(config.player, config.options);
-	if (config.index) this.index(config.index, config.options);
-	if (config.transcript) this.transcript(config.transcript, config.options);
+	if (config.index) this.index = this.configIndex(config.index, config.options);
+	if (config.transcript) this.transcript = this.configTranscript(config.transcript, config.options);
 };
 
 OHSynchronizer.prototype = {
@@ -29,7 +29,7 @@ OHSynchronizer.prototype = {
 		}
 	},
 
-	index: function(feature, options) {
+	configIndex: function(feature, options) {
 		var widget = new OHSynchronizer.Index(feature.id, options);
 		if (feature.fileId) {
 			var fileInfo = OHSynchronizer.Import.uploadedFile(feature.fileId);
@@ -46,7 +46,7 @@ OHSynchronizer.prototype = {
 		}
 	},
 
-	transcript: function(feature, options) {
+	configTranscript: function(feature, options) {
 		var widget = new OHSynchronizer.Transcript(feature.id, options);
 		if (feature.fileId) {
 			var fileInfo = OHSynchronizer.Import.uploadedFile(feature.fileId);
@@ -64,7 +64,19 @@ OHSynchronizer.prototype = {
 	},
 
 	dispose: function() {
+		// feature disposals
 		if (OHSynchronizer.playerControls) OHSynchronizer.playerControls.dispose();
+		if (this.index) this.index.dispose();
+		if (this.transcript) this.transcript.dispose();
+		// time monitor disposals
+		$("#audio-player").off('timeupdate');
+		$("#audio-player").off('durationchange');
+		$("#video-player").off('timeupdate');
+		$("#video-player").off('durationchange');
+		// preview control disposals
+		$('.preview-button').off('click');
+		$('.preview-minute').off('click');
+		$('.preview-segment').off('click');
 	}
 }
 
@@ -249,8 +261,8 @@ OHSynchronizer.Import.renderHLS = function(url) {
 		OHSynchronizer.playerControls.bindNavControls();
 		// Watch the AblePlayer time status for Transcript Syncing
 		// Must set before video plays
-		$("#video-player").bind('timeupdate', function() { OHSynchronizer.playerControls.transcriptTimestamp() });
-		$("#audio-player").bind('timeupdate', function() { OHSynchronizer.playerControls.transcriptTimestamp() });
+		$("#video-player").on('timeupdate', function() { OHSynchronizer.playerControls.transcriptTimestamp() });
+		$("#audio-player").on('timeupdate', function() { OHSynchronizer.playerControls.transcriptTimestamp() });
 		video.play();
 	});
 	$("#media-upload").hide();
@@ -298,7 +310,7 @@ OHSynchronizer.Import.renderVideo = function(file) {
 	}
 
 	reader.readAsDataURL(file);
-	$('#video-player').bind('durationchange', function() {
+	$('#video-player').on('durationchange', function() {
 		var time = this.duration;
 		$('#endTime')[0].innerHTML = OHSynchronizer.secondsAsTimestamp(time);
 	});
@@ -361,7 +373,7 @@ OHSynchronizer.Import.renderAudio = function(file) {
 	}
 
 	reader.readAsDataURL(file);
-	$('#audio-player').bind('durationchange', function() {
+	$('#audio-player').on('durationchange', function() {
 		var time = this.duration;
 		$('#endTime')[0].innerHTML = OHSynchronizer.secondsAsTimestamp(time);
 	});
@@ -1248,7 +1260,7 @@ OHSynchronizer.Export.previewWork = function(type) {
 
 // Here we activate the minute sync markers created for previewing transcript
 OHSynchronizer.Export.addPreviewMinutes = function() {
-	$('.preview-minute').bind('click', function(){
+	$('.preview-minute').on('click', function(){
 		var timestamp = $(this)[0].innerText.split('[');
 		var minute = timestamp[1].split(':');
 		OHSynchronizer.playerControls.seekMinute(parseInt(minute[0]));
@@ -1257,7 +1269,7 @@ OHSynchronizer.Export.addPreviewMinutes = function() {
 
 // Here we activate the index segment buttons to for playing index segments during preview
 OHSynchronizer.Export.addPreviewSegments = function() {
-	$('.preview-segment').bind('click', function(){
+	$('.preview-segment').on('click', function(){
 		var timestamp = $(this).parent().parent().parent().attr("id");
 		OHSynchronizer.playerControls.seekTo(OHSynchronizer.timestampAsSeconds(timestamp));
 		OHSynchronizer.playerControls.playerControls("play");
