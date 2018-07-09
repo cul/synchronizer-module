@@ -47,8 +47,11 @@
 		url: info.transcript
 	}
 	var widget = new OHSynchronizer({player: player, transcript: transcript, options: widgetOptions});
-	$('.preview-button').bind('click', function() {
-		widget.transcript.preview();
-	});
-	if (widgetOptions.previewOnly) widget.hideFinishingControls();
+	if (widgetOptions.previewOnly) {
+		widget.hideFinishingControls();
+	} else {
+		$('.preview-button').on('click', function() {
+			widget.transcript.preview();
+		});
+	}
 }(jQuery));

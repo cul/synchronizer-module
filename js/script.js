@@ -38,7 +38,7 @@
 	$("#file-type, #input-text").click(function() {
 		var selected = "#tabs-" + $("#file-type").val();
 		$('#text-tabs a[href="' + selected + '"]').trigger('click');
-		$('.preview-button').bind('click', function() {
+		$('.preview-button').on('click', function() {
 			OHSynchronizer.Export.previewWork($("#file-type").val());
 		});
 	});

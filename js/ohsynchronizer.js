@@ -450,6 +450,7 @@ OHSynchronizer.Player.prototype = {
 		$('.tag-control-update').on('click', function(){ controls.playerControls('update') });
 	},
 	dispose: function() {
+		$('.preview-button').off('click'); // bound outside widget
 		$('.tag-control-beginning').off('click');
 		$('.tag-control-backward').off('click');
 		$('.tag-control-play').off('click');

@@ -48,8 +48,11 @@
 	}
 	var widget = new OHSynchronizer({player: player, index: index, options: widgetOptions});
 
-	$('.preview-button').bind('click', function() {
-		widget.index.preview();
-	});
-	if (widgetOptions.previewOnly) widget.hideFinishingControls();
+	if (widgetOptions.previewOnly) {
+		widget.hideFinishingControls();
+	} else {
+		$('.preview-button').on('click', function() {
+			widget.index.preview();
+		});
+	}
 }(jQuery));
