@@ -612,6 +612,7 @@ OHSynchronizer.Transcript = function(id, options = {}){
 	Object.call(this);
 	this.contentDiv = $('#' + id);
 	this.type = 'transcript';
+	this.previewOnly = options.previewOnly;
 }
 
 OHSynchronizer.Transcript.prototype.constructor = OHSynchronizer.Transcript;
@@ -641,7 +642,9 @@ OHSynchronizer.Transcript.prototype.fileReader = function(file, ext) {
 					if (!(OHSynchronizer.Import.timecodeRegEx.test(target)) || target.indexOf("WEBVTT") !== 0){
 						OHSynchronizer.errorHandler(new Error("Not a valid VTT transcript file."));
 					} else {
-						if ($("#audio").is(':visible') || $("#video").is(':visible') || $("#ytplayer")[0].innerHTML != '') $("#sync-controls").show();
+						if ($("#audio").is(':visible') || $("#video").is(':visible') || $("#ytplayer")[0].innerHTML != '') {
+							if (!transcript.previewOnly) $("#sync-controls").show();
+						}
 						OHSynchronizer.Events.uploadsuccess(new CustomEvent("uploadsuccess", {detail: file}));
 						OHSynchronizer.Index.closeButtons();
 						// We'll break up the file line by line
@@ -649,13 +652,18 @@ OHSynchronizer.Transcript.prototype.fileReader = function(file, ext) {
 
 						// We implement a Web Worker because larger transcript files will freeze the browser
 						if (window.Worker) {
-							var textWorker = new Worker(OHSynchronizer.webWorkers + "/transcript.js");
+							var workerSrc = (transcript.previewOnly) ? (OHSynchronizer.webWorkers + "/transcript-preview.js") : (OHSynchronizer.webWorkers + "/transcript.js");
+							var textWorker = new Worker(workerSrc);
 							textWorker.postMessage(text);
 							textWorker.onmessage = function(e) {
 								$('#transcript')[0].innerHTML += e.data;
 
 								// Enable click functions, addSyncMarker calls all three functions
-								transcript.addSyncMarker();
+								if (transcript.previewOnly) {
+									transcript.initPreviewControls();
+								} else {
+									transcript.addSyncMarker();
+								}
 							}
 						}
 					}
@@ -675,7 +683,7 @@ OHSynchronizer.Transcript.prototype.renderText = function(file, ext) {
 // Here we add a Sync Marker
 OHSynchronizer.Transcript.prototype.addSyncMarker = function() {
 	$('.transcript-word').on('click', function(){
-		var minute = parseInt($("#sync-minute")[0].innerHTML);
+		var minute = parseInt($("#sync-minute").html());
 		if (minute == 0) minute++;
 		var marker = "{" + minute + ":00}";
 		var regEx = new RegExp(marker);
@@ -705,20 +713,47 @@ OHSynchronizer.Transcript.prototype.addSyncMarker = function() {
 
 			// If we are looping, we automatically jump forward
 			if (OHSynchronizer.looping !== -1) {
-				$("#sync-minute")[0].innerHTML = minute;
+				$("#sync-minute").html(minute);
 				OHSynchronizer.Transcript.syncControl("forward", OHSynchronizer.playerControls);
 			}
 		}
 	});
 }
 
+OHSynchronizer.Transcript.prototype.preview = function() {
+	$("#transcript").hide();
+	$("#sync-controls").hide();
+	$("#transcript-preview").show();
+	$("#export").addClass('hidden');
+	$(".preview-button").addClass('hidden');
+	$("#preview-close").removeClass('hidden');
+
+	var content = OHSynchronizer.Export.transcriptVTT();
+	if (window.Worker) {
+		var textWorker = new Worker(OHSynchronizer.webWorkers + "/transcript-preview.js");
+		textWorker.onmessage = function(e) {
+			$("#transcript-preview").html(e.data);
+		}
+		textWorker.postMessage(content);
+	}
+	this.initPreviewControls();	
+}
+
+OHSynchronizer.Transcript.prototype.initPreviewControls = function() {
+	$('.preview-minute').on('click', function(){
+		var timestamp = $(this)[0].innerText.split('[');
+		var minute = timestamp[1].split(':');
+		OHSynchronizer.playerControls.seekMinute(parseInt(minute[0]));
+	});
+}
+
 // Here we update Transcript Sync Current Mark
 OHSynchronizer.Transcript.updateCurrentMark = function() {
 	$('.transcript-timestamp').on('click', function(){
-		var mark = $(this)[0].innerHTML;
+		var mark = $(this).html();
 		mark = mark.replace("{", '');
 		var num = mark.split(":");
-		$("#sync-minute")[0].innerHTML = num[0];
+		$("#sync-minute").html(num[0]);
 	})
 }
 
@@ -740,7 +775,7 @@ OHSynchronizer.Transcript.syncControl = function(type, playerControls) {
 		case "back":
 			minute -= 1;
 			if (minute <= 0) $("#sync-minute")[0].innerHTML = 0;
-			else $("#sync-minute")[0].innerHTML = minute;
+			else $("#sync-minute").html(minute);
 
 			playerControls.seekMinute(minute);
 			break;

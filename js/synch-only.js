@@ -46,7 +46,7 @@
 		transcript: "./assets/OHMS-Sample-003.captions.vtt"
 	};
 
-	var widgetOptions = { previewOnly: false };
+	var widgetOptions = { previewOnly: true };
 	var player = {
 		type: 'player',
 		url: info.media
