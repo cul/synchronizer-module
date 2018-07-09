@@ -38,12 +38,11 @@
 
 	var widgetOptions = { previewOnly: false };
 	var player = {
-		type: 'player',
+		type: 'video',
 		url: info.media
 	}
 	var transcript = {
 		id: 'transcript-index',
-		type: 'transcript',
 		url: info.transcript
 	}
 	var widget = new OHSynchronizer({player: player, transcript: transcript, options: widgetOptions});

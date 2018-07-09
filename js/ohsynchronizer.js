@@ -21,7 +21,7 @@ var OHSynchronizer = function(config = {}){
 OHSynchronizer.prototype = {
 	player: function(feature, options) {
 		if (feature.url) {
-			OHSynchronizer.Import.mediaFromUrl(feature.url);
+			OHSynchronizer.Import.mediaFromUrl(feature.url, feature);
 		} else if (feature.fileId) {
 			OHSynchronizer.Import.mediaFromFile.apply(null, OHSynchronizer.Import.uploadedFile(feature.fileId));
 		} else if (feature.file) {
@@ -155,7 +155,7 @@ OHSynchronizer.Import.uploadedFile = function (sender) {
 
 // Here we accept URL-based files
 // This function is no longer utilized for non-AV files
-OHSynchronizer.Import.mediaFromUrl = function(url) {
+OHSynchronizer.Import.mediaFromUrl = function(url, options = {type: 'video'}) {
 	// Continue onward, grab the URL value
 	var id = '';
 
@@ -191,16 +191,10 @@ OHSynchronizer.Import.mediaFromUrl = function(url) {
 	else if (id !== '') OHSynchronizer.Import.loadYouTube(id);
 	else {
 		// We only allow URL uploads of media files, not any text files
-		if (ext == "mp3" || ext == "ogg" || ext == "mp4" || ext == "webm") {
-			fetch(url)
-				.then(res => res.blob())
-				.then(blob => {
-					OHSynchronizer.Import.playerForFile(blob, ext);
-				})
-				.catch(function(e) { OHSynchronizer.errorHandler(e);	});
+		if (options.type == 'video' || options.type == 'audio') {
+			OHSynchronizer.Import.renderMediaURL(url, options);
 			OHSynchronizer.playerControls = new OHSynchronizer.AblePlayer();
-		}
-		else {
+		} else {
 			var error = new Error("This field only accepts audio and video file URLs.");
 			OHSynchronizer.errorHandler(error);
 		}
@@ -281,6 +275,26 @@ OHSynchronizer.Import.renderHLS = function(url) {
 	$("#finish-area").show();
 	if ($('#transcript')[0] && $('#transcript')[0].innerHTML != '') { $("#sync-controls").show(); }
 	OHSynchronizer.Events.hlssuccess(new CustomEvent("hlssuccess", {detail: url}));
+	OHSynchronizer.Index.closeButtons();
+}
+
+OHSynchronizer.Import.renderMediaURL = function(url, options = {type: 'video'} ) {
+	var selector = '#' + options.type + '-player';
+	$(selector).on('timeupdate', function() { OHSynchronizer.playerControls.transcriptTimestamp() });
+	$(selector).attr('src', url);
+	$(selector)[0].play();
+	$("#media-upload").hide();
+	if (options.type == 'video') {
+		$("#audio").hide();
+		$("#video").show();
+	} else {
+		$("#audio").show();
+		$("#video").hide();
+	}
+	// show segment controls
+	$(".tag-add-segment").show();
+	$("#finish-area").show();
+	if ($('#transcript')[0] && $('#transcript')[0].innerHTML != '') { $("#sync-controls").show(); }
 	OHSynchronizer.Index.closeButtons();
 }
 

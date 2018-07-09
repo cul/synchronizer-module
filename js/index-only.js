@@ -31,6 +31,7 @@
 		$("#messagesBar").append(success);
 	};
 	var info = {
+		// media: "https://www.rmp-streaming.com/media/bbb-360p.mp4",
 		media: "https://ldpd-wowza-test1.svc.cul.columbia.edu:8443/vod/mp4:CARN27_v_1_READY_TO_EXPORT.mp4/playlist.m3u8",
 		index: "./assets/OHMS-Sample-003.metadata.vtt",
 		transcript: "./assets/OHMS-Sample-003.captions.vtt"
@@ -38,12 +39,11 @@
 
 	var widgetOptions = { previewOnly: false };
 	var player = {
-		type: 'player',
+		type: 'video',
 		url: info.media
 	}
 	var index = {
 		id: 'input-index',
-		type: 'index',
 		url: info.index
 	}
 	var widget = new OHSynchronizer({player: player, index: index, options: widgetOptions});
