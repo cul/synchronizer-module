@@ -721,6 +721,7 @@ OHSynchronizer.Transcript.prototype.addSyncMarker = function() {
 }
 
 OHSynchronizer.Transcript.prototype.preview = function() {
+	OHSynchronizer.looping = -1;
 	$("#transcript").hide();
 	$("#sync-controls").hide();
 	$("#transcript-preview").show();
@@ -1219,7 +1220,7 @@ OHSynchronizer.Export.indexVTT = function(widget) {
 // Here we use VTT-esque data to preview the end result
 OHSynchronizer.Export.previewWork = function(type) {
 	// Make sure looping isn't running, we'll stop the A/V media and return the playhead to the beginning
-	looping = -1;
+	OHSynchronizer.looping = -1;
 	OHSynchronizer.playerControls.playerControls("beginning");
 	OHSynchronizer.playerControls.playerControls("stop");
 
