@@ -1,0 +1,6 @@
+# Ignore editor files
+*~
+\#*\#
+
+# Ignore OS-specific
+.DS_Store
