@@ -1020,7 +1020,7 @@ OHSynchronizer.Index.prototype.tagSave = function() {
 		}
 
 		this.addSegment(segment);
-		this.sortAccordion();
+		this.sortAccordion(edit);
 
 		this.tagEdit();
 		this.tagCancel();
@@ -1071,9 +1071,8 @@ OHSynchronizer.Index.prototype.tagCancel = function() {
 }
 
 // Here we sort the accordion according to the timestamp to keep the parts in proper time order
-OHSynchronizer.Index.prototype.sortAccordion = function() {
+OHSynchronizer.Index.prototype.sortAccordion = function(activateId = null) {
 	var accordion = this.accordion();
-
 	// Get an array of jQuery objects for each accordion panel
 	var entries = $.map(accordion.children("div").get(), function(entry) {
 		var $entry = $(entry);
@@ -1088,10 +1087,17 @@ OHSynchronizer.Index.prototype.sortAccordion = function() {
 	});
 
 	// Put them in the right order in the accordion
-	$.each(entries, function() {
+	var activateIndex = -1;
+	$.each(entries, function(index) {
 		this.detach().appendTo(accordion);
+		if (this.attr('id') == activateId) {
+			activateIndex = index;
+		}
 	});
+	accordion.accordion( "option", "active", false);
 	accordion.accordion("refresh");
+	// if a panel was edited, activate it
+	if (activateIndex !== -1) accordion.accordion( "option", "active", activateIndex);
 }
 
 OHSynchronizer.Index.prototype.preview = function() {
