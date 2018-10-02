@@ -1056,6 +1056,7 @@ OHSynchronizer.Index.prototype.tagEdit = function() {
 		$("#tag-partial-transcript").val(transcript);
 
 		OHSynchronizer.playerControls.seekTo(OHSynchronizer.timestampAsSeconds(timestamp));
+		OHSynchronizer.playerControls.playerControls("play");
 	});
 }
 
