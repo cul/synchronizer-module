@@ -1224,13 +1224,15 @@ OHSynchronizer.Export.indexSegmentData = function(widget) {
 	var endProxy = {startTime : OHSynchronizer.secondsAsTimestamp(OHSynchronizer.playerControls.duration())};
 	// We'll break up the text by segments
 	var segments = $(widget.indexDiv).find('.segment-panel').map(function(index, div){
+		// ignore the duplicate preview segments
+		if ($(div).parents('#previewAccordion').length) return null;
 		return {
 			startTime: $(div).attr('id'),
 			title: $(div).find(".tag-title").text(),
 			keywords: $(div).find(".tag-keywords").text(),
 			subjects: $(div).find(".tag-subjects").text(),
 			description: $(div).find(".tag-segment-synopsis").text(),
-			partialTranscript: $(div).find(".tag-partial-transcript").text(),
+			partialTranscript: $(div).find(".tag-partial-transcript").text()
 		}
 	});
 	segments.map(function(index, segment) {
